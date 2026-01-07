@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model RoleRate {
+  role        String @id
+  monthlyRate Float
+  baseHours   Int    @default(160)
+  hourlyRate  Float
+}
+
+model Quote {
+  id                   String   @id @default(uuid())
+  clientName           String
+  projectType          String
+  technicalParameters  String   // Serialized JSON
+  estimatedCost        Float
+  staffingRequirements String   // Serialized JSON
+  diagramDefinition    String
+  createdAt            DateTime @default(now())
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("USER") // ADMIN or USER
+  createdAt DateTime @default(now())
+}
