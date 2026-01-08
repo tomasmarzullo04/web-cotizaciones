@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button"
 import { PlusCircle, FileText, ArrowRight } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { getUserQuotes } from '@/lib/actions'
+import { DeleteQuoteButton } from '@/components/delete-quote-button'
+import { QuoteDetailsSheet } from '@/components/quote-details-sheet'
 
 export const dynamic = 'force-dynamic'
 
@@ -68,10 +70,9 @@ export default async function DashboardPage() {
                                         </span>
                                         <span className="text-[#CFDBD5] text-xs ml-1">/ mes</span>
                                     </div>
-                                    <div className="col-span-2 flex justify-end">
-                                        <Button size="sm" className="bg-[#333533] text-[#E8EDDF] hover:bg-[#E8EDDF] hover:text-[#171717] rounded-lg h-10 px-4 font-bold transition-all">
-                                            Ver Detalle <ArrowRight className="w-4 h-4 ml-2" />
-                                        </Button>
+                                    <div className="col-span-2 flex justify-end gap-2">
+                                        <QuoteDetailsSheet quote={quote} />
+                                        <DeleteQuoteButton quoteId={quote.id} quoteName={quote.clientName} />
                                     </div>
                                 </div>
                             </Card>

@@ -1,23 +1,59 @@
 # Cotizador de Soluciones de Datos (Data Solutions Quoter)
 
-Aplicación web profesional para la estimación de costos y dimensionamiento de equipos en proyectos de datos. Construida con Next.js 14+, Tailwind CSS, Shadcn/ui y Prisma.
+Aplicación web profesional para la estimación de costos y dimensionamiento de equipos en proyectos de datos. Diseño moderno "Enterprise Dark" construido con las últimas tecnologías web.
 
-## Características
+## 🚀 Características Principales
 
-- **Diseño Enterprise Dark**: Interfaz moderna y profesional.
-- **Formulario Inteligente**: 10 preguntas técnicas clave para dimensionar el proyecto.
-- **Motor de Costeo**: Cálculo automático de roles y costos mensuales basado en tarifas configurables.
-- **Diagramas Dinámicos**: Generación automática de arquitectura de flujo de datos con Mermaid.js.
-- **Historial**: Persistencia de cotizaciones utilizando SQLite (fácilmente migrable a PostgreSQL).
+### 💼 Panel de Gestión (Dashboard)
+- **Mis Cotizaciones**: Historial personal de proyectos cotizados.
+- **Detalle Interactivo**: Visualización de parámetros y costos mediante paneles laterales (Sheet).
+- **Gestión de Cotizaciones**: Funcionalidad para eliminar cotizaciones con confirmación segura.
 
-## Stack Tecnológico
+### 🛠️ Cotizador Inteligente
+- **Formulario Dinámico**: 10 preguntas clave para dimensionar la infraestructura y equipo.
+- **Lógica de Costeo**: Algoritmo que calcula roles (Data Engineer, Analyst, Scientist, BI) y horas necesarias.
+- **Arquitectura Automática**: Generación de diagramas de flujo de datos con Mermaid.js basados en las respuestas.
 
-- **Frontend**: Next.js (App Router), Tailwind CSS, Shadcn/ui, Framer Motion.
-- **Backend**: Server Actions, Prisma ORM.
-- **Base de Datos**: SQLite (Dev/Local).
-- **Visualización**: Mermaid.js.
+### 👑 Panel Administrativo
+- **Vista General**: KPIs en tiempo real (Cotizaciones Mes, Pipeline, Usuarios Activos).
+- **Editor de Tarifas**: Interfaz para ajustar los costos por hora/mes de cada rol sin tocar código.
+- **Trazabilidad**: Historial completo de todas las cotizaciones generadas por usuarios.
 
-## Configuración e Instalación
+## 🏗️ Arquitectura y Herramientas
+
+El proyecto utiliza una arquitectura moderna basada en **Next.js 16 (App Router)** para garantizar rendimiento, SEO y escalabilidad. A continuación, el detalle de las tecnologías empleadas:
+
+### Core & Frontend
+| Tecnología | Versión | Propósito en el Proyecto |
+|------------|---------|--------------------------|
+| **Next.js** | 16.1 | Framework principal. Renderizado híbrido (Server Actions + Componentes Cliente). |
+| **React** | 19.2 | Biblioteca de UI con las últimas optimizaciones de concurrencia y servidor. |
+| **Tailwind CSS** | v4.0 | Motor de estilos utility-first para un diseño rápido y consistente "Enterprise Dark". |
+| **TypeScript** | 5.x | Tipado estático para garantizar la robustez del código y autocompletado inteligente. |
+| **Framer Motion** | 12.x | Animaciones fluidas en transiciones de página y micro-interacciones. |
+
+### Componentes & UI
+| Librería | Uso Específico |
+|----------|----------------|
+| **Shadcn/ui** | Colección de componentes reutilizables basados en **Radix UI** (Dialogs, Sheets, Tabs). |
+| **Lucide React** | Iconografía consistente y optimizada (SVG). |
+| **Sonner** | Sistema de notificaciones (Toasts) elegante y no intrusivo. |
+| **Mermaid.js** | Generación dinámica de diagramas de flujo para la arquitectura de datos. |
+
+### Backend & Datos
+| Herramienta | Función |
+|-------------|---------|
+| **Prisma ORM** | Capa de acceso a datos tipo-segura. Gestiona esquemas, migraciones y consultas. |
+| **SQLite** | Base de datos ligera incluida para desarrollo local cero-configuración. |
+| **Bcryptjs** | Hashing seguro de contraseñas para la autenticación local. |
+| **Server Actions** | Mutaciones de datos directas desde el frontend, eliminando la necesidad de una API REST separada. |
+
+### Utilidades
+- **XLSX**: Exportación de reportes y trazabilidad a formato Excel.
+- **Date-fns**: Manejo y formateo consistente de fechas y zonas horarias.
+- **Docx / File-saver**: Generación de documentos descargables (propuestas).
+
+## ⚡ Configuración e Instalación
 
 1. **Instalar dependencias**:
    ```bash
@@ -25,28 +61,50 @@ Aplicación web profesional para la estimación de costos y dimensionamiento de 
    ```
 
 2. **Configurar Base de Datos**:
-   La base de datos SQLite ya está configurada. Si necesitas resetearla o sembrarla nuevamente:
+   La base de datos SQLite ya está configurada localmente. Para inicializarla desde cero:
    ```bash
-   # Crear migraciones y aplicar
+   # Generar cliente Prisma
+   npx prisma generate
+   
+   # Crear tablas (migraciones)
    npx prisma migrate dev --name init
    
-   # Sembrar tarifas iniciales (Analyst, DS, BI, DE)
-   npx tsx prisma/seed.ts
+   # Poblar base de datos (Usuarios y Tarifas por defecto)
+   npx ts-node --project tsconfig.seed.json prisma/seed.ts
    ```
+   *(Nota: Usamos un tsconfig especial para el seed debido a compatibilidad con módulos)*
 
-3. **Iniciar Servidor de Desarrollo**:
-   ```bash
-   npm run dev
-   ```
+
 
 4. **Acceder**:
    Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
-## Estructura de Tarifas (Base)
+## 👥 Usuarios Predeterminados
 
-- **Data Analyst**: $2,500 / mes
+El sistema viene con usuarios pre-cargados para probar los diferentes roles:
+
+### Administrador (Rol: ADMIN)
+- **Email**: `admin@antigravity.com`
+- **Password**: `admin2026`
+- *Acceso completo al panel administrativo y edición de tarifas.*
+
+### Consultor (Rol: USER)
+- **Email**: `tomasmarzullo04@gmail.com`
+- **Password**: `user2026`
+- *Acceso estándar para generar y ver sus propias cotizaciones.*
+
+### Usuario Demo (Rol: USER)
+- **Email**: `maxhigareda@thestoreintelligence.com`
+- **Password**: `max2026`
+- *Usuario adicional para pruebas.*
+
+## 💲 Estructura de Tarifas (Base)
+
+Las tarifas pueden ser modificadas desde el Panel Admin. Valores iniciales:
+
 - **Data Scientist**: $5,100 / mes
-- **BI Specialist**: $4,128 / mes
 - **Data Engineer**: $4,950 / mes
+- **BI Specialist**: $4,128 / mes
+- **Data Analyst**: $2,500 / mes
 
 *Base de cálculo: 160 horas mensuales.*

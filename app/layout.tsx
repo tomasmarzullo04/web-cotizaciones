@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/navbar'
 import { getSessionRole, getSessionUser } from '@/lib/auth'
+import { Toaster } from 'sonner'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -24,6 +25,7 @@ export default async function RootLayout({
       <body className={inter.className}>
         <Navbar userRole={role} userName={name} />
         {children}
+        <Toaster richColors position="top-center" theme="dark" />
       </body>
     </html>
   )

@@ -29,9 +29,8 @@ export default function Home() {
                         </span>
                     </h1>
 
-                    <p className="text-xl md:text-2xl text-[#CFDBD5] max-w-3xl mx-auto leading-relaxed opacity-80 relative z-10">
-                        La suite definitiva para la estimación de costos en proyectos de Data & AI.
-                        <br /> Precisión técnica, trazabilidad total y estándares corporativos.
+                    <p className="text-xl md:text-2xl text-[#CFDBD5] max-w-2xl mx-auto mb-10 font-medium leading-relaxed opacity-90 relative z-10">
+                        De la Complejidad a la Cotización en Segundos con Estándares Enterprise.
                     </p>
 
                     <div className="pt-8 relative z-10">

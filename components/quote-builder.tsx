@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { MermaidDiagram } from "@/components/mermaid-diagram"
-import { Wand2, Download, FileText, Check, ShieldAlert, Network, Cpu, Calculator, Save, Loader2 } from "lucide-react"
+import { Wand2, Download, FileText, Check, ShieldAlert, Network, Cpu, Calculator, Save, Loader2, ClipboardList, Database, Users, Briefcase, Layers } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { saveQuote } from "@/lib/actions"
+import html2canvas from 'html2canvas'
 
 // --- 1. TYPES & CONSTANTS ---
 
@@ -125,6 +126,54 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
     const [chartCode, setChartCode] = useState('')
     const [polishLoading, setPolishLoading] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
+    const [isExporting, setIsExporting] = useState(false)
+    const [exportType, setExportType] = useState<'pdf' | 'word' | null>(null)
+
+    const handleExport = async (type: 'pdf' | 'word') => {
+        setIsExporting(true)
+        setExportType(type)
+        try {
+            // Give UI a moment to update
+            await new Promise(r => setTimeout(r, 100))
+
+            // Capture Diagram
+            let diagramImage = null
+            const element = document.getElementById('diagram-capture-target')
+            if (element) {
+                // Temporary style for valid capture (white background often helps readability in docs)
+                const canvas = await html2canvas(element, {
+                    backgroundColor: '#ffffff',
+                    scale: 2 // Retain quality
+                })
+                diagramImage = canvas.toDataURL('image/png')
+            }
+
+            const exportData = {
+                ...state,
+                totalMonthlyCost,
+                l2SupportCost,
+                riskCost,
+                totalWithRisk,
+                criticitnessLevel,
+                diagramImage
+            }
+
+            // Dynamic import
+            const mod = await import("@/lib/export")
+            if (type === 'pdf') {
+                await mod.exportToPDF(exportData as any)
+            } else {
+                await mod.exportToWord(exportData as any)
+            }
+
+        } catch (error) {
+            console.error("Export failed", error)
+            alert("Error generando el documento")
+        } finally {
+            setIsExporting(false)
+            setExportType(null)
+        }
+    }
 
     // Merge DB rates with fallback
     const currentRates = useMemo(() => {
@@ -338,7 +387,7 @@ graph TD
                     </div>
 
                     {/* 1. GENERAL */}
-                    <SectionCard number="01" title="Información General">
+                    <SectionCard number="01" title="Información General" icon={ClipboardList}>
                         <div className="space-y-8">
                             <div>
                                 <Label className="text-[#CFDBD5] text-sm font-bold uppercase tracking-wider mb-2 block">Cliente / Prospecto</Label>
@@ -397,7 +446,7 @@ graph TD
                     </SectionCard>
 
                     {/* 2. VOLUMETRY */}
-                    <SectionCard number="02" title="Volumetría y Técnica">
+                    <SectionCard number="02" title="Volumetría y Técnica" icon={Database}>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-10">
                             <CountInput label="Pipelines" value={state.pipelinesCount} onChange={(v: number) => updateState('pipelinesCount', v)} />
                             <CountInput label="Notebooks" value={state.notebooksCount} onChange={(v: number) => updateState('notebooksCount', v)} />
@@ -409,7 +458,7 @@ graph TD
                     </SectionCard>
 
                     {/* 3. CONSUMPTION */}
-                    <SectionCard number="03" title="Consumo y Negocio">
+                    <SectionCard number="03" title="Consumo y Negocio" icon={Users}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-end">
                             <CountInput label="# Reportes Finales" value={state.reportsCount} onChange={(v: number) => updateState('reportsCount', v)} />
                             <CountInput label="# Usuarios Finales" value={state.reportUsers} onChange={(v: number) => updateState('reportUsers', v)} />
@@ -424,7 +473,7 @@ graph TD
                     </SectionCard>
 
                     {/* 4. TEAM */}
-                    <SectionCard number="04" title="Equipo Requerido">
+                    <SectionCard number="04" title="Equipo Requerido" icon={Briefcase}>
                         <div className="grid grid-cols-1 gap-6">
                             {Object.entries(state.roles).map(([key, count]) => {
                                 const rate = dbRates ? dbRates[key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())] || FALLBACK_RATES[key as RoleKey] : FALLBACK_RATES[key as RoleKey]
@@ -447,7 +496,7 @@ graph TD
                     </SectionCard>
 
                     {/* 5. TECH */}
-                    <SectionCard number="05" title="Stack Tecnológico">
+                    <SectionCard number="05" title="Stack Tecnológico" icon={Layers}>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                             {TECH_OPTIONS.map(tech => (
                                 <div
@@ -468,7 +517,7 @@ graph TD
                     </SectionCard>
 
                     {/* 6. CRITICITNESS */}
-                    <SectionCard number="06" title="Evaluación de Criticidad">
+                    <SectionCard number="06" title="Evaluación de Criticidad" icon={ShieldAlert}>
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-[#333533] rounded-xl border border-[#4A4D4A]">
@@ -590,17 +639,21 @@ graph TD
 
                         <div className="grid grid-cols-2 gap-4">
                             <Button
-                                onClick={() => import("@/lib/export").then(mod => mod.exportToPDF({ ...state, totalMonthlyCost, l2SupportCost, riskCost, totalWithRisk, criticitnessLevel } as any))}
+                                onClick={() => handleExport('pdf')}
+                                disabled={isExporting}
                                 className="bg-[#333533] hover:bg-[#E8EDDF] hover:text-[#242423] text-[#E8EDDF] border border-transparent rounded-2xl h-12 font-bold transition-all text-sm"
                             >
-                                <Download className="w-4 h-4 mr-2" /> PDF
+                                {isExporting && exportType === 'pdf' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+                                PDF
                             </Button>
                             <Button
                                 variant="outline"
-                                onClick={() => import("@/lib/export").then(mod => mod.exportToWord(state as any))}
+                                onClick={() => handleExport('word')}
+                                disabled={isExporting}
                                 className="bg-transparent border-[#4A4D4A] text-[#E8EDDF] hover:bg-[#333533] hover:text-[#E8EDDF] rounded-2xl h-12 font-medium transition-all text-sm"
                             >
-                                <FileText className="w-4 h-4 mr-2" /> Word
+                                {isExporting && exportType === 'word' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+                                Word
                             </Button>
                         </div>
                     </div>
@@ -611,7 +664,7 @@ graph TD
                     <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
                         <Network className="w-4 h-4 text-[#F5CB5C]" /> Arquitectura Dinámica
                     </h4>
-                    <div className="rounded-[2rem] border border-[#CFDBD5]/20 bg-[#333533] p-4 min-h-[250px] flex items-center justify-center relative overflow-hidden">
+                    <div id="diagram-capture-target" className="rounded-[2rem] border border-[#CFDBD5]/20 bg-[#333533] p-4 min-h-[250px] flex items-center justify-center relative overflow-hidden bg-white">
                         <MermaidDiagram chart={chartCode} />
                     </div>
                 </div>
@@ -641,18 +694,22 @@ graph TD
 interface SectionCardProps {
     title: string
     number: string
+    icon: React.ElementType
     children: React.ReactNode
 }
 
-function SectionCard({ title, number, children }: SectionCardProps) {
+function SectionCard({ title, number, icon: Icon, children }: SectionCardProps) {
     return (
         <div className="bg-[#242423] rounded-[2rem] p-10 lg:p-12 border border-[#333533] shadow-sm relative overflow-hidden group hover:border-[#F5CB5C]/30 transition-colors">
             <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
-                <div className="w-32 h-32 bg-[#F5CB5C] rounded-full blur-3xl" />
+                <Icon className="w-32 h-32 text-[#F5CB5C]" />
             </div>
             <div className="flex items-center gap-6 mb-10 border-b border-[#333533] pb-6 relative z-10">
                 <div className="w-12 h-12 rounded-2xl bg-[#333533] text-[#F5CB5C] flex items-center justify-center font-bold text-xl border border-[#4A4D4A] shadow-[0_0_15px_rgba(245,203,92,0.1)]">{number}</div>
-                <h2 className="text-3xl font-bold tracking-tight text-[#E8EDDF]">{title}</h2>
+                <h2 className="text-3xl font-bold tracking-tight text-[#E8EDDF] flex items-center gap-4">
+                    {title}
+                    <Icon className="w-8 h-8 text-[#CFDBD5]/50" />
+                </h2>
             </div>
             <div className="relative z-10">
                 {children}

@@ -19,7 +19,10 @@ export default function LoginPage() {
 
         const formData = new FormData(event.currentTarget)
         try {
-            await loginAction(formData)
+            const result = await loginAction(formData)
+            if (result?.error) {
+                setError(result.error)
+            }
         } catch (err) {
             console.error("Auth failed", err)
             setError(err instanceof Error ? err.message : "Error de autenticación")

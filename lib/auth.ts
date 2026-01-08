@@ -10,7 +10,7 @@ export async function loginAction(formData: FormData) {
     const password = formData.get('password') as string
 
     if (!email || !password) {
-        throw new Error("Credenciales incompletas")
+        return { error: "Credenciales incompletas" }
     }
 
     const user = await prisma.user.findUnique({
@@ -18,7 +18,7 @@ export async function loginAction(formData: FormData) {
     })
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
-        throw new Error("Credenciales inválidas")
+        return { error: "Credenciales inválidas" }
     }
 
     // Set Session

@@ -244,3 +244,23 @@ export async function getAdminStats() {
         conversionRate: 32 // Maintaining static as we don't have "Closed Won" status
     }
 }
+
+export async function deleteQuote(quoteId: string) {
+    const cookieStore = await cookies()
+    const userId = cookieStore.get('session_user_id')?.value
+
+    if (!userId) throw new Error("Unauthorized")
+
+    // Verify ownership
+    const quote = await prisma.quote.findUnique({
+        where: { id: quoteId },
+        select: { userId: true }
+    })
+
+    if (!quote) throw new Error("Quote not found")
+    if (quote.userId !== userId) throw new Error("Unauthorized access to this quote")
+
+    return await prisma.quote.delete({
+        where: { id: quoteId }
+    })
+}
