@@ -11,9 +11,10 @@ import { useRouter } from 'next/navigation'
 interface DeleteQuoteButtonProps {
     quoteId: string
     quoteName: string
+    onSuccess?: () => void
 }
 
-export function DeleteQuoteButton({ quoteId, quoteName }: DeleteQuoteButtonProps) {
+export function DeleteQuoteButton({ quoteId, quoteName, onSuccess }: DeleteQuoteButtonProps) {
     const [open, setOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const router = useRouter()
@@ -25,6 +26,8 @@ export function DeleteQuoteButton({ quoteId, quoteName }: DeleteQuoteButtonProps
             toast.success('Cotización eliminada correctamente')
             setOpen(false)
             router.refresh()
+            // Trigger client-side update if provided
+            if (onSuccess) onSuccess()
         } catch (error) {
             toast.error('Error al eliminar la cotización')
             console.error(error)

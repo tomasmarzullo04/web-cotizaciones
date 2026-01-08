@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -128,6 +129,7 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
     const [isSaving, setIsSaving] = useState(false)
     const [isExporting, setIsExporting] = useState(false)
     const [exportType, setExportType] = useState<'pdf' | 'word' | null>(null)
+    const router = useRouter()
 
     const handleExport = async (type: 'pdf' | 'word') => {
         setIsExporting(true)
@@ -349,6 +351,7 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
             }
 
             alert("Cotización guardada exitosamente.")
+            router.push('/dashboard')
         } catch (e) {
             console.error(e)
             alert("Error al guardar cotización.")

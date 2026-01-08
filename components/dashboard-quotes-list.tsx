@@ -131,9 +131,12 @@ export function DashboardQuotesList({ serverQuotes = [] }: { serverQuotes?: any[
                         <div className="col-span-2 flex justify-end gap-2">
                             {/* Safe check for quote before passing */}
                             {quote && <QuoteDetailsSheet quote={quote} />}
-                            <div onClick={() => handleDelete(quote.id)}>
-                                <DeleteQuoteButton quoteId={quote.id} quoteName={quote.clientName} />
-                            </div>
+                            {/* Delete button manages the dialog and calls back on success */}
+                            <DeleteQuoteButton
+                                quoteId={quote.id}
+                                quoteName={quote.clientName}
+                                onSuccess={() => handleDelete(quote.id)}
+                            />
                         </div>
                     </div>
                 </Card>
