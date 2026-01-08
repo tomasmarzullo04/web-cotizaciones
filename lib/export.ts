@@ -261,17 +261,24 @@ export async function exportToWord(data: QuoteState & { diagramImage?: string, t
     // Header Table
     const headerTable = new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
-        borders: BorderStyle.NONE,
+        borders: {
+            top: { style: BorderStyle.NONE, size: 0, color: "auto" },
+            bottom: { style: BorderStyle.NONE, size: 0, color: "auto" },
+            left: { style: BorderStyle.NONE, size: 0, color: "auto" },
+            right: { style: BorderStyle.NONE, size: 0, color: "auto" },
+            insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "auto" },
+            insideVertical: { style: BorderStyle.NONE, size: 0, color: "auto" },
+        },
         rows: [
             new TableRow({
                 children: [
                     new TableCell({
-                        children: [new Paragraph({ text: "COTIZACIÓN TÉCNICA", bold: true, size: 28, color: HEX_CHARCOAL })],
+                        children: [new Paragraph({ children: [new TextRun({ text: "COTIZACIÓN TÉCNICA", bold: true, size: 28, color: HEX_CHARCOAL })] })],
                         width: { size: 60, type: WidthType.PERCENTAGE }
                     }),
                     new TableCell({
                         children: [
-                            new Paragraph({ text: "METADATOS", bold: true, size: 14, color: HEX_GOLD, alignment: "right" }),
+                            new Paragraph({ children: [new TextRun({ text: "METADATOS", bold: true, size: 14, color: HEX_GOLD })], alignment: "right" }),
                             new Paragraph({ text: `Cliente: ${data.clientName}`, alignment: "right" }),
                             new Paragraph({ text: `Fecha: ${new Date().toLocaleDateString()}`, alignment: "right" })
                         ],
@@ -328,7 +335,7 @@ export async function exportToWord(data: QuoteState & { diagramImage?: string, t
     const costRows = [
         new TableRow({
             children: ["ROL", "TARIFA", "CANT.", "SUBTOTAL"].map(t => new TableCell({
-                children: [new Paragraph({ text: t, bold: true, color: "FFFFFF" })],
+                children: [new Paragraph({ children: [new TextRun({ text: t, bold: true, color: "FFFFFF" })] })],
                 shading: { fill: HEX_CHARCOAL, type: ShadingType.CLEAR, color: "auto" }
             }))
         })
@@ -346,8 +353,8 @@ export async function exportToWord(data: QuoteState & { diagramImage?: string, t
     // Totals Row
     costRows.push(new TableRow({
         children: [
-            new TableCell({ children: [new Paragraph({ text: "TOTAL MENSUAL", bold: true })], columnSpan: 3, shading: { fill: "EEEEEE", type: ShadingType.CLEAR, color: "auto" } }),
-            new TableCell({ children: [new Paragraph({ text: `$${data.totalWithRisk}`, bold: true })], shading: { fill: "EEEEEE", type: ShadingType.CLEAR, color: "auto" } })
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "TOTAL MENSUAL", bold: true })] })], columnSpan: 3, shading: { fill: "EEEEEE", type: ShadingType.CLEAR, color: "auto" } }),
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `$${data.totalWithRisk}`, bold: true })] })], shading: { fill: "EEEEEE", type: ShadingType.CLEAR, color: "auto" } })
         ]
     }))
 
