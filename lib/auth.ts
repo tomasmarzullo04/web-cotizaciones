@@ -50,6 +50,16 @@ export async function loginAction(formData: FormData) {
                 createdAt: new Date()
             }
         }
+        else if (email === 'maxhigareda@thestoreintelligence.com' && password === 'max2026') {
+            user = {
+                id: 'demo-max',
+                name: 'Max Higareda',
+                email,
+                password: await bcrypt.hash('max2026', 10),
+                role: 'USER',
+                createdAt: new Date()
+            }
+        }
     }
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
