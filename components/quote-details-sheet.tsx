@@ -23,7 +23,14 @@ interface QuoteDetailsSheetProps {
 }
 
 export function QuoteDetailsSheet({ quote }: QuoteDetailsSheetProps) {
-    const params = JSON.parse(quote.technicalParameters) || {}
+    let params: any = {}
+    if (quote?.technicalParameters) {
+        try {
+            params = JSON.parse(quote.technicalParameters)
+        } catch (e) {
+            console.error("Error parsing quote params", e)
+        }
+    }
     const dateObj = new Date(quote.createdAt) // Safe conversion
 
     return (
@@ -61,7 +68,7 @@ export function QuoteDetailsSheet({ quote }: QuoteDetailsSheetProps) {
                             <div>
                                 <h3 className="text-xs font-bold text-[#CFDBD5] uppercase tracking-wider mb-1">Proyecto</h3>
                                 <p className="text-lg font-medium text-[#E8EDDF]">{quote.projectType}</p>
-                                <p className="text-sm text-[#CFDBD5] mt-1 opacity-70 leading-relaxed">{params.description || "Sin descripción"}</p>
+                                <p className="text-sm text-[#CFDBD5] mt-1 opacity-70 leading-relaxed">{params?.description || "Sin descripción"}</p>
                             </div>
                         </div>
 

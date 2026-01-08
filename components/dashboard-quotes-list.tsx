@@ -112,7 +112,9 @@ export function DashboardQuotesList({ serverQuotes = [] }: { serverQuotes?: any[
                             <p className="text-[#CFDBD5] text-sm truncate opacity-70">
                                 {(() => {
                                     try {
-                                        return (JSON.parse(quote.technicalParameters) as any).description?.substring(0, 40)
+                                        if (!quote.technicalParameters) return 'Sin descripción'
+                                        const parsed = JSON.parse(quote.technicalParameters)
+                                        return parsed?.description?.substring(0, 40) || 'Sin descripción'
                                     } catch { return 'Sin descripción' }
                                 })()}...
                             </p>
