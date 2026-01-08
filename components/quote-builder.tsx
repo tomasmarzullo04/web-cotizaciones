@@ -322,13 +322,25 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
 
             // Client-Side Persistence for Vercel Demo (Phantom Mode)
             try {
-                const currentLocal = JSON.parse(localStorage.getItem('demo_quotes') || '[]')
+                // Ensure unique ID for client-side storage to avoid "mock-id" collisions
+                const uniqueId = `demo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
                 // Add specific fields required for display
                 const quoteForStorage = {
                     ...savedQuote,
+                    id: uniqueId, // Override mock ID with unique client ID
                     userId: 'demo-user', // Ensure visible
                     createdAt: new Date().toISOString() // Ensure date is string for JSON
+                }
+
+                const rawValue = typeof window !== 'undefined' ? localStorage.getItem('demo_quotes') : null
+                let currentLocal: any[] = []
+
+                if (rawValue && rawValue !== "undefined" && rawValue !== "null") {
+                    try {
+                        const parsed = JSON.parse(rawValue)
+                        if (Array.isArray(parsed)) currentLocal = parsed
+                    } catch (e) { }
                 }
 
                 localStorage.setItem('demo_quotes', JSON.stringify([quoteForStorage, ...currentLocal]))
