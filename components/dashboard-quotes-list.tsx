@@ -8,29 +8,47 @@ import { FileText } from "lucide-react"
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
 
-export function DashboardQuotesList({ serverQuotes }: { serverQuotes: any[] }) {
-    const [mergedQuotes, setMergedQuotes] = useState(serverQuotes)
+export function DashboardQuotesList({ serverQuotes = [] }: { serverQuotes?: any[] }) {
+    // Initialize with empty array to match potential empty server props,
+    // actual data merging happens in useEffect to prevent hydration mismatch
+    const [mergedQuotes, setMergedQuotes] = useState<any[]>(serverQuotes || [])
+    const [isClient, setIsClient] = useState(false)
 
     useEffect(() => {
+        setIsClient(true)
+
+        // Ensure we work with at least a valid array from server
+        const safeServerQuotes = Array.isArray(serverQuotes) ? serverQuotes : []
+
         // Load local "Demo" quotes from browser storage
         const localQuotesRaw = localStorage.getItem('demo_quotes')
+        let localQuotes: any[] = []
+
         if (localQuotesRaw) {
             try {
-                const localQuotes = JSON.parse(localQuotesRaw)
-                // Merge: Local first (newer), then Server
-                // Deduplicate by ID just in case
-                const combined = [...localQuotes, ...serverQuotes]
-                // Simple unique by ID
-                const unique = Array.from(new Map(combined.map(item => [item.id, item])).values())
-
-                // Sort descending date
-                unique.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-
-                setMergedQuotes(unique)
+                const parsed = JSON.parse(localQuotesRaw)
+                if (Array.isArray(parsed)) {
+                    localQuotes = parsed
+                }
             } catch (e) {
                 console.error("Failed to load local quotes", e)
             }
         }
+
+        // Merge: Local first (newer), then Server
+        const combined = [...localQuotes, ...safeServerQuotes]
+
+        // Deduplicate by ID
+        const unique = Array.from(new Map(combined.map(item => [item?.id || Math.random(), item])).values())
+
+        // Filter invalid items
+        const validQuotes = unique.filter(q => q && q.createdAt)
+
+        // Sort descending date
+        validQuotes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+        setMergedQuotes(validQuotes)
+
     }, [serverQuotes])
 
     // Handler to remove deleted items from UI immediately
@@ -42,13 +60,20 @@ export function DashboardQuotesList({ serverQuotes }: { serverQuotes: any[] }) {
         // Update Local Storage
         const localQuotesRaw = localStorage.getItem('demo_quotes')
         if (localQuotesRaw) {
-            const local = JSON.parse(localQuotesRaw)
-            const newLocal = local.filter((q: any) => q.id !== id)
-            localStorage.setItem('demo_quotes', JSON.stringify(newLocal))
+            try {
+                const local = JSON.parse(localQuotesRaw)
+                if (Array.isArray(local)) {
+                    const newLocal = local.filter((q: any) => q.id !== id)
+                    localStorage.setItem('demo_quotes', JSON.stringify(newLocal))
+                }
+            } catch (e) { }
         }
     }
 
-    if (!isClient) return <div className="p-16 text-center text-[#CFDBD5] animate-pulse">Cargando cotizaciones...</div>
+    // Hydration guard
+    if (!isClient) {
+        return <div className="p-16 text-center text-[#CFDBD5] animate-pulse">Cargando cotizaciones...</div>
+    }
 
     if (mergedQuotes.length === 0) {
         return (
@@ -80,10 +105,10 @@ export function DashboardQuotesList({ serverQuotes }: { serverQuotes: any[] }) {
             </div>
 
             {mergedQuotes.map((quote) => (
-                <Card key={quote.id} className="bg-[#1F1F1F] border-[#2D2D2D] rounded-[1.5rem] p-6 hover:border-[#F5CB5C]/30 transition-all group">
+                <Card key={quote.id || Math.random()} className="bg-[#1F1F1F] border-[#2D2D2D] rounded-[1.5rem] p-6 hover:border-[#F5CB5C]/30 transition-all group">
                     <div className="grid grid-cols-12 gap-4 items-center">
                         <div className="col-span-4">
-                            <h4 className="text-[#E8EDDF] font-bold text-lg truncate">{quote.clientName}</h4>
+                            <h4 className="text-[#E8EDDF] font-bold text-lg truncate">{quote.clientName || 'Sin Nombre'}</h4>
                             <p className="text-[#CFDBD5] text-sm truncate opacity-70">
                                 {(() => {
                                     try {
@@ -93,23 +118,17 @@ export function DashboardQuotesList({ serverQuotes }: { serverQuotes: any[] }) {
                             </p>
                         </div>
                         <div className="col-span-3 text-[#CFDBD5] font-medium">
-                            {new Date(quote.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            {quote.createdAt ? new Date(quote.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
                         </div>
                         <div className="col-span-3">
                             <span className="text-[#F5CB5C] font-mono font-bold text-lg">
-                                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(quote.estimatedCost)}
+                                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(quote.estimatedCost || 0)}
                             </span>
                             <span className="text-[#CFDBD5] text-xs ml-1">/ mes</span>
                         </div>
                         <div className="col-span-2 flex justify-end gap-2">
-                            <QuoteDetailsSheet quote={quote} />
-
-                            {/* We override the delete button behavior by passing our own handler context if needed, 
-                                but simpler is to let the button do its server action, 
-                                AND we manually update our local state. 
-                                ACTUALLY, DeleteQuoteButton is a server component wrapper usually. 
-                                Let's wrap it or modify it. 
-                                Ideally, we pass an onDelete callback here. */}
+                            {/* Safe check for quote before passing */}
+                            {quote && <QuoteDetailsSheet quote={quote} />}
                             <div onClick={() => handleDelete(quote.id)}>
                                 <DeleteQuoteButton quoteId={quote.id} quoteName={quote.clientName} />
                             </div>
