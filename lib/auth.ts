@@ -13,9 +13,41 @@ export async function loginAction(formData: FormData) {
         return { error: "Credenciales incompletas" }
     }
 
-    const user = await prisma.user.findUnique({
-        where: { email }
-    })
+    let user;
+
+    try {
+        user = await prisma.user.findUnique({
+            where: { email }
+        })
+    } catch (e) {
+        console.error("DB Login Failed (Fallback to Demo Auth):", e)
+    }
+
+    // Demo Fallback / Hardcoded check if DB fails or User not found
+    if (!user) {
+        // Fallback for Admin
+        if (email === 'admin@antigravity.com' && password === 'admin2026') {
+            user = {
+                id: 'demo-admin',
+                name: 'Admin Demo',
+                email,
+                password: await bcrypt.hash('admin2026', 10),
+                role: 'ADMIN',
+                createdAt: new Date()
+            }
+        }
+        // Fallback for User
+        else if (email === 'tomasmarzullo04@gmail.com' && password === 'user2026') {
+            user = {
+                id: 'demo-user',
+                name: 'Consultor Demo',
+                email,
+                password: await bcrypt.hash('user2026', 10),
+                role: 'USER',
+                createdAt: new Date()
+            }
+        }
+    }
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
         return { error: "Credenciales inválidas" }
