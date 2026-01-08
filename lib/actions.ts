@@ -164,28 +164,8 @@ export async function getUserQuotes() {
             orderBy: { createdAt: 'desc' }
         })
     } catch (e) {
-        console.warn("DB Failed (getUserQuotes), returning mock data")
-        // Mock Data for Dashboard
-        return [
-            {
-                id: 'mock-1',
-                clientName: 'Coca-Cola (Demo)',
-                projectType: 'Data Lakehouse',
-                estimatedCost: 14500,
-                createdAt: new Date(),
-                technicalParameters: JSON.stringify({ description: 'Migración a Azure Databricks con ingesta realtime.' }),
-                userId: userId
-            },
-            {
-                id: 'mock-2',
-                clientName: 'Banco Galicia (Demo)',
-                projectType: 'Risk Analytics',
-                estimatedCost: 8900,
-                createdAt: new Date(Date.now() - 86400000 * 2), // 2 days ago
-                technicalParameters: JSON.stringify({ description: 'Modelos de riesgo crediticio y dashboard regulatorio.' }),
-                userId: userId
-            }
-        ] as any[]
+        console.warn("DB Failed (getUserQuotes), returning clean list for Vercel")
+        return [] // Use client-side storage only on Vercel
     }
 }
 
@@ -243,10 +223,10 @@ export async function getAdminStats() {
         return { monthlyQuotesCount, pipelineValue: 0, activeUsersCount: 0, conversionRate: 0 }
     } catch (e) {
         return {
-            monthlyQuotesCount: 12,
-            pipelineValue: 345000,
-            activeUsersCount: 4,
-            conversionRate: 25
+            monthlyQuotesCount: 0,
+            pipelineValue: 0,
+            activeUsersCount: 0,
+            conversionRate: 0
         }
     }
 }
