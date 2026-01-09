@@ -46,6 +46,7 @@ interface QuoteState {
     manualProcessPct: number
     automationsCount: number
     pipelineExecutions: number
+    usersCount: number // Added alias for simpler logic access
 
     // 4. Consumption
     reportsCount: number
@@ -65,6 +66,7 @@ interface QuoteState {
         level: 'low' | 'medium' | 'high'
         impactOperative: 'low' | 'medium' | 'high'
         impactFinancial: 'low' | 'medium' | 'high'
+        dataExposure: 'internal' | 'partners' | 'public'
         countriesCount: number
     }
 
@@ -94,8 +96,15 @@ const INITIAL_STATE: QuoteState = {
     pipelineExecutions: 0,
     reportsCount: 0,
     reportUsers: 0,
+    pipelineExecutions: 0,
+    usersCount: 0,
+
+    reportsCount: 0,
+    reportUsers: 0,
     isFinancialOrSales: false,
+
     techStack: [],
+
     dsModelsCount: 0,
     dashboardsCount: 0,
     criticitness: {
@@ -103,6 +112,7 @@ const INITIAL_STATE: QuoteState = {
         level: 'low',
         impactOperative: 'low',
         impactFinancial: 'low',
+        dataExposure: 'internal',
         countriesCount: 1
     },
     durationMonths: 6,
@@ -609,7 +619,7 @@ graph TD
 
                         {state.criticitness.enabled && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
-                                
+
                                 {/* Predictive Logic Alert */}
                                 {(state.complexity === 'high' && (state.updateFrequency === 'weekly' || state.updateFrequency === 'realtime') && state.supportHours !== '24/7') && (
                                     <div className="bg-orange-900/20 border border-orange-500/30 rounded-2xl p-4 flex items-start gap-4">
@@ -619,8 +629,8 @@ graph TD
                                             <p className="text-xs text-orange-200/70 mt-1">
                                                 La combinación de complejidad <strong>Alta</strong> y frecuencia <strong>{state.updateFrequency}</strong> sugiere un esquema de soporte <strong>24/7</strong>.
                                             </p>
-                                            <Button 
-                                                variant="link" 
+                                            <Button
+                                                variant="link"
                                                 className="text-orange-400 p-0 h-auto text-xs mt-2 underline"
                                                 onClick={() => updateState('supportHours', '24/7')}
                                             >
@@ -633,7 +643,7 @@ graph TD
                                 {/* Main Risk Score Card */}
                                 <div className="col-span-1 md:col-span-2 bg-[#333533] rounded-[1.5rem] p-8 border border-[#4A4D4A] flex flex-col md:flex-row justify-between items-center relative overflow-hidden gap-6">
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-[#F5CB5C]/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-                                    
+
                                     <div className="relative z-10 flex flex-col gap-2">
                                         <span className="text-xs font-bold text-[#CFDBD5] uppercase tracking-widest flex items-center gap-2">
                                             <Activity className="w-4 h-4 text-[#F5CB5C]" /> Score de Riesgo
@@ -666,7 +676,7 @@ graph TD
                                             <span className="text-xs text-[#E8EDDF] font-bold">{state.usersCount > 50 ? 'Alto Vol.' : 'Bajo Vol.'}</span>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="text-right relative z-10 w-full md:w-auto border-t md:border-t-0 border-[#4A4D4A] pt-4 md:pt-0">
                                         <Label className="text-[#7C7F7C] text-xs uppercase font-bold mb-2 block text-left">Nivel de Soporte</Label>
                                         <Select value={state.supportHours} onValueChange={(v: any) => updateState('supportHours', v)}>
@@ -691,7 +701,7 @@ graph TD
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                     <div>
+                                    <div>
                                         <Label className="text-[#CFDBD5] mb-2 block">Exposición de Datos</Label>
                                         <Select value={state.criticitness.dataExposure} onValueChange={(v: any) => updateCriticitness('dataExposure', v)}>
                                             <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
@@ -704,7 +714,7 @@ graph TD
                                     </div>
                                 </div>
 
-                                </div>
+
                                 <div>
                                     <Label className="text-[#CFDBD5] mb-2 block">Impacto Financiero</Label>
                                     <Select value={state.criticitness.impactFinancial} onValueChange={(v: any) => updateCriticitness('impactFinancial', v)}>
@@ -721,16 +731,16 @@ graph TD
                                 </div>
                             </div>
                         )}
-            </SectionCard>
+                    </SectionCard>
 
-        </div>
+                </div>
             </div >
 
-        {/* ================= RIGHT COLUMN: INDEPENDENT SCROLL SUMMARY ================= */ }
-        < div className = "w-full lg:w-1/3 h-full overflow-y-auto scrollbar-custom bg-[#242423] border-l border-[#CFDBD5]/10 p-8 lg:p-10 space-y-10 relative" >
+            {/* ================= RIGHT COLUMN: INDEPENDENT SCROLL SUMMARY ================= */}
+            <div className="w-full lg:w-1/3 h-full overflow-y-auto scrollbar-custom bg-[#242423] border-l border-[#CFDBD5]/10 p-8 lg:p-10 space-y-10 relative">
 
-            {/* Cost Summary */ }
-            < div className = "space-y-6" >
+                {/* Cost Summary */}
+                <div className="space-y-6">
                     <div>
                         <h4 className="text-[#F5CB5C] text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
                             <Calculator className="w-4 h-4" /> Inversión Estimada
@@ -804,8 +814,8 @@ graph TD
                     </div>
                 </div >
 
-        {/* Architecture Diagram */ }
-        < div className = "space-y-6 pt-10 border-t border-[#CFDBD5]/10" >
+                {/* Architecture Diagram */}
+                < div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10" >
                     <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
                         <Network className="w-4 h-4 text-[#F5CB5C]" /> Arquitectura Dinámica
                     </h4>
@@ -814,8 +824,8 @@ graph TD
                     </div>
                 </div >
 
-        {/* Tech Summary */ }
-        < div className = "space-y-6 pt-10 border-t border-[#CFDBD5]/10" >
+                {/* Tech Summary */}
+                < div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10" >
                     <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
                         <Cpu className="w-4 h-4 text-[#F5CB5C]" /> Resumen Técnico
                     </h4>
