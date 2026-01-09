@@ -146,6 +146,7 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
     const router = useRouter()
 
     const handleDownloadDiagram = async () => {
+        alert("Iniciando descarga... (Si no ocurre nada, verifica los permisos del navegador)") // Immediate feedback
         try {
             const element = document.getElementById('diagram-capture-target')
             if (!element) {
