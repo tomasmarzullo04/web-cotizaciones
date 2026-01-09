@@ -149,13 +149,13 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
         try {
             const element = document.getElementById('diagram-capture-target')
             if (!element) {
-                alert("Error interno: No se encontró el contenedor del diagrama.")
+                alert("DEBUG: No se encontró el elemento con ID 'diagram-capture-target'")
                 return
             }
 
             const svgElement = element.querySelector('svg')
             if (!svgElement) {
-                alert("Error interno: No se encontró el gráfico SVG.")
+                alert("DEBUG: El elemento existe pero no contiene un SVG")
                 return
             }
 
@@ -544,10 +544,22 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
             nodes += '\n    Process[Databricks ML]'
             flow += 'Store --> Process\nProcess --> Store\n'
         }
+        // Explode Tech Stack into Subgraph
         if (techStack.length > 0) {
-            const techNames = techStack.map(t => TECH_OPTIONS.find(o => o.id === t)?.name).join('\\n')
-            nodes += `\n    Tech[Stack: ${techNames}]`
-            flow += `\n    Tech -.- Store`
+            nodes += '\n    subgraph TechStack [Stack Tecnológico]'
+
+            techStack.forEach(t => {
+                const option = TECH_OPTIONS.find(o => o.id === t)
+                const name = option ? option.name : t
+                const cleanId = `Tech${t.replace(/[^a-zA-Z0-9]/g, '')}`
+
+                if (t !== 'databricks') {
+                    nodes += `\n        ${cleanId}[${name}]`
+                    flow += `\n    ${cleanId} -.- Store`
+                    nodes += `\n        style ${cleanId} stroke-dasharray: 5 5`
+                }
+            })
+            nodes += '\n    end'
         }
         const chart = `
 graph TD
