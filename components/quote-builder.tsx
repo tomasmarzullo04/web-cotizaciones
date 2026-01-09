@@ -94,14 +94,11 @@ const INITIAL_STATE: QuoteState = {
     manualProcessPct: 20,
     automationsCount: 0,
     pipelineExecutions: 0,
-    reportsCount: 0,
-    reportUsers: 0,
-    pipelineExecutions: 0,
     usersCount: 0,
-
+    isFinancialOrSales: false,
     reportsCount: 0,
     reportUsers: 0,
-    isFinancialOrSales: false,
+
 
     techStack: [],
 
