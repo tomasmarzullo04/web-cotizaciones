@@ -28,7 +28,14 @@ export function DashboardQuotesList({ serverQuotes = [] }: { serverQuotes?: any[
             try {
                 const parsed = JSON.parse(rawValue)
                 if (Array.isArray(parsed)) {
-                    localQuotes = parsed
+                    // Filter out old server-side mocks that might have been persisted
+                    // Only keep user-created quotes (which use 'demo-' prefix now, or real UUIDs)
+                    localQuotes = parsed.filter((q: any) => !q.id.startsWith('mock-'))
+
+                    // If we filtered something out, update storage immediately to clean it
+                    if (localQuotes.length !== parsed.length) {
+                        localStorage.setItem('demo_quotes', JSON.stringify(localQuotes))
+                    }
                 }
             } catch (e) {
                 console.error("Failed to load local quotes", e)
