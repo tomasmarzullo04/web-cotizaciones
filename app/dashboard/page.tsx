@@ -11,8 +11,8 @@ export default async function DashboardPage() {
     let quotes: any[] = []
 
     try {
-        const rawQuotes = await getUserQuotes()
-        quotes = rawQuotes.map(q => ({
+        const rawQuotes = await getUserQuotes() || []
+        quotes = Array.isArray(rawQuotes) ? rawQuotes.map(q => ({
             ...q,
             createdAt: q.createdAt.toISOString()
         }))
