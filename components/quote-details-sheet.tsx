@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from "react"
 import {
     Sheet,
     SheetContent,
@@ -9,7 +10,11 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Calendar, DollarSign, FileText, User } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { ArrowRight, Calendar, DollarSign, FileText, User, Edit, Save, X, Loader2, Network } from "lucide-react"
+import { MermaidDiagram } from "./mermaid-diagram"
+import { updateQuoteDiagram } from "@/lib/actions"
+import { useRouter } from "next/navigation"
 
 interface QuoteDetailsSheetProps {
     quote: {
@@ -17,12 +22,14 @@ interface QuoteDetailsSheetProps {
         clientName: string
         projectType: string
         estimatedCost: number
-        createdAt: Date | string // Allow string from serialization
+        createdAt: Date | string
         technicalParameters: string
+        diagramDefinition?: string
     }
 }
 
 export function QuoteDetailsSheet({ quote }: QuoteDetailsSheetProps) {
+    const router = useRouter()
     let params: any = {}
     if (quote?.technicalParameters) {
         try {
@@ -31,7 +38,31 @@ export function QuoteDetailsSheet({ quote }: QuoteDetailsSheetProps) {
             console.error("Error parsing quote params", e)
         }
     }
-    const dateObj = new Date(quote.createdAt) // Safe conversion
+    const dateObj = new Date(quote.createdAt)
+
+    const [isEditingDiagram, setIsEditingDiagram] = useState(false)
+    const [editedDiagramCode, setEditedDiagramCode] = useState(quote.diagramDefinition || '')
+    const [isSavingDiagram, setIsSavingDiagram] = useState(false)
+
+    const initialDiagram = quote.diagramDefinition || 'graph TD\n  A[Inicio] --> B[Fin]'
+
+    const handleSaveDiagram = async () => {
+        setIsSavingDiagram(true)
+        try {
+            const res = await updateQuoteDiagram(quote.id, editedDiagramCode)
+            if (res.success) {
+                setIsEditingDiagram(false)
+                router.refresh()
+            } else {
+                alert("Error al guardar el diagrama")
+            }
+        } catch (e) {
+            console.error(e)
+            alert("Error de conexión")
+        } finally {
+            setIsSavingDiagram(false)
+        }
+    }
 
     return (
         <Sheet>
@@ -40,7 +71,7 @@ export function QuoteDetailsSheet({ quote }: QuoteDetailsSheetProps) {
                     Ver Detalle <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
             </SheetTrigger>
-            <SheetContent className="bg-[#171717] border-l-[#2D2D2D] w-[400px] sm:w-[540px] overflow-y-auto">
+            <SheetContent className="bg-[#171717] border-l-[#2D2D2D] w-[400px] sm:w-[600px] md:w-[800px] overflow-y-auto">
                 <SheetHeader className="mb-8">
                     <SheetTitle className="text-2xl font-black text-[#E8EDDF]">Detalle de Cotización</SheetTitle>
                     <SheetDescription className="text-[#CFDBD5] text-base">
@@ -81,6 +112,78 @@ export function QuoteDetailsSheet({ quote }: QuoteDetailsSheetProps) {
                                 <p className="text-lg font-medium text-[#E8EDDF]">{dateObj.toLocaleDateString('es-ES', { dateStyle: 'long' })}</p>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Architecture Diagram Editor */}
+                    <div className="p-6 bg-[#1F1F1F] rounded-[1.5rem] border border-[#2D2D2D] flex flex-col gap-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-[#E8EDDF] flex items-center gap-2">
+                                <Network className="w-5 h-5 text-[#F5CB5C]" />
+                                Arquitectura Propuesta
+                            </h3>
+                            {!isEditingDiagram ? (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                        setEditedDiagramCode(quote.diagramDefinition || initialDiagram)
+                                        setIsEditingDiagram(true)
+                                    }}
+                                    className="text-[#F5CB5C] hover:text-[#E8EDDF] hover:bg-[#F5CB5C]/10"
+                                >
+                                    <Edit className="w-4 h-4 mr-2" /> Editar
+                                </Button>
+                            ) : (
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setIsEditingDiagram(false)}
+                                        className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                                        disabled={isSavingDiagram}
+                                    >
+                                        <X className="w-4 h-4 mr-2" /> Cancelar
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        onClick={handleSaveDiagram}
+                                        className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold"
+                                        disabled={isSavingDiagram}
+                                    >
+                                        {isSavingDiagram ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                                        Guardar
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+
+                        {isEditingDiagram ? (
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 animate-in fade-in zoom-in-95 duration-300">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-[#CFDBD5] uppercase">Código Mermaid</label>
+                                    <Textarea
+                                        value={editedDiagramCode}
+                                        onChange={(e) => setEditedDiagramCode(e.target.value)}
+                                        className="font-mono text-xs bg-[#171717] border-[#2D2D2D] text-[#E8EDDF] resize-none h-[300px] focus-visible:ring-[#F5CB5C]"
+                                    />
+                                    <p className="text-[10px] text-[#CFDBD5]/50">
+                                        Edita los nodos y conexiones para actualizar el diagrama en tiempo real.
+                                    </p>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-[#CFDBD5] uppercase">Vista Previa</label>
+                                    <div className="bg-white rounded-xl overflow-hidden h-[300px] flex items-center justify-center border border-[#2D2D2D]">
+                                        <div className="scale-75 origin-center w-full">
+                                            <MermaidDiagram chart={editedDiagramCode} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-white rounded-xl p-4 overflow-hidden min-h-[200px] border border-[#2D2D2D]">
+                                <MermaidDiagram chart={quote.diagramDefinition || initialDiagram} />
+                            </div>
+                        )}
                     </div>
 
                     {/* Cost */}

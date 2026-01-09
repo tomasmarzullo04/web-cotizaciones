@@ -217,3 +217,21 @@ export async function deleteQuote(quoteId: string) {
         return { success: true }
     }
 }
+
+export async function updateQuoteDiagram(quoteId: string, newDiagramCode: string) {
+    const cookieStore = await cookies()
+    const userId = cookieStore.get('session_user_id')?.value
+
+    if (!userId) throw new Error("Unauthorized")
+
+    try {
+        await prisma.quote.update({
+            where: { id: quoteId },
+            data: { diagramDefinition: newDiagramCode }
+        })
+        return { success: true }
+    } catch (e) {
+        console.error("Failed to update diagram", e)
+        return { success: false, error: "Failed to update" }
+    }
+}
