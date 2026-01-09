@@ -865,10 +865,10 @@ graph TD
                 {/* Architecture Diagram */}
                 <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
                     <div className="flex items-center justify-between">
-                        <h4 className="text-[#CFDBD5] text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                        <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
                             <Network className="w-4 h-4 text-[#F5CB5C]" /> Arquitectura Dinámica
                         </h4>
-                        <div className="flex gap-6">
+                        <div className="flex gap-4">
                             {!isEditingDiagram ? (
                                 <>
                                     {manualDiagramCode && (
@@ -880,10 +880,10 @@ graph TD
                                                     setManualDiagramCode(null)
                                                 }
                                             }}
-                                            className="h-8 px-2 text-[#CFDBD5] hover:text-[#F5CB5C] text-xs"
+                                            className="h-7 px-2 text-[#CFDBD5] hover:text-[#F5CB5C] text-[10px]"
                                             title="Restaurar Automático"
                                         >
-                                            <RefreshCw className="w-4 h-4" />
+                                            <RefreshCw className="w-3 h-3" />
                                         </Button>
                                     )}
                                     <Button
@@ -893,18 +893,18 @@ graph TD
                                             setTempDiagramCode(chartCode)
                                             setIsEditingDiagram(true)
                                         }}
-                                        className="h-8 px-2 text-[#F5CB5C] hover:text-[#E8EDDF] hover:bg-[#F5CB5C]/10 text-xs font-medium"
+                                        className="h-7 px-3 text-[#F5CB5C] hover:text-[#E8EDDF] hover:bg-[#F5CB5C]/10 text-[10px] uppercase font-bold tracking-wider"
                                     >
-                                        <Edit className="w-4 h-4 mr-2" /> Editar
+                                        <Edit className="w-3 h-3 mr-2" /> Editar
                                     </Button>
                                     <Button
                                         variant="ghost"
                                         size="sm"
                                         onClick={handleDownloadDiagram}
-                                        className="h-8 px-2 text-white hover:text-[#F5CB5C] hover:bg-transparent font-medium text-xs transition-colors"
+                                        className="h-7 px-3 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-transparent text-[10px] uppercase font-bold tracking-wider transition-colors"
                                     >
-                                        <ImageDown className="w-4 h-4 mr-2" />
-                                        Descargar Diagrama de Flujo
+                                        <ImageDown className="w-3 h-3 mr-2" />
+                                        Descargar Diagrama
                                     </Button>
                                 </>
                             ) : (
@@ -913,9 +913,9 @@ graph TD
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => setIsEditingDiagram(false)}
-                                        className="h-8 px-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 text-xs"
+                                        className="h-7 px-3 text-red-400 hover:text-red-300 hover:bg-red-400/10 text-[10px] uppercase font-bold tracking-wider"
                                     >
-                                        <X className="w-4 h-4 mr-2" /> Cancelar
+                                        <X className="w-3 h-3 mr-2" /> Cancelar
                                     </Button>
                                     <Button
                                         size="sm"
@@ -924,9 +924,9 @@ graph TD
                                             setChartCode(tempDiagramCode)
                                             setIsEditingDiagram(false)
                                         }}
-                                        className="h-8 px-3 bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold text-xs"
+                                        className="h-7 px-3 bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] text-[10px] uppercase font-bold tracking-wider"
                                     >
-                                        <Check className="w-4 h-4 mr-2" /> Aplicar
+                                        <Check className="w-3 h-3 mr-2" /> Aplicar
                                     </Button>
                                 </>
                             )}
