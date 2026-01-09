@@ -872,10 +872,10 @@ graph TD
                                         variant="ghost"
                                         size="sm"
                                         onClick={handleDownloadDiagram}
-                                        className="h-8 px-2 text-[#CFDBD5] hover:text-[#E8EDDF] hover:bg-[#333533]"
-                                        title="Descargar Imagen"
+                                        className="h-8 px-2 text-white hover:text-[#F5CB5C] hover:bg-transparent font-medium text-xs transition-colors"
                                     >
-                                        <ImageDown className="w-4 h-4" />
+                                        <ImageDown className="w-4 h-4 mr-2" />
+                                        Descargar Diagrama de Flujo
                                     </Button>
                                 </>
                             ) : (
