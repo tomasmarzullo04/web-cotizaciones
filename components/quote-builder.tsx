@@ -146,42 +146,41 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
     const router = useRouter()
 
     const handleDownloadDiagram = async () => {
-        alert("Iniciando descarga... (Si no ocurre nada, verifica los permisos del navegador)") // Immediate feedback
+        alert("Iniciando descarga... (Por favor espera)")
+
+        // Timeout Safety
+        const timeoutId = setTimeout(() => {
+            alert("Error: La descarga está tardando demasiado. Puede ser un problema del navegador.")
+        }, 8000)
+
         try {
             const element = document.getElementById('diagram-capture-target')
-            if (!element) {
-                alert("DEBUG: No se encontró el elemento con ID 'diagram-capture-target'")
-                return
-            }
+            if (!element) throw new Error("No se encontró el contenedor ID 'diagram-capture-target'")
 
             const svgElement = element.querySelector('svg')
-            if (!svgElement) {
-                alert("DEBUG: El elemento existe pero no contiene un SVG")
-                return
-            }
+            if (!svgElement) throw new Error("No se encontró el elemento SVG")
 
-            // Get explicit size
+            // Get explicit size & Clone to avoid modifying live DOM
             const bbox = svgElement.getBoundingClientRect()
-            if (bbox.width === 0 || bbox.height === 0) {
-                alert("Error: El diagrama parece estar vacío o oculto.")
-                return
-            }
+            if (bbox.width === 0 || bbox.height === 0) throw new Error("El diagrama tiene tamaño 0")
+
+            const clone = svgElement.cloneNode(true) as SVGSVGElement
+            clone.setAttribute('width', `${bbox.width}`)
+            clone.setAttribute('height', `${bbox.height}`)
 
             const serializer = new XMLSerializer()
-            let source = serializer.serializeToString(svgElement)
+            let source = serializer.serializeToString(clone)
 
-            // Ensure namespace for valid XML
             if (!source.includes('xmlns="http://www.w3.org/2000/svg"')) {
                 source = source.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"')
             }
 
             const canvas = document.createElement('canvas')
-            canvas.width = bbox.width * 2 // 2x Scale for Retina/High Res
+            canvas.width = bbox.width * 2
             canvas.height = bbox.height * 2
             const ctx = canvas.getContext('2d')
-            if (!ctx) return
+            if (!ctx) throw new Error("No se pudo iniciar el contexto 2D")
 
-            // Fill White Background
             ctx.fillStyle = "#ffffff"
             ctx.fillRect(0, 0, canvas.width, canvas.height)
 
@@ -190,26 +189,29 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
             const url = URL.createObjectURL(svgBlob)
 
             img.onload = () => {
+                clearTimeout(timeoutId)
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
                 const link = document.createElement('a')
                 link.download = `arquitectura-${state.clientName || 'draft'}.png`
                 link.href = canvas.toDataURL('image/png')
-                document.body.appendChild(link) // Required for Firefox sometimes
+                document.body.appendChild(link)
                 link.click()
                 document.body.removeChild(link)
                 URL.revokeObjectURL(url)
             }
 
             img.onerror = (e) => {
-                console.error("Image export error", e)
-                alert("No se pudo generar la imagen del diagrama.")
+                clearTimeout(timeoutId)
+                console.error("Image load error", e)
+                alert("Error al procesar la imagen del diagrama.")
             }
 
             img.src = url
 
         } catch (e: any) {
+            clearTimeout(timeoutId)
             console.error(e)
-            alert(`Error inesperado al exportar: ${e.message}`)
+            alert(`Error: ${e.message}`)
         }
     }
 
@@ -545,22 +547,49 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
             nodes += '\n    Process[Databricks ML]'
             flow += 'Store --> Process\nProcess --> Store\n'
         }
-        // Explode Tech Stack into Subgraph
+        // Explode Tech Stack into Subgraph with Row Layout
         if (techStack.length > 0) {
             nodes += '\n    subgraph TechStack [Stack Tecnológico]'
+            nodes += '\n    direction TB' // Main stack is top-bottom
 
-            techStack.forEach(t => {
-                const option = TECH_OPTIONS.find(o => o.id === t)
-                const name = option ? option.name : t
-                const cleanId = `Tech${t.replace(/[^a-zA-Z0-9]/g, '')}`
+            // Helper function to chunk array
+            const chunkSize = 4
+            for (let i = 0; i < techStack.length; i += chunkSize) {
+                const chunk = techStack.slice(i, i + chunkSize)
+                const rowId = `Row${i / chunkSize}`
 
-                if (t !== 'databricks') {
+                nodes += `\n    subgraph ${rowId} [ ]` // Boxless subgraph for rows? or explicit?
+                nodes += `\n    direction LR` // Items in row flow Left-Right
+
+                chunk.forEach(t => {
+                    if (t === 'databricks') return
+                    const option = TECH_OPTIONS.find(o => o.id === t)
+                    const name = option ? option.name : t
+                    const cleanId = `Tech${t.replace(/[^a-zA-Z0-9]/g, '')}`
+
                     nodes += `\n        ${cleanId}[${name}]`
-                    flow += `\n    ${cleanId} -.- Store`
                     nodes += `\n        style ${cleanId} stroke-dasharray: 5 5`
+                })
+                nodes += '\n    end'
+            }
+
+            // Connect Rows to Store (Connects the subgraph itself or nodes?)
+            // We'll just link a representative from each row to the store to position it?
+            // Actually, if we just define them, Mermaid places them. Let's rely on one link per chunk.
+            for (let i = 0; i < techStack.length; i += chunkSize) {
+                const firstInRow = techStack[i]
+                if (firstInRow && firstInRow !== 'databricks') {
+                    const cleanId = `Tech${firstInRow.replace(/[^a-zA-Z0-9]/g, '')}`
+                    flow += `\n    ${cleanId} -.- Store`
                 }
-            })
+            }
+
             nodes += '\n    end'
+
+            // Style the row subgraphs to be invisible containers
+            for (let i = 0; i < techStack.length; i += chunkSize) {
+                nodes += `\n    style Row${i / chunkSize} fill:none,stroke:none`
+            }
         }
         const chart = `
 graph TD
