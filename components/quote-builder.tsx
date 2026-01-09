@@ -146,58 +146,27 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
     const router = useRouter()
 
     const handleDownloadDiagram = async () => {
-        // Silent download logic standard
         try {
             const element = document.getElementById('diagram-capture-target')
             if (!element) return
 
-            const svgElement = element.querySelector('svg')
-            if (!svgElement) return
+            // Use html2canvas to capture the visual representation directly, avoiding Tainted Canvas from foreignObject
+            const canvas = await html2canvas(element, {
+                backgroundColor: '#ffffff', // User likely wants a clean white background for the PNG
+                scale: 3, // High resolution
+                logging: false,
+                useCORS: true // Handle potential external images if any
+            })
 
-            // Get explicit size & Clone to avoid modifying live DOM
-            const bbox = svgElement.getBoundingClientRect()
-            if (bbox.width === 0 || bbox.height === 0) return
-
-            const clone = svgElement.cloneNode(true) as SVGSVGElement
-            clone.setAttribute('width', `${bbox.width}`)
-            clone.setAttribute('height', `${bbox.height}`)
-            // Ensure white background
-            clone.style.backgroundColor = '#ffffff';
-
-            const serializer = new XMLSerializer()
-            let source = serializer.serializeToString(clone)
-
-            if (!source.includes('xmlns="http://www.w3.org/2000/svg"')) {
-                source = source.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"')
-            }
-
-            const canvas = document.createElement('canvas')
-            canvas.width = bbox.width * 2
-            canvas.height = bbox.height * 2
-            const ctx = canvas.getContext('2d')
-            if (!ctx) return
-
-            ctx.fillStyle = "#ffffff"
-            ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-            const img = new Image()
-            const svgBlob = new Blob([source], { type: "image/svg+xml;charset=utf-8" })
-            const url = URL.createObjectURL(svgBlob)
-
-            img.onload = () => {
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-                const link = document.createElement('a')
-                link.download = `arquitectura-${state.clientName || 'draft'}.png`
-                link.href = canvas.toDataURL('image/png')
-                document.body.appendChild(link)
-                link.click()
-                document.body.removeChild(link)
-                URL.revokeObjectURL(url)
-            }
-            img.src = url
+            const link = document.createElement('a')
+            link.download = `arquitectura-${state.clientName || 'draft'}.png`
+            link.href = canvas.toDataURL('image/png')
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
 
         } catch (e) {
-            console.error(e)
+            console.error("Download failed", e)
             alert("No se pudo descargar el diagrama.")
         }
     }
