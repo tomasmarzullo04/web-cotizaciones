@@ -10,9 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { MermaidDiagram } from "@/components/mermaid-diagram"
-import { Wand2, Download, FileText, Check, ShieldAlert, Network, Cpu, Calculator, Save, Loader2, ClipboardList, Database, Users, Briefcase, Layers, AlertTriangle, Activity, Zap, Edit, X, RefreshCw, ImageDown } from "lucide-react"
+import { Wand2, Download, FileText, Check, ShieldAlert, Network, Cpu, Calculator, Save, Loader2, ClipboardList, Database, Users, Briefcase, Layers, AlertTriangle, Activity, Zap, Edit, X, RefreshCw, ImageDown, Sparkles, Undo2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { saveQuote } from "@/lib/actions"
+import { generateMermaidUpdate } from "@/lib/ai"
 import html2canvas from 'html2canvas'
 
 // --- 1. TYPES & CONSTANTS ---
@@ -135,6 +136,9 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
     const [manualDiagramCode, setManualDiagramCode] = useState<string | null>(null)
     const [isEditingDiagram, setIsEditingDiagram] = useState(false)
     const [tempDiagramCode, setTempDiagramCode] = useState('')
+    const [aiPrompt, setAiPrompt] = useState('')
+    const [isAiLoading, setIsAiLoading] = useState(false)
+    const [diagramHistory, setDiagramHistory] = useState<string[]>([]) // For Undo
     const [polishLoading, setPolishLoading] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
     const [isExporting, setIsExporting] = useState(false)
@@ -155,6 +159,31 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
                 alert("Error al exportar imagen")
             }
         }
+    }
+
+    const handleAiGenerate = async () => {
+        if (!aiPrompt.trim()) return
+        setIsAiLoading(true)
+        // Push current to history before changing
+        setDiagramHistory(prev => [...prev, tempDiagramCode])
+
+        try {
+            const newCode = await generateMermaidUpdate(tempDiagramCode, aiPrompt)
+            setTempDiagramCode(newCode)
+            setAiPrompt('')
+        } catch (e) {
+            console.error(e)
+            alert("Error generando diagrama con IA")
+        } finally {
+            setIsAiLoading(false)
+        }
+    }
+
+    const handleUndo = () => {
+        if (diagramHistory.length === 0) return
+        const previous = diagramHistory[diagramHistory.length - 1]
+        setTempDiagramCode(previous)
+        setDiagramHistory(prev => prev.slice(0, -1))
     }
 
     const handleExport = async (type: 'pdf' | 'word') => {
@@ -906,8 +935,42 @@ graph TD
 
                     {isEditingDiagram ? (
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 animate-in fade-in zoom-in-95 duration-300">
+                            {/* AI Input Section */}
+                            <div className="col-span-1 xl:col-span-2 bg-[#2D2D2D] p-3 rounded-xl border border-[#F5CB5C]/20 flex gap-2 items-center mb-2">
+                                <div className="p-2 bg-[#F5CB5C]/10 rounded-lg">
+                                    <Sparkles className="w-5 h-5 text-[#F5CB5C]" />
+                                </div>
+                                <Input
+                                    placeholder="Describe cambios con IA (ej: 'Agrega validación entre origen e ingesta')"
+                                    value={aiPrompt}
+                                    onChange={(e) => setAiPrompt(e.target.value)}
+                                    className="bg-transparent border-none text-[#E8EDDF] placeholder:text-[#CFDBD5]/50 focus-visible:ring-0"
+                                    onKeyDown={(e) => e.key === 'Enter' && handleAiGenerate()}
+                                />
+                                <Button
+                                    size="sm"
+                                    onClick={handleAiGenerate}
+                                    disabled={isAiLoading || !aiPrompt.trim()}
+                                    className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold"
+                                >
+                                    {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                                </Button>
+                            </div>
+
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-[#CFDBD5] uppercase">Código Mermaid</label>
+                                <div className="flex justify-between items-center">
+                                    <label className="text-xs font-bold text-[#CFDBD5] uppercase">Código Mermaid</label>
+                                    {diagramHistory.length > 0 && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={handleUndo}
+                                            className="h-6 text-xs text-[#CFDBD5] hover:text-[#E8EDDF]"
+                                        >
+                                            <Undo2 className="w-3 h-3 mr-1" /> Deshacer
+                                        </Button>
+                                    )}
+                                </div>
                                 <Textarea
                                     value={tempDiagramCode}
                                     onChange={(e) => setTempDiagramCode(e.target.value)}
