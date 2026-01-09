@@ -679,92 +679,93 @@ graph TD
                     </div>
 
                     <div className="bg-[#333533] rounded-[2rem] p-8 text-sm space-y-5 border border-[#4A4D4A] shadow-xl relative overflow-hidden">
-                        <span className="text-[#CFDBD5]">Servicios (Infra/Data)</span>
-                        <span className="font-mono text-xl">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(servicesCost)}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-[#E8EDDF]">
-                        <span className="text-[#CFDBD5]">Equipo (Roles)</span>
-                        <span className="font-mono text-xl">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(rolesCost)}</span>
-                    </div>
-                    {l2SupportCost > 0 && (
-                        <div className="flex justify-between items-center text-[#F5CB5C] bg-[#F5CB5C]/10 p-3 rounded-xl -mx-2 border border-[#F5CB5C]/20">
-                            <span className="text-xs font-bold">SOPORTE L2 (10%)</span>
-                            <span className="font-mono text-xl">+ {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(l2SupportCost)}</span>
+                        <div className="flex justify-between items-center text-[#E8EDDF]">
+                            <span className="text-[#CFDBD5]">Servicios (Infra/Data)</span>
+                            <span className="font-mono text-xl">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(servicesCost)}</span>
                         </div>
-                    )}
-                    {state.criticitness.enabled && (
-                        <div className="flex justify-between items-center text-orange-400 bg-orange-900/10 p-3 rounded-xl -mx-2 border border-orange-500/20">
-                            <span className="text-xs font-bold">RIESGO ({criticitnessLevel.label})</span>
-                            <span className="font-mono text-xl">+ {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(riskCost)}</span>
+                        <div className="flex justify-between items-center text-[#E8EDDF]">
+                            <span className="text-[#CFDBD5]">Equipo (Roles)</span>
+                            <span className="font-mono text-xl">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(rolesCost)}</span>
                         </div>
-                    )}
-                    <Separator className="bg-[#4A4D4A]" />
-                    <div className="flex justify-between items-center text-[#E8EDDF] font-black text-2xl">
-                        <span>Mensual</span>
-                        <span className="text-[#F5CB5C]">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(totalWithRisk)}</span>
+                        {l2SupportCost > 0 && (
+                            <div className="flex justify-between items-center text-[#F5CB5C] bg-[#F5CB5C]/10 p-3 rounded-xl -mx-2 border border-[#F5CB5C]/20">
+                                <span className="text-xs font-bold">SOPORTE L2 (10%)</span>
+                                <span className="font-mono text-xl">+ {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(l2SupportCost)}</span>
+                            </div>
+                        )}
+                        {state.criticitness.enabled && (
+                            <div className="flex justify-between items-center text-orange-400 bg-orange-900/10 p-3 rounded-xl -mx-2 border border-orange-500/20">
+                                <span className="text-xs font-bold">RIESGO ({criticitnessLevel.label})</span>
+                                <span className="font-mono text-xl">+ {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(riskCost)}</span>
+                            </div>
+                        )}
+                        <Separator className="bg-[#4A4D4A]" />
+                        <div className="flex justify-between items-center text-[#E8EDDF] font-black text-2xl">
+                            <span>Mensual</span>
+                            <span className="text-[#F5CB5C]">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(totalWithRisk)}</span>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-4">
+                        <Button
+                            onClick={handleSaveQuote}
+                            disabled={isSaving}
+                            className="bg-[#F5CB5C] hover:bg-[#E0B84C] text-[#242423] border-0 rounded-2xl h-14 font-bold w-full transition-all text-base shadow-[0_0_20px_rgba(245,203,92,0.3)] hover:shadow-[0_0_25px_rgba(245,203,92,0.5)] transform hover:scale-[1.02]"
+                        >
+                            {isSaving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
+                            {isSaving ? 'Guardando...' : 'Guardar Cotización'}
+                        </Button>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <Button
+                                onClick={() => handleExport('pdf')}
+                                disabled={isExporting}
+                                className="bg-[#333533] hover:bg-[#E8EDDF] hover:text-[#242423] text-[#E8EDDF] border border-transparent rounded-2xl h-12 font-bold transition-all text-sm"
+                            >
+                                {isExporting && exportType === 'pdf' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+                                PDF
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => handleExport('word')}
+                                disabled={isExporting}
+                                className="bg-transparent border-[#4A4D4A] text-[#E8EDDF] hover:bg-[#333533] hover:text-[#E8EDDF] rounded-2xl h-12 font-medium transition-all text-sm"
+                            >
+                                {isExporting && exportType === 'word' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+                                Word
+                            </Button>
+                        </div>
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-4">
-                    <Button
-                        onClick={handleSaveQuote}
-                        disabled={isSaving}
-                        className="bg-[#F5CB5C] hover:bg-[#E0B84C] text-[#242423] border-0 rounded-2xl h-14 font-bold w-full transition-all text-base shadow-[0_0_20px_rgba(245,203,92,0.3)] hover:shadow-[0_0_25px_rgba(245,203,92,0.5)] transform hover:scale-[1.02]"
-                    >
-                        {isSaving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
-                        {isSaving ? 'Guardando...' : 'Guardar Cotización'}
-                    </Button>
+                {/* Architecture Diagram */}
+                <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
+                    <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                        <Network className="w-4 h-4 text-[#F5CB5C]" /> Arquitectura Dinámica
+                    </h4>
+                    <div id="diagram-capture-target" className="rounded-[2rem] border border-[#CFDBD5]/20 bg-[#333533] p-4 min-h-[250px] flex items-center justify-center relative overflow-hidden bg-white">
+                        <MermaidDiagram chart={chartCode} />
+                    </div>
+                </div>
 
+                {/* Tech Summary */}
+                <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
+                    <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                        <Cpu className="w-4 h-4 text-[#F5CB5C]" /> Resumen Técnico
+                    </h4>
                     <div className="grid grid-cols-2 gap-4">
-                        <Button
-                            onClick={() => handleExport('pdf')}
-                            disabled={isExporting}
-                            className="bg-[#333533] hover:bg-[#E8EDDF] hover:text-[#242423] text-[#E8EDDF] border border-transparent rounded-2xl h-12 font-bold transition-all text-sm"
-                        >
-                            {isExporting && exportType === 'pdf' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-                            PDF
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => handleExport('word')}
-                            disabled={isExporting}
-                            className="bg-transparent border-[#4A4D4A] text-[#E8EDDF] hover:bg-[#333533] hover:text-[#E8EDDF] rounded-2xl h-12 font-medium transition-all text-sm"
-                        >
-                            {isExporting && exportType === 'word' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
-                            Word
-                        </Button>
+                        <div className="bg-[#333533] p-5 rounded-2xl border border-[#4A4D4A] text-center">
+                            <span className="block text-3xl font-black text-[#E8EDDF]">{state.pipelinesCount}</span>
+                            <span className="text-xs text-[#CFDBD5] uppercase tracking-wider font-bold">Pipelines</span>
+                        </div>
+                        <div className="bg-[#333533] p-5 rounded-2xl border border-[#4A4D4A] text-center">
+                            <span className="block text-3xl font-black text-[#E8EDDF]">{state.dashboardsCount + state.reportsCount}</span>
+                            <span className="text-xs text-[#CFDBD5] uppercase tracking-wider font-bold">Visualizaciones</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Architecture Diagram */}
-            <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
-                <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                    <Network className="w-4 h-4 text-[#F5CB5C]" /> Arquitectura Dinámica
-                </h4>
-                <div id="diagram-capture-target" className="rounded-[2rem] border border-[#CFDBD5]/20 bg-[#333533] p-4 min-h-[250px] flex items-center justify-center relative overflow-hidden bg-white">
-                    <MermaidDiagram chart={chartCode} />
-                </div>
             </div>
-
-            {/* Tech Summary */}
-            <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
-                <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                    <Cpu className="w-4 h-4 text-[#F5CB5C]" /> Resumen Técnico
-                </h4>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-[#333533] p-5 rounded-2xl border border-[#4A4D4A] text-center">
-                        <span className="block text-3xl font-black text-[#E8EDDF]">{state.pipelinesCount}</span>
-                        <span className="text-xs text-[#CFDBD5] uppercase tracking-wider font-bold">Pipelines</span>
-                    </div>
-                    <div className="bg-[#333533] p-5 rounded-2xl border border-[#4A4D4A] text-center">
-                        <span className="block text-3xl font-black text-[#E8EDDF]">{state.dashboardsCount + state.reportsCount}</span>
-                        <span className="text-xs text-[#CFDBD5] uppercase tracking-wider font-bold">Visualizaciones</span>
-                    </div>
-                </div>
-            </div>
-
-        </div>
         </div >
     )
 }
