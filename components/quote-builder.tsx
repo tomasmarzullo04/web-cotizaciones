@@ -146,63 +146,69 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
     const router = useRouter()
 
     const handleDownloadDiagram = async () => {
-        const element = document.getElementById('diagram-capture-target') // Correct ID
-        if (!element) return
-
         try {
-            // Find the SVG inside the container
-            const svgElement = element.querySelector('svg')
-            if (!svgElement) {
-                alert("No se encontró el diagrama para exportar.")
+            const element = document.getElementById('diagram-capture-target')
+            if (!element) {
+                alert("Error interno: No se encontró el contenedor del diagrama.")
                 return
             }
 
-            // Get SVG data
+            const svgElement = element.querySelector('svg')
+            if (!svgElement) {
+                alert("Error interno: No se encontró el gráfico SVG.")
+                return
+            }
+
+            // Get explicit size
+            const bbox = svgElement.getBoundingClientRect()
+            if (bbox.width === 0 || bbox.height === 0) {
+                alert("Error: El diagrama parece estar vacío o oculto.")
+                return
+            }
+
             const serializer = new XMLSerializer()
             let source = serializer.serializeToString(svgElement)
 
-            // Add namespaces if missing
-            if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
-                source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"')
-            }
-            if (!source.match(/^<svg[^>]+xmlns:xlink="http\:\/\/www\.w3\.org\/1000\/xlink"/)) {
-                source = source.replace(/^<svg/, '<svg xmlns:xlink="http://www.w3.org/1999/xlink"')
+            // Ensure namespace for valid XML
+            if (!source.includes('xmlns="http://www.w3.org/2000/svg"')) {
+                source = source.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"')
             }
 
-            // Create Image from SVG
+            const canvas = document.createElement('canvas')
+            canvas.width = bbox.width * 2 // 2x Scale for Retina/High Res
+            canvas.height = bbox.height * 2
+            const ctx = canvas.getContext('2d')
+            if (!ctx) return
+
+            // Fill White Background
+            ctx.fillStyle = "#ffffff"
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+
             const img = new Image()
             const svgBlob = new Blob([source], { type: "image/svg+xml;charset=utf-8" })
             const url = URL.createObjectURL(svgBlob)
 
             img.onload = () => {
-                const canvas = document.createElement('canvas')
-                // Use actual bounding box or viewbox
-                const bbox = svgElement.getBoundingClientRect()
-                canvas.width = bbox.width * 2 // High res
-                canvas.height = bbox.height * 2
-                const ctx = canvas.getContext('2d')
-                if (!ctx) return
-
-                // Fill White Background
-                ctx.fillStyle = "#ffffff"
-                ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-                // Draw SVG
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-
-                // Download
                 const link = document.createElement('a')
                 link.download = `arquitectura-${state.clientName || 'draft'}.png`
                 link.href = canvas.toDataURL('image/png')
+                document.body.appendChild(link) // Required for Firefox sometimes
                 link.click()
-
+                document.body.removeChild(link)
                 URL.revokeObjectURL(url)
             }
+
+            img.onerror = (e) => {
+                console.error("Image export error", e)
+                alert("No se pudo generar la imagen del diagrama.")
+            }
+
             img.src = url
 
-        } catch (e) {
+        } catch (e: any) {
             console.error(e)
-            alert("Error al exportar imagen")
+            alert(`Error inesperado al exportar: ${e.message}`)
         }
     }
 
