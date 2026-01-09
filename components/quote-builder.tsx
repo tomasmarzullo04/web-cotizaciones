@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { MermaidDiagram } from "@/components/mermaid-diagram"
-import { Wand2, Download, FileText, Check, ShieldAlert, Network, Cpu, Calculator, Save, Loader2, ClipboardList, Database, Users, Briefcase, Layers } from "lucide-react"
+import { Wand2, Download, FileText, Check, ShieldAlert, Network, Cpu, Calculator, Save, Loader2, ClipboardList, Database, Users, Briefcase, Layers, AlertTriangle, Activity, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { saveQuote } from "@/lib/actions"
 import html2canvas from 'html2canvas'
@@ -592,6 +592,7 @@ graph TD
                     </SectionCard>
 
                     {/* 6. CRITICITNESS */}
+                    {/* 6. CRITICITNESS (Upgraded v2) */}
                     <SectionCard number="06" title="Evaluación de Criticidad" icon={ShieldAlert}>
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-4">
@@ -607,19 +608,69 @@ graph TD
                         </div>
 
                         {state.criticitness.enabled && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-4 duration-300">
-                                <div className="col-span-1 md:col-span-2 bg-[#333533] rounded-[1.5rem] p-8 border border-[#4A4D4A] flex justify-between items-center relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#F5CB5C]/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-                                    <div className="relative z-10">
-                                        <span className="text-xs font-bold text-[#CFDBD5] uppercase tracking-widest">Score de Riesgo</span>
-                                        <div className="text-4xl font-black mt-2 text-[#E8EDDF]">
-                                            {criticitnessScore} pts
-                                            <span className={cn("ml-4 text-xl px-3 py-1 rounded-lg bg-black/30 border border-white/10", criticitnessLevel.color)}>{criticitnessLevel.label}</span>
+                            <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                                
+                                {/* Predictive Logic Alert */}
+                                {(state.complexity === 'high' && (state.updateFrequency === 'weekly' || state.updateFrequency === 'realtime') && state.supportHours !== '24/7') && (
+                                    <div className="bg-orange-900/20 border border-orange-500/30 rounded-2xl p-4 flex items-start gap-4">
+                                        <AlertTriangle className="w-6 h-6 text-orange-400 shrink-0 mt-1" />
+                                        <div>
+                                            <h4 className="text-orange-300 font-bold text-sm">Nivel de Criticidad Elevado</h4>
+                                            <p className="text-xs text-orange-200/70 mt-1">
+                                                La combinación de complejidad <strong>Alta</strong> y frecuencia <strong>{state.updateFrequency}</strong> sugiere un esquema de soporte <strong>24/7</strong>.
+                                            </p>
+                                            <Button 
+                                                variant="link" 
+                                                className="text-orange-400 p-0 h-auto text-xs mt-2 underline"
+                                                onClick={() => updateState('supportHours', '24/7')}
+                                            >
+                                                Actualizar a Soporte 24/7
+                                            </Button>
                                         </div>
                                     </div>
-                                    <div className="text-right relative z-10">
+                                )}
+
+                                {/* Main Risk Score Card */}
+                                <div className="col-span-1 md:col-span-2 bg-[#333533] rounded-[1.5rem] p-8 border border-[#4A4D4A] flex flex-col md:flex-row justify-between items-center relative overflow-hidden gap-6">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#F5CB5C]/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+                                    
+                                    <div className="relative z-10 flex flex-col gap-2">
+                                        <span className="text-xs font-bold text-[#CFDBD5] uppercase tracking-widest flex items-center gap-2">
+                                            <Activity className="w-4 h-4 text-[#F5CB5C]" /> Score de Riesgo
+                                        </span>
+                                        <div className="text-5xl font-black text-[#E8EDDF] flex items-baseline gap-2">
+                                            {criticitnessScore}
+                                            <span className="text-lg text-[#7C7F7C] font-normal">/100</span>
+                                        </div>
+                                        <div className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-full border w-fit text-sm font-bold", criticitnessLevel.color)}>
+                                            <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
+                                            {criticitnessLevel.label}
+                                        </div>
+                                    </div>
+
+                                    {/* Micro Indicators */}
+                                    <div className="grid grid-cols-3 gap-4 w-full md:w-auto">
+                                        <div className="bg-[#242423] p-3 rounded-xl border border-[#4A4D4A] text-center">
+                                            <Database className={cn("w-5 h-5 mx-auto mb-2", state.updateFrequency === 'realtime' ? "text-red-400" : "text-[#CFDBD5]")} />
+                                            <span className="text-[10px] text-[#7C7F7C] uppercase font-bold block">Latencia</span>
+                                            <span className="text-xs text-[#E8EDDF] font-bold">{state.updateFrequency === 'realtime' ? 'Crítica' : 'Std'}</span>
+                                        </div>
+                                        <div className="bg-[#242423] p-3 rounded-xl border border-[#4A4D4A] text-center">
+                                            <Layers className={cn("w-5 h-5 mx-auto mb-2", state.complexity === 'high' ? "text-orange-400" : "text-[#CFDBD5]")} />
+                                            <span className="text-[10px] text-[#7C7F7C] uppercase font-bold block">Lógica</span>
+                                            <span className="text-xs text-[#E8EDDF] font-bold">{state.complexity === 'high' ? 'Compleja' : 'Std'}</span>
+                                        </div>
+                                        <div className="bg-[#242423] p-3 rounded-xl border border-[#4A4D4A] text-center">
+                                            <Users className="w-5 h-5 mx-auto mb-2 text-[#CFDBD5]" />
+                                            <span className="text-[10px] text-[#7C7F7C] uppercase font-bold block">Usuarios</span>
+                                            <span className="text-xs text-[#E8EDDF] font-bold">{state.usersCount > 50 ? 'Alto Vol.' : 'Bajo Vol.'}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="text-right relative z-10 w-full md:w-auto border-t md:border-t-0 border-[#4A4D4A] pt-4 md:pt-0">
+                                        <Label className="text-[#7C7F7C] text-xs uppercase font-bold mb-2 block text-left">Nivel de Soporte</Label>
                                         <Select value={state.supportHours} onValueChange={(v: any) => updateState('supportHours', v)}>
-                                            <SelectTrigger className="w-[200px] h-12 bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
+                                            <SelectTrigger className="w-full md:w-[180px] h-10 bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
                                             <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
                                                 <SelectItem value="business">Business (9-18h)</SelectItem>
                                                 <SelectItem value="24/7">24/7 Critical</SelectItem>
@@ -628,16 +679,31 @@ graph TD
                                     </div>
                                 </div>
 
-                                <div>
-                                    <Label className="text-[#CFDBD5] mb-2 block">Impacto Operativo</Label>
-                                    <Select value={state.criticitness.impactOperative} onValueChange={(v: any) => updateCriticitness('impactOperative', v)}>
-                                        <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
-                                        <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                            <SelectItem value="low">Bajo (Interno)</SelectItem>
-                                            <SelectItem value="medium">Medio (Departamental)</SelectItem>
-                                            <SelectItem value="high">Alto (Core Business)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <Label className="text-[#CFDBD5] mb-2 block">Impacto Operativo</Label>
+                                        <Select value={state.criticitness.impactOperative} onValueChange={(v: any) => updateCriticitness('impactOperative', v)}>
+                                            <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
+                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                <SelectItem value="low">Bajo (Interno)</SelectItem>
+                                                <SelectItem value="medium">Medio (Departamental)</SelectItem>
+                                                <SelectItem value="high">Alto (Core Business)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                     <div>
+                                        <Label className="text-[#CFDBD5] mb-2 block">Exposición de Datos</Label>
+                                        <Select value={state.criticitness.dataExposure} onValueChange={(v: any) => updateCriticitness('dataExposure', v)}>
+                                            <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
+                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                <SelectItem value="internal">Interna</SelectItem>
+                                                <SelectItem value="partners">Partners / Clientes</SelectItem>
+                                                <SelectItem value="public">Pública / Regulatoria</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+
                                 </div>
                                 <div>
                                     <Label className="text-[#CFDBD5] mb-2 block">Impacto Financiero</Label>
@@ -655,16 +721,16 @@ graph TD
                                 </div>
                             </div>
                         )}
-                    </SectionCard>
+            </SectionCard>
 
-                </div>
-            </div>
+        </div>
+            </div >
 
-            {/* ================= RIGHT COLUMN: INDEPENDENT SCROLL SUMMARY ================= */}
-            <div className="w-full lg:w-1/3 h-full overflow-y-auto scrollbar-custom bg-[#242423] border-l border-[#CFDBD5]/10 p-8 lg:p-10 space-y-10 relative">
+        {/* ================= RIGHT COLUMN: INDEPENDENT SCROLL SUMMARY ================= */ }
+        < div className = "w-full lg:w-1/3 h-full overflow-y-auto scrollbar-custom bg-[#242423] border-l border-[#CFDBD5]/10 p-8 lg:p-10 space-y-10 relative" >
 
-                {/* Cost Summary */}
-                <div className="space-y-6">
+            {/* Cost Summary */ }
+            < div className = "space-y-6" >
                     <div>
                         <h4 className="text-[#F5CB5C] text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
                             <Calculator className="w-4 h-4" /> Inversión Estimada
@@ -736,20 +802,20 @@ graph TD
                             </Button>
                         </div>
                     </div>
-                </div>
+                </div >
 
-                {/* Architecture Diagram */}
-                <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
+        {/* Architecture Diagram */ }
+        < div className = "space-y-6 pt-10 border-t border-[#CFDBD5]/10" >
                     <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
                         <Network className="w-4 h-4 text-[#F5CB5C]" /> Arquitectura Dinámica
                     </h4>
                     <div id="diagram-capture-target" className="rounded-[2rem] border border-[#CFDBD5]/20 bg-[#333533] p-4 min-h-[250px] flex items-center justify-center relative overflow-hidden bg-white">
                         <MermaidDiagram chart={chartCode} />
                     </div>
-                </div>
+                </div >
 
-                {/* Tech Summary */}
-                <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
+        {/* Tech Summary */ }
+        < div className = "space-y-6 pt-10 border-t border-[#CFDBD5]/10" >
                     <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
                         <Cpu className="w-4 h-4 text-[#F5CB5C]" /> Resumen Técnico
                     </h4>
@@ -763,9 +829,9 @@ graph TD
                             <span className="text-xs text-[#CFDBD5] uppercase tracking-wider font-bold">Visualizaciones</span>
                         </div>
                     </div>
-                </div>
+                </div >
 
-            </div>
+            </div >
         </div >
     )
 }
