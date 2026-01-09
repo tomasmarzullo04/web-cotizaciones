@@ -974,7 +974,7 @@ graph TD
                                 <Textarea
                                     value={tempDiagramCode}
                                     onChange={(e) => setTempDiagramCode(e.target.value)}
-                                    className="font-mono text-xs bg-[#171717] border-[#2D2D2D] text-[#E8EDDF] resize-none h-[350px] focus-visible:ring-[#F5CB5C]"
+                                    className="font-mono text-xs bg-[#171717] border-[#2D2D2D] text-[#E8EDDF] resize-none h-[600px] focus-visible:ring-[#F5CB5C]"
                                     placeholder="graph TD..."
                                 />
                                 <p className="text-[10px] text-[#CFDBD5]/50 flex items-center gap-1">
@@ -984,7 +984,7 @@ graph TD
                             </div>
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-[#CFDBD5] uppercase">Vista Previa</label>
-                                <div className="rounded-[1rem] border border-[#CFDBD5]/20 bg-[#333533] p-4 h-[350px] flex items-center justify-center relative overflow-hidden bg-white">
+                                <div className="rounded-[1rem] border border-[#CFDBD5]/20 bg-[#333533] p-4 h-[600px] flex items-center justify-center relative overflow-hidden bg-white">
                                     <MermaidDiagram chart={tempDiagramCode} />
                                 </div>
                             </div>
