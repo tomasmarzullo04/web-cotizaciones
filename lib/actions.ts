@@ -199,19 +199,9 @@ export async function getAllQuotes() {
             include: { user: { select: { name: true, email: true } } }
         })
     } catch (e) {
+    } catch (e) {
         // Mock Admin Data
-        return [
-            {
-                id: 'mock-1', clientName: 'Coca-Cola (Demo)', estimatedCost: 14500, createdAt: new Date(),
-                user: { name: 'Consultor Demo', email: 'demo@antigravity.com' },
-                projectType: 'Lakehouse'
-            },
-            {
-                id: 'mock-2', clientName: 'Tenaris', estimatedCost: 24000, createdAt: new Date(Date.now() - 86400000),
-                user: { name: 'Admin Demo', email: 'admin@antigravity.com' },
-                projectType: 'IoT Analytics'
-            }
-        ] as any[]
+        return []
     }
 }
 
