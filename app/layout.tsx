@@ -19,6 +19,7 @@ export default async function RootLayout({
 }) {
   const role = await getSessionRole()
   const name = await getSessionUser()
+  console.log('Rendering Root Layout v2.5 - POP_FIX')
 
   return (
     <html lang="es">
