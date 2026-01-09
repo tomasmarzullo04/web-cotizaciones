@@ -329,7 +329,9 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
 
                 // Add specific fields required for display
                 const quoteForStorage = {
-                    ...savedQuote,
+                    ...(savedQuote as any),
+                    // Ensure estimatedCost is captured even if server returned a mock without it
+                    estimatedCost: (savedQuote as any).estimatedCost || (savedQuote as any).breakdown?.totalMonthlyCost || 0,
                     id: uniqueId, // Override mock ID with unique client ID
                     userId: 'demo-user', // Ensure visible
                     createdAt: new Date().toISOString() // Ensure date is string for JSON

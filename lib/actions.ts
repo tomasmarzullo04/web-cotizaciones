@@ -148,7 +148,11 @@ export async function saveQuote(data: {
         })
     } catch (e) {
         console.warn("DB Failed (saveQuote), mocking success")
-        return { id: 'mock-quote-id', ...data }
+        return {
+            id: 'mock-quote-id',
+            ...data,
+            estimatedCost: data.breakdown.totalMonthlyCost
+        }
     }
 }
 

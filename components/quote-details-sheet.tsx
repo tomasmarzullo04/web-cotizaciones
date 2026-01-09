@@ -90,7 +90,7 @@ export function QuoteDetailsSheet({ quote }: QuoteDetailsSheetProps) {
                         </div>
                         <h3 className="text-sm font-bold text-[#F5CB5C] uppercase tracking-wider mb-2">Costo Estimado Mensual</h3>
                         <p className="text-4xl font-black text-[#E8EDDF] tracking-tight">
-                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(quote.estimatedCost)}
+                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(quote.estimatedCost) || 0)}
                         </p>
                     </div>
 

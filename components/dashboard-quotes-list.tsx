@@ -7,6 +7,7 @@ import { DeleteQuoteButton } from '@/components/delete-quote-button'
 import { FileText } from "lucide-react"
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 export function DashboardQuotesList({ serverQuotes = [] }: { serverQuotes?: any[] }) {
     // Initialize with empty array to match potential empty server props,
@@ -115,28 +116,44 @@ export function DashboardQuotesList({ serverQuotes = [] }: { serverQuotes?: any[
                     <div className="grid grid-cols-12 gap-4 items-center">
                         <div className="col-span-4">
                             <h4 className="text-[#E8EDDF] font-bold text-lg truncate">{quote.clientName || 'Sin Nombre'}</h4>
-                            <p className="text-[#CFDBD5] text-sm truncate opacity-70">
+                            <div className="text-[#CFDBD5] text-sm opacity-70 mt-1">
                                 {(() => {
                                     try {
                                         if (!quote.technicalParameters) return 'Sin descripción'
                                         const parsed = JSON.parse(quote.technicalParameters)
-                                        return parsed?.description?.substring(0, 40) || 'Sin descripción'
+                                        const desc = parsed?.description || 'Sin descripción'
+
+                                        if (desc.length > 50) {
+                                            return (
+                                                <Popover>
+                                                    <PopoverTrigger className="hover:text-[#F5CB5C] underline underline-offset-4 cursor-pointer">
+                                                        Ver descripción
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] w-80">
+                                                        <p className="text-sm leading-relaxed max-h-[200px] overflow-y-auto pr-2 scrollbar-custom">
+                                                            {desc}
+                                                        </p>
+                                                    </PopoverContent>
+                                                </Popover>
+                                            )
+                                        }
+                                        return desc
                                     } catch { return 'Sin descripción' }
-                                })()}...
-                            </p>
+                                })()}
+                            </div>
                         </div>
                         <div className="col-span-3 text-[#CFDBD5] font-medium">
                             {quote.createdAt ? new Date(quote.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
                         </div>
                         <div className="col-span-3">
                             <span className="text-[#F5CB5C] font-mono font-bold text-lg">
-                                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(quote.estimatedCost || 0)}
+                                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(quote.estimatedCost) || 0)}
                             </span>
                             <span className="text-[#CFDBD5] text-xs ml-1">/ mes</span>
                         </div>
                         <div className="col-span-2 flex justify-end gap-2">
                             {/* Safe check for quote before passing */}
-                            {quote && <QuoteDetailsSheet quote={quote} />}
+                            {quote && <QuoteDetailsSheet quote={{ ...quote, estimatedCost: Number(quote.estimatedCost) || 0 }} />}
                             {/* Delete button manages the dialog and calls back on success */}
                             <DeleteQuoteButton
                                 quoteId={quote.id}
