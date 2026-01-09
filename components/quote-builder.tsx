@@ -146,27 +146,23 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
     const router = useRouter()
 
     const handleDownloadDiagram = async () => {
-        alert("Iniciando descarga... (Por favor espera)")
-
-        // Timeout Safety
-        const timeoutId = setTimeout(() => {
-            alert("Error: La descarga está tardando demasiado. Puede ser un problema del navegador.")
-        }, 8000)
-
+        // Silent download logic standard
         try {
             const element = document.getElementById('diagram-capture-target')
-            if (!element) throw new Error("No se encontró el contenedor ID 'diagram-capture-target'")
+            if (!element) return
 
             const svgElement = element.querySelector('svg')
-            if (!svgElement) throw new Error("No se encontró el elemento SVG")
+            if (!svgElement) return
 
             // Get explicit size & Clone to avoid modifying live DOM
             const bbox = svgElement.getBoundingClientRect()
-            if (bbox.width === 0 || bbox.height === 0) throw new Error("El diagrama tiene tamaño 0")
+            if (bbox.width === 0 || bbox.height === 0) return
 
             const clone = svgElement.cloneNode(true) as SVGSVGElement
             clone.setAttribute('width', `${bbox.width}`)
             clone.setAttribute('height', `${bbox.height}`)
+            // Ensure white background
+            clone.style.backgroundColor = '#ffffff';
 
             const serializer = new XMLSerializer()
             let source = serializer.serializeToString(clone)
@@ -179,7 +175,7 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
             canvas.width = bbox.width * 2
             canvas.height = bbox.height * 2
             const ctx = canvas.getContext('2d')
-            if (!ctx) throw new Error("No se pudo iniciar el contexto 2D")
+            if (!ctx) return
 
             ctx.fillStyle = "#ffffff"
             ctx.fillRect(0, 0, canvas.width, canvas.height)
@@ -189,7 +185,6 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
             const url = URL.createObjectURL(svgBlob)
 
             img.onload = () => {
-                clearTimeout(timeoutId)
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
                 const link = document.createElement('a')
                 link.download = `arquitectura-${state.clientName || 'draft'}.png`
@@ -199,19 +194,11 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
                 document.body.removeChild(link)
                 URL.revokeObjectURL(url)
             }
-
-            img.onerror = (e) => {
-                clearTimeout(timeoutId)
-                console.error("Image load error", e)
-                alert("Error al procesar la imagen del diagrama.")
-            }
-
             img.src = url
 
-        } catch (e: any) {
-            clearTimeout(timeoutId)
+        } catch (e) {
             console.error(e)
-            alert(`Error: ${e.message}`)
+            alert("No se pudo descargar el diagrama.")
         }
     }
 
@@ -573,15 +560,10 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
                 nodes += '\n    end'
             }
 
-            // Connect Rows to Store (Connects the subgraph itself or nodes?)
-            // We'll just link a representative from each row to the store to position it?
-            // Actually, if we just define them, Mermaid places them. Let's rely on one link per chunk.
-            for (let i = 0; i < techStack.length; i += chunkSize) {
-                const firstInRow = techStack[i]
-                if (firstInRow && firstInRow !== 'databricks') {
-                    const cleanId = `Tech${firstInRow.replace(/[^a-zA-Z0-9]/g, '')}`
-                    flow += `\n    ${cleanId} -.- Store`
-                }
+            // SINGLE LINK: Connect only the main TechStack subgraph to Store
+            // This prevents the visual clutter of multiple lines
+            if (techStack.some(t => t !== 'databricks')) {
+                flow += `\n    TechStack -.- Store`
             }
 
             nodes += '\n    end'
