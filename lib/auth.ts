@@ -45,7 +45,7 @@ export async function loginAction(formData: FormData) {
         else if (email === 'tomasmarzullo04@gmail.com' && password === 'user2026') {
             user = {
                 id: 'demo-user',
-                name: 'Tomas Marzullo',
+                name: 'Consultor Tomas',
                 email,
                 password: await bcrypt.hash('user2026', 10),
                 role: 'USER',
