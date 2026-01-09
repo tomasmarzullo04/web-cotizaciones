@@ -865,10 +865,10 @@ graph TD
                 {/* Architecture Diagram */}
                 <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
                     <div className="flex items-center justify-between">
-                        <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                        <h4 className="text-[#CFDBD5] text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
                             <Network className="w-4 h-4 text-[#F5CB5C]" /> Arquitectura Dinámica
                         </h4>
-                        <div className="flex gap-2">
+                        <div className="flex gap-6">
                             {!isEditingDiagram ? (
                                 <>
                                     {manualDiagramCode && (
@@ -880,7 +880,7 @@ graph TD
                                                     setManualDiagramCode(null)
                                                 }
                                             }}
-                                            className="h-8 px-2 text-[#CFDBD5] hover:text-[#F5CB5C]"
+                                            className="h-8 px-2 text-[#CFDBD5] hover:text-[#F5CB5C] text-xs"
                                             title="Restaurar Automático"
                                         >
                                             <RefreshCw className="w-4 h-4" />
@@ -893,7 +893,7 @@ graph TD
                                             setTempDiagramCode(chartCode)
                                             setIsEditingDiagram(true)
                                         }}
-                                        className="h-8 px-2 text-[#F5CB5C] hover:text-[#E8EDDF] hover:bg-[#F5CB5C]/10"
+                                        className="h-8 px-2 text-[#F5CB5C] hover:text-[#E8EDDF] hover:bg-[#F5CB5C]/10 text-xs font-medium"
                                     >
                                         <Edit className="w-4 h-4 mr-2" /> Editar
                                     </Button>
@@ -913,7 +913,7 @@ graph TD
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => setIsEditingDiagram(false)}
-                                        className="h-8 px-2 text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                                        className="h-8 px-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 text-xs"
                                     >
                                         <X className="w-4 h-4 mr-2" /> Cancelar
                                     </Button>
@@ -924,7 +924,7 @@ graph TD
                                             setChartCode(tempDiagramCode)
                                             setIsEditingDiagram(false)
                                         }}
-                                        className="h-8 px-3 bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold"
+                                        className="h-8 px-3 bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold text-xs"
                                     >
                                         <Check className="w-4 h-4 mr-2" /> Aplicar
                                     </Button>
@@ -959,7 +959,7 @@ graph TD
 
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center">
-                                    <label className="text-xs font-bold text-[#CFDBD5] uppercase">Código Mermaid</label>
+                                    <label className="text-[10px] font-bold text-[#CFDBD5] uppercase tracking-wider">Código Mermaid</label>
                                     {diagramHistory.length > 0 && (
                                         <Button
                                             variant="ghost"
@@ -974,7 +974,7 @@ graph TD
                                 <Textarea
                                     value={tempDiagramCode}
                                     onChange={(e) => setTempDiagramCode(e.target.value)}
-                                    className="font-mono text-xs bg-[#171717] border-[#2D2D2D] text-[#E8EDDF] resize-none h-[600px] focus-visible:ring-[#F5CB5C]"
+                                    className="font-mono text-xs bg-[#171717] border border-[#CFDBD5]/20 text-[#E8EDDF] resize-none h-[600px] focus-visible:ring-[#F5CB5C] rounded-[1rem] p-4 w-full"
                                     placeholder="graph TD..."
                                 />
                                 <p className="text-[10px] text-[#CFDBD5]/50 flex items-center gap-1">
