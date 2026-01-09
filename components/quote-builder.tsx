@@ -382,6 +382,34 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
         }
     }, [])
 
+    // --- Helper: Find Rate (Moved to Component Scope for Shared Access) ---
+    const findRate = useCallback((serviceName: string) => {
+        // Map State -> DB Strings
+        const freqMap: any = { 'daily': 'Diaria', 'weekly': 'Semanal', 'monthly': 'Mensual', 'realtime': 'Bajo Demanda' }
+        const compMap: any = { 'low': 'Baja', 'medium': 'Media', 'high': 'Alta' }
+
+        const targetFreq = freqMap[state.updateFrequency] || 'Diaria'
+        const targetComp = compMap[state.complexity] || 'Media'
+
+        // Try Exact Match
+        let match = serviceRates.find(r =>
+            r.service.toLowerCase().includes(serviceName.toLowerCase()) &&
+            r.frequency === targetFreq &&
+            r.complexity === targetComp
+        )
+
+        // Fallback: Try matching service only (take first/avg?) -> actually let's try matching just complexity if freq varies
+        if (!match) {
+            match = serviceRates.find(r => r.service.toLowerCase().includes(serviceName.toLowerCase()) && r.complexity === targetComp)
+        }
+        if (!match) {
+            match = serviceRates.find(r => r.service.toLowerCase().includes(serviceName.toLowerCase()))
+        }
+
+        if (match) return match.basePrice * match.multiplier
+        return 0 // No rate found
+    }, [serviceRates, state.updateFrequency, state.complexity])
+
     const { totalMonthlyCost, l2SupportCost, riskCost, totalWithRisk, servicesCost, rolesCost } = useMemo(() => {
         // 1. Calculate Roles Cost
         let baseRoles = 0
@@ -401,34 +429,6 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
         // 2. Calculate Services Cost (Based on new Admin Table)
         let baseServices = 0
 
-        // Helper to find best match
-        const findRate = (serviceName: string) => {
-            // Map State -> DB Strings
-            const freqMap: any = { 'daily': 'Diaria', 'weekly': 'Semanal', 'monthly': 'Mensual', 'realtime': 'Bajo Demanda' }
-            const compMap: any = { 'low': 'Baja', 'medium': 'Media', 'high': 'Alta' }
-
-            const targetFreq = freqMap[state.updateFrequency] || 'Diaria'
-            const targetComp = compMap[state.complexity] || 'Media'
-
-            // Try Exact Match
-            let match = serviceRates.find(r =>
-                r.service.toLowerCase().includes(serviceName.toLowerCase()) &&
-                r.frequency === targetFreq &&
-                r.complexity === targetComp
-            )
-
-            // Fallback: Try matching service only (take first/avg?) -> actually let's try matching just complexity if freq varies
-            if (!match) {
-                match = serviceRates.find(r => r.service.toLowerCase().includes(serviceName.toLowerCase()) && r.complexity === targetComp)
-            }
-            if (!match) {
-                match = serviceRates.find(r => r.service.toLowerCase().includes(serviceName.toLowerCase()))
-            }
-
-            if (match) return match.basePrice * match.multiplier
-            return 0 // No rate found
-        }
-
         if (state.pipelinesCount > 0) baseServices += state.pipelinesCount * findRate('Pipe')
         if (state.notebooksCount > 0) baseServices += state.notebooksCount * findRate('Dataset') // Assuming Notebooks ~ Datasets
         if (state.dashboardsCount > 0) baseServices += state.dashboardsCount * findRate('Dashboard')
@@ -441,7 +441,7 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
         const totalWithRisk = total + riskCost
 
         return { totalMonthlyCost: total, l2SupportCost, riskCost, totalWithRisk, servicesCost: baseServices, rolesCost: baseRoles }
-    }, [state, criticitnessLevel, serviceRates])
+    }, [state, criticitnessLevel, findRate])
 
     const totalProjectCost = totalWithRisk * state.durationMonths
 
