@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -25,17 +26,58 @@ interface AdminHistoryProps {
     quotes: Quote[]
 }
 
-export function AdminHistory({ quotes }: AdminHistoryProps) {
+export function AdminHistory({ quotes: serverQuotes }: AdminHistoryProps) {
+    const [mergedQuotes, setMergedQuotes] = useState<any[]>(serverQuotes || [])
+    const [isClient, setIsClient] = useState(false)
+
+    useEffect(() => {
+        setIsClient(true)
+
+        // Load local quotes (Same key as Dashboard)
+        const storageKey = 'quotes_v1_prod'
+        const rawValue = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null
+        let localQuotes: any[] = []
+
+        if (rawValue && rawValue !== "undefined" && rawValue !== "null") {
+            try {
+                const parsed = JSON.parse(rawValue)
+                if (Array.isArray(parsed)) {
+                    localQuotes = parsed
+                }
+            } catch (e) {
+                console.error("Failed to load local quotes in admin", e)
+            }
+        }
+
+        // Merge: Local + Server
+        // We prioritize Local for this demo view so newly created items appear
+        const combined = [...localQuotes, ...serverQuotes]
+
+        // Deduplicate by ID
+        const unique = Array.from(new Map(combined.map(item => [item?.id || Math.random(), item])).values())
+
+        // Sort descending
+        unique.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+        setMergedQuotes(unique)
+    }, [serverQuotes])
+
     const handleExportExcel = () => {
-        const dataToExport = quotes.map(q => {
-            const params = JSON.parse(q.technicalParameters)
+        const dataToExport = mergedQuotes.map(q => {
+            let params: any = {}
+            try {
+                params = JSON.parse(q.technicalParameters)
+            } catch {
+                params = q.params || {}
+            }
+
             return {
                 ID: q.id,
                 Cliente: q.clientName,
                 Proyecto: q.projectType,
-                Fecha: format(q.createdAt, 'dd/MM/yyyy HH:mm'),
+                Fecha: q.createdAt ? format(new Date(q.createdAt), 'dd/MM/yyyy HH:mm') : '-',
                 Costo_Estimado: q.estimatedCost,
-                Consultor: q.user?.name || q.user?.email || 'Sistema',
+                Consultor: q.user?.name || q.user?.email || (q.userId === 'demo-user' ? 'Consultor Demo' : 'Sistema'),
                 Criticidad: params?.criticitness?.enabled ? 'ALTA' : 'NORMAL',
                 Complejidad: params?.complexity || 'N/A'
             }
@@ -47,6 +89,8 @@ export function AdminHistory({ quotes }: AdminHistoryProps) {
         XLSX.writeFile(wb, `Cotizaciones_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`)
     }
 
+    if (!isClient) return null // Avoid hydration mismatch
+
     return (
         <Card className="rounded-[2rem] border border-[#2D2D2D] bg-[#171717] shadow-xl overflow-hidden mt-16">
             <CardHeader className="p-8 border-b border-[#2D2D2D] bg-[#171717] flex flex-row items-center justify-between">
@@ -57,7 +101,7 @@ export function AdminHistory({ quotes }: AdminHistoryProps) {
                     <div>
                         <CardTitle className="text-2xl font-bold text-[#E8EDDF]">Trazabilidad</CardTitle>
                         <CardDescription className="text-[#CFDBD5]">
-                            Historial completo de cotizaciones generadas.
+                            Historial completo de cotizaciones generadas ({mergedQuotes.length}).
                         </CardDescription>
                     </div>
                 </div>
@@ -82,11 +126,11 @@ export function AdminHistory({ quotes }: AdminHistoryProps) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {quotes.map((quote) => (
-                                <TableRow key={quote.id} className="border-[#2D2D2D] hover:bg-[#2D2D2D]/30 transition-colors group">
+                            {mergedQuotes.map((quote) => (
+                                <TableRow key={quote.id || Math.random()} className="border-[#2D2D2D] hover:bg-[#2D2D2D]/30 transition-colors group">
                                     <TableCell className="font-bold text-[#E8EDDF] pl-8 py-5">
                                         {quote.clientName || 'Sin Nombre'}
-                                        <span className="block text-xs text-[#CFDBD5] font-normal mt-1 truncate max-w-[200px]">{quote.id}</span>
+                                        <span className="block text-xs text-[#CFDBD5] font-normal mt-1 truncate max-w-[200px]">{quote.id?.toString().substring(0, 15)}...</span>
                                     </TableCell>
                                     <TableCell className="text-[#CFDBD5] py-5">
                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#171717] text-[#F5CB5C] border border-[#F5CB5C]/20">
@@ -95,22 +139,28 @@ export function AdminHistory({ quotes }: AdminHistoryProps) {
                                     </TableCell>
                                     <TableCell className="text-[#CFDBD5] py-5">
                                         <div className="flex flex-col">
-                                            <span className="font-bold text-[#E8EDDF]">{quote.user?.name || 'Sistema'}</span>
-                                            <span className="text-xs text-[#CFDBD5] opacity-60">{quote.user?.email || '-'}</span>
+                                            <span className="font-bold text-[#E8EDDF]">
+                                                {quote.user?.name || (quote.user?.email ? quote.user.email : (quote.userId === 'demo-user' ? 'Consultor Demo' : 'Sistema'))}
+                                            </span>
+                                            <span className="text-xs text-[#CFDBD5] opacity-60">
+                                                {quote.user?.email || (quote.userId === 'demo-user' ? 'demo@cotizador.com' : '-')}
+                                            </span>
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-[#CFDBD5] py-5">
-                                        {format(new Date(quote.createdAt), "d MMM yyyy", { locale: es })}
-                                        <span className="block text-xs text-[#CFDBD5]">{format(new Date(quote.createdAt), "HH:mm")}</span>
+                                        {quote.createdAt ? format(new Date(quote.createdAt), "d MMM yyyy", { locale: es }) : '-'}
+                                        <span className="block text-xs text-[#CFDBD5]">
+                                            {quote.createdAt ? format(new Date(quote.createdAt), "HH:mm") : ''}
+                                        </span>
                                     </TableCell>
                                     <TableCell className="text-right pr-8 py-5">
                                         <span className="font-mono font-bold text-[#E8EDDF] text-lg group-hover:text-[#F5CB5C] transition-colors">
-                                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(quote.estimatedCost)}
+                                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(quote.estimatedCost) || 0)}
                                         </span>
                                     </TableCell>
                                 </TableRow>
                             ))}
-                            {quotes.length === 0 && (
+                            {mergedQuotes.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={5} className="h-32 text-center text-[#CFDBD5]">
                                         No hay cotizaciones registradas aún.

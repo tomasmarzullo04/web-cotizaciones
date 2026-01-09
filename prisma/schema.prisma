@@ -7,12 +7,17 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-model RoleRate {
-  role        String @id
-  monthlyRate Float
-  baseHours   Int    @default(160)
-  hourlyRate  Float
+
+model ServiceRate {
+  id          String   @id @default(uuid())
+  service     String
+  frequency   String
+  complexity  String
+  basePrice   Float
+  multiplier  Float
+  createdAt   DateTime @default(now())
 }
+
 
 model Quote {
   id                   String   @id @default(uuid())
