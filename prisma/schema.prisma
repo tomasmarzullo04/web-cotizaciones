@@ -31,6 +31,7 @@ model Quote {
   
   userId               String?  // Optional for now to avoid breaking existing data immediately, or make Required if we reset
   user                 User?    @relation(fields: [userId], references: [id])
+  status               String   @default("BORRADOR") // BORRADOR, ENVIADA, APROBADA, RECHAZADA
 }
 
 model User {

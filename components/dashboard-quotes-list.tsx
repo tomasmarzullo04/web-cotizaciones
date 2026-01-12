@@ -8,6 +8,16 @@ import { FileText } from "lucide-react"
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Badge } from "@/components/ui/badge"
+
+const getStatusStyles = (status: string) => {
+    switch ((status || '').toUpperCase()) {
+        case 'ENVIADA': return "bg-blue-500/10 text-blue-400 border-blue-500/30 hover:bg-blue-500/20"
+        case 'APROBADA': return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
+        case 'RECHAZADA': return "bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20"
+        default: return "bg-slate-500/10 text-slate-400 border-slate-500/30 hover:bg-slate-500/20" // BORRADOR
+    }
+}
 
 export function DashboardQuotesList({ serverQuotes = [] }: { serverQuotes?: any[] }) {
     // Initialize with empty array to match potential empty server props,
@@ -115,7 +125,12 @@ export function DashboardQuotesList({ serverQuotes = [] }: { serverQuotes?: any[
                 <Card key={quote.id || Math.random()} className="bg-[#1F1F1F] border-[#2D2D2D] rounded-[1.5rem] p-6 hover:border-[#F5CB5C]/30 transition-all group">
                     <div className="grid grid-cols-12 gap-4 items-center">
                         <div className="col-span-4">
-                            <h4 className="text-[#E8EDDF] font-bold text-lg truncate">{quote.clientName || 'Sin Nombre'}</h4>
+                            <div className="flex items-center gap-3">
+                                <h4 className="text-[#E8EDDF] font-bold text-lg truncate max-w-[200px]">{quote.clientName || 'Sin Nombre'}</h4>
+                                <Badge variant="outline" className={getStatusStyles(quote.status)}>
+                                    {(quote.status || 'BORRADOR').toUpperCase()}
+                                </Badge>
+                            </div>
                             <div className="text-[#CFDBD5] text-sm opacity-70 mt-1">
                                 {(() => {
                                     try {
@@ -161,7 +176,7 @@ export function DashboardQuotesList({ serverQuotes = [] }: { serverQuotes?: any[
                         </div>
                         <div className="col-span-2 flex justify-end gap-2">
                             {/* Safe check for quote before passing */}
-                            {quote && <QuoteDetailsSheet quote={{ ...quote, estimatedCost: Number(quote.estimatedCost) || 0 }} />}
+                            {quote && <QuoteDetailsSheet quote={{ ...quote, estimatedCost: Number(quote.estimatedCost) || 0, status: quote.status || 'BORRADOR' }} />}
                             {/* Delete button manages the dialog and calls back on success */}
                             <DeleteQuoteButton
                                 quoteId={quote.id}

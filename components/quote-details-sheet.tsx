@@ -13,8 +13,10 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ArrowRight, Calendar, DollarSign, FileText, User, Edit, Save, X, Loader2, Network } from "lucide-react"
 import { MermaidDiagram } from "./mermaid-diagram"
-import { updateQuoteDiagram } from "@/lib/actions"
+import { updateQuoteDiagram, updateQuoteStatus } from "@/lib/actions"
 import { useRouter } from "next/navigation"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
 
 interface QuoteDetailsSheetProps {
     quote: {
@@ -25,6 +27,7 @@ interface QuoteDetailsSheetProps {
         createdAt: Date | string
         technicalParameters: string
         diagramDefinition?: string
+        status?: string
     }
 }
 
@@ -43,6 +46,25 @@ export function QuoteDetailsSheet({ quote }: QuoteDetailsSheetProps) {
     const [isEditingDiagram, setIsEditingDiagram] = useState(false)
     const [editedDiagramCode, setEditedDiagramCode] = useState(quote.diagramDefinition || '')
     const [isSavingDiagram, setIsSavingDiagram] = useState(false)
+    const [status, setStatus] = useState(quote.status || 'BORRADOR')
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+
+    const handleStatusChange = async (val: string) => {
+        setIsUpdatingStatus(true)
+        // Optimistic update
+        setStatus(val)
+        try {
+            await updateQuoteStatus(quote.id, val)
+            router.refresh()
+        } catch (e) {
+            console.error(e)
+            // Revert on error
+            setStatus(quote.status || 'BORRADOR')
+            alert("Error al actualizar estado")
+        } finally {
+            setIsUpdatingStatus(false)
+        }
+    }
 
     const initialDiagram = quote.diagramDefinition || 'graph TD\n  A[Inicio] --> B[Fin]'
 
@@ -72,11 +94,28 @@ export function QuoteDetailsSheet({ quote }: QuoteDetailsSheetProps) {
                 </Button>
             </SheetTrigger>
             <SheetContent className="bg-[#171717] border-l-[#2D2D2D] w-[400px] sm:w-[600px] md:w-[800px] overflow-y-auto">
-                <SheetHeader className="mb-8">
-                    <SheetTitle className="text-2xl font-black text-[#E8EDDF]">Detalle de Cotización</SheetTitle>
-                    <SheetDescription className="text-[#CFDBD5] text-base">
-                        Información completa del proyecto y parámetros.
-                    </SheetDescription>
+                <SheetHeader className="mb-8 space-y-4">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <SheetTitle className="text-2xl font-black text-[#E8EDDF]">Detalle de Cotización</SheetTitle>
+                            <SheetDescription className="text-[#CFDBD5] text-base">
+                                Información completa del proyecto y parámetros.
+                            </SheetDescription>
+                        </div>
+                        <div className="w-[180px]">
+                            <Select value={status} onValueChange={handleStatusChange} disabled={isUpdatingStatus}>
+                                <SelectTrigger className="bg-[#1F1F1F] border-[#2D2D2D] text-[#E8EDDF] font-bold">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-[#1F1F1F] border-[#2D2D2D] text-[#E8EDDF]">
+                                    <SelectItem value="BORRADOR">Borrador</SelectItem>
+                                    <SelectItem value="ENVIADA">Enviada</SelectItem>
+                                    <SelectItem value="APROBADA">Aprobada</SelectItem>
+                                    <SelectItem value="RECHAZADA">Rechazada</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
                 </SheetHeader>
 
                 <div className="space-y-8">

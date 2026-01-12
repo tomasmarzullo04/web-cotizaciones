@@ -196,16 +196,42 @@ export async function getAllQuotes() {
 
 export async function getAdminStats() {
     try {
-        /* DB Stats Logic */
-        const monthlyQuotesCount = await prisma.quote.count()
-        // ...
-        return { monthlyQuotesCount, pipelineValue: 0, activeUsersCount: 0, conversionRate: 0 }
+        const totalQuotes = await prisma.quote.count()
+
+        const allQuotes = await prisma.quote.findMany({
+            select: { estimatedCost: true, status: true, clientName: true }
+        })
+
+        const pipelineValue = allQuotes.reduce((acc, q) => acc + (q.estimatedCost || 0), 0)
+
+        // Unique clients
+        const activeUsersCount = new Set(allQuotes.map(q => q.clientName)).size
+
+        // Conversion Rate: (Approved / Total) * 100
+        const approvedCount = allQuotes.filter(q => q.status === 'APROBADA').length
+        const conversionRate = totalQuotes > 0 ? Math.round((approvedCount / totalQuotes) * 100) : 0
+
+        const statusCounts = allQuotes.reduce((acc, q) => {
+            const s = q.status || 'BORRADOR'
+            acc[s] = (acc[s] || 0) + 1
+            return acc
+        }, {} as Record<string, number>)
+
+        return {
+            monthlyQuotesCount: totalQuotes,
+            pipelineValue,
+            activeUsersCount,
+            conversionRate,
+            statusCounts
+        }
     } catch (e) {
+        console.error("Stats Error", e)
         return {
             monthlyQuotesCount: 0,
             pipelineValue: 0,
             activeUsersCount: 0,
-            conversionRate: 0
+            conversionRate: 0,
+            statusCounts: {}
         }
     }
 }
@@ -232,6 +258,24 @@ export async function updateQuoteDiagram(quoteId: string, newDiagramCode: string
         return { success: true }
     } catch (e) {
         console.error("Failed to update diagram", e)
+        return { success: false, error: "Failed to update" }
+    }
+}
+
+export async function updateQuoteStatus(quoteId: string, status: string) {
+    const cookieStore = await cookies()
+    const userId = cookieStore.get('session_user_id')?.value
+
+    if (!userId) throw new Error("Unauthorized")
+
+    try {
+        await prisma.quote.update({
+            where: { id: quoteId },
+            data: { status }
+        })
+        return { success: true }
+    } catch (e) {
+        console.error("Failed to update status", e)
         return { success: false, error: "Failed to update" }
     }
 }
