@@ -198,24 +198,38 @@ export async function getAdminStats() {
     try {
         const totalQuotes = await prisma.quote.count()
 
-        const allQuotes = await prisma.quote.findMany({
-            select: { estimatedCost: true, status: true, clientName: true }
+        // Pipeline Value (Sum of estimatedCost)
+        const pipelineAgg = await prisma.quote.aggregate({
+            _sum: { estimatedCost: true }
         })
+        const pipelineValue = pipelineAgg._sum.estimatedCost || 0
 
-        const pipelineValue = allQuotes.reduce((acc, q) => acc + (q.estimatedCost || 0), 0)
+        // Unique Active Users (Count distinct clientName - SQLite workaround via groupBy)
+        const uniqueClients = await prisma.quote.groupBy({
+            by: ['clientName'],
+        })
+        const activeUsersCount = uniqueClients.length
 
-        // Unique clients
-        const activeUsersCount = new Set(allQuotes.map(q => q.clientName)).size
-
-        // Conversion Rate: (Approved / Total) * 100
-        const approvedCount = allQuotes.filter(q => q.status === 'APROBADA').length
+        // Approved Count for Conversion Rate
+        const approvedCount = await prisma.quote.count({
+            where: { status: 'APROBADA' }
+        })
         const conversionRate = totalQuotes > 0 ? Math.round((approvedCount / totalQuotes) * 100) : 0
 
-        const statusCounts = allQuotes.reduce((acc, q) => {
-            const s = q.status || 'BORRADOR'
-            acc[s] = (acc[s] || 0) + 1
-            return acc
-        }, {} as Record<string, number>)
+        // Status Distribution
+        const statusGroups = await prisma.quote.groupBy({
+            by: ['status'],
+            _count: { status: true }
+        })
+
+        // Transform groupBy result to Record<string, number>
+        const statusCounts: Record<string, number> = {
+            'BORRADOR': 0, 'ENVIADA': 0, 'APROBADA': 0, 'RECHAZADA': 0
+        }
+        statusGroups.forEach(group => {
+            const s = group.status || 'BORRADOR'
+            statusCounts[s] = group._count.status
+        })
 
         return {
             monthlyQuotesCount: totalQuotes,
@@ -276,6 +290,7 @@ export async function updateQuoteStatus(quoteId: string, status: string) {
             data: { status }
         })
         revalidatePath('/dashboard')
+        revalidatePath('/admin')
         return { success: true }
     } catch (e) {
         console.error("Failed to update status", e)
