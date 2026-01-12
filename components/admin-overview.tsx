@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, DollarSign, Activity, FileCheck } from "lucide-react"
-import { useState, useEffect } from "react"
+
 
 const statsConfig = [
     {
@@ -47,15 +47,8 @@ interface AdminOverviewProps {
     }
 }
 
-export function AdminOverview({ stats: initialStats }: AdminOverviewProps) {
-    const [stats, setStats] = useState(initialStats)
-
-    // Sync state if props change (revalidation)
-    useEffect(() => {
-        setStats(initialStats)
-    }, [initialStats])
-
-    // Calculate distribution for chart
+export function AdminOverview({ stats }: AdminOverviewProps) {
+    // Calculate distribution for chart directly from props (No State)
     const statusCounts = stats.statusCounts || { 'BORRADOR': 0, 'ENVIADA': 0, 'APROBADA': 0, 'RECHAZADA': 0 }
     const totalQuotes = Object.values(statusCounts).reduce((a, b) => a + (b as number), 0) || 1
 

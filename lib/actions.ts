@@ -199,59 +199,49 @@ import { revalidatePath, unstable_noStore } from 'next/cache'
 
 export async function getAdminStats() {
     unstable_noStore()
-    try {
-        const totalQuotes = await prisma.quote.count()
-        console.log("Admin Stats - Total Quotes:", totalQuotes) // DEBUG
+    // No try/catch - Let it fail if DB is unreachable so we see the error
+    const totalQuotes = await prisma.quote.count()
+    console.log("Admin Stats - Total Quotes:", totalQuotes) // DEBUG
 
-        // Pipeline Value (Sum of estimatedCost)
-        const pipelineAgg = await prisma.quote.aggregate({
-            _sum: { estimatedCost: true }
-        })
-        const pipelineValue = pipelineAgg._sum.estimatedCost || 0
+    // Pipeline Value (Sum of estimatedCost)
+    const pipelineAgg = await prisma.quote.aggregate({
+        _sum: { estimatedCost: true }
+    })
+    const pipelineValue = pipelineAgg._sum.estimatedCost || 0
 
-        // Unique Active Users (Count distinct clientName - SQLite workaround via groupBy)
-        const uniqueClients = await prisma.quote.groupBy({
-            by: ['clientName'],
-        })
-        const activeUsersCount = uniqueClients.length
+    // Unique Active Users (Count distinct clientName - SQLite workaround via groupBy)
+    const uniqueClients = await prisma.quote.groupBy({
+        by: ['clientName'],
+    })
+    const activeUsersCount = uniqueClients.length
 
-        // Approved Count for Conversion Rate
-        const approvedCount = await prisma.quote.count({
-            where: { status: 'APROBADA' }
-        })
-        const conversionRate = totalQuotes > 0 ? Math.round((approvedCount / totalQuotes) * 100) : 0
+    // Approved Count for Conversion Rate
+    const approvedCount = await prisma.quote.count({
+        where: { status: 'APROBADA' }
+    })
+    const conversionRate = totalQuotes > 0 ? Math.round((approvedCount / totalQuotes) * 100) : 0
 
-        // Status Distribution - Explicit Counts for Robustness
-        const borradorCount = await prisma.quote.count({ where: { status: 'BORRADOR' } })
-        const enviadaCount = await prisma.quote.count({ where: { status: 'ENVIADA' } })
-        const aprobadaCount = await prisma.quote.count({ where: { status: 'APROBADA' } })
-        const rechazadaCount = await prisma.quote.count({ where: { status: 'RECHAZADA' } })
+    // Status Distribution - Explicit Counts for Robustness
+    const borradorCount = await prisma.quote.count({ where: { status: 'BORRADOR' } })
+    const enviadaCount = await prisma.quote.count({ where: { status: 'ENVIADA' } })
+    const aprobadaCount = await prisma.quote.count({ where: { status: 'APROBADA' } })
+    const rechazadaCount = await prisma.quote.count({ where: { status: 'RECHAZADA' } })
 
-        console.log("Status Counts:", { borradorCount, enviadaCount, aprobadaCount, rechazadaCount }) // DEBUG
+    console.log("Status Counts:", { borradorCount, enviadaCount, aprobadaCount, rechazadaCount }) // DEBUG
 
-        const statusCounts: Record<string, number> = {
-            'BORRADOR': borradorCount,
-            'ENVIADA': enviadaCount,
-            'APROBADA': aprobadaCount,
-            'RECHAZADA': rechazadaCount
-        }
+    const statusCounts: Record<string, number> = {
+        'BORRADOR': borradorCount,
+        'ENVIADA': enviadaCount,
+        'APROBADA': aprobadaCount,
+        'RECHAZADA': rechazadaCount
+    }
 
-        return {
-            monthlyQuotesCount: totalQuotes,
-            pipelineValue,
-            activeUsersCount,
-            conversionRate,
-            statusCounts
-        }
-    } catch (e) {
-        console.error("Stats Error", e)
-        return {
-            monthlyQuotesCount: 0,
-            pipelineValue: 0,
-            activeUsersCount: 0,
-            conversionRate: 0,
-            statusCounts: {}
-        }
+    return {
+        monthlyQuotesCount: totalQuotes,
+        pipelineValue,
+        activeUsersCount,
+        conversionRate,
+        statusCounts
     }
 }
 
