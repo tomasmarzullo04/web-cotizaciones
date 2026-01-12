@@ -50,6 +50,11 @@ interface AdminOverviewProps {
 export function AdminOverview({ stats: initialStats }: AdminOverviewProps) {
     const [stats, setStats] = useState(initialStats)
 
+    // Sync state if props change (revalidation)
+    useEffect(() => {
+        setStats(initialStats)
+    }, [initialStats])
+
     // Calculate distribution for chart
     const statusCounts = stats.statusCounts || { 'BORRADOR': 0, 'ENVIADA': 0, 'APROBADA': 0, 'RECHAZADA': 0 }
     const totalQuotes = Object.values(statusCounts).reduce((a, b) => a + (b as number), 0) || 1
@@ -62,46 +67,6 @@ export function AdminOverview({ stats: initialStats }: AdminOverviewProps) {
             default: return "bg-slate-500"
         }
     }
-
-    useEffect(() => {
-        // Load demo quotes from local storage
-        const saved = localStorage.getItem('demo_quotes')
-        if (saved) {
-            try {
-                const quotes: any[] = JSON.parse(saved)
-
-                // 1. Monthly Quotes (Approximation: All quotes in demo mode or filter by date if available)
-                const currentMonth = new Date().getMonth()
-                const monthlyQuotes = quotes.filter(q => {
-                    const d = new Date(q.createdAt || Date.now()) // Fallback to now if no date
-                    return d.getMonth() === currentMonth
-                })
-
-                // 2. Pipeline Value (Total Monthly * Duration)
-                const pipelineVal = quotes.reduce((acc, q) => {
-                    const monthly = q.costBreakdown?.totalWithRisk || 0
-                    const duration = q.durationMonths || 6
-                    return acc + (monthly * duration)
-                }, 0)
-
-                // 3. Active Users (Unique Clients)
-                const uniqueClients = new Set(quotes.map(q => q.clientName)).size
-
-                // 4. Conversion Rate (Proxy: % of High Complexity Quotes)
-                const highComplexity = quotes.filter(q => q.complexity === 'high').length
-                const conversion = quotes.length > 0 ? Math.round((highComplexity / quotes.length) * 100) : 0
-
-                setStats({
-                    monthlyQuotesCount: monthlyQuotes.length,
-                    pipelineValue: pipelineVal,
-                    activeUsersCount: uniqueClients,
-                    conversionRate: conversion
-                })
-            } catch (e) {
-                console.error("Error calculating admin stats", e)
-            }
-        }
-    }, [])
 
     return (
         <div className="space-y-8">
