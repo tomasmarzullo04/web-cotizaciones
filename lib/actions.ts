@@ -219,20 +219,18 @@ export async function getAdminStats() {
         })
         const conversionRate = totalQuotes > 0 ? Math.round((approvedCount / totalQuotes) * 100) : 0
 
-        // Status Distribution
-        const statusGroups = await prisma.quote.groupBy({
-            by: ['status'],
-            _count: { status: true }
-        })
+        // Status Distribution - Explicit Counts for Robustness
+        const borradorCount = await prisma.quote.count({ where: { status: 'BORRADOR' } })
+        const enviadaCount = await prisma.quote.count({ where: { status: 'ENVIADA' } })
+        const aprobadaCount = await prisma.quote.count({ where: { status: 'APROBADA' } })
+        const rechazadaCount = await prisma.quote.count({ where: { status: 'RECHAZADA' } })
 
-        // Transform groupBy result to Record<string, number>
         const statusCounts: Record<string, number> = {
-            'BORRADOR': 0, 'ENVIADA': 0, 'APROBADA': 0, 'RECHAZADA': 0
+            'BORRADOR': borradorCount,
+            'ENVIADA': enviadaCount,
+            'APROBADA': aprobadaCount,
+            'RECHAZADA': rechazadaCount
         }
-        statusGroups.forEach(group => {
-            const s = group.status || 'BORRADOR'
-            statusCounts[s] = group._count.status
-        })
 
         return {
             monthlyQuotesCount: totalQuotes,
