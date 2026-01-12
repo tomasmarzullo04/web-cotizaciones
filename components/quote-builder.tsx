@@ -424,7 +424,7 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
                 diagramCode: chartCode
             }
 
-            const savedQuote = await saveQuote({
+            const result = await saveQuote({
                 clientName: state.clientName,
                 projectType: state.complexity,
                 params: {
@@ -441,6 +441,13 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
                 },
                 breakdown: breakdown
             })
+
+            if (!result.success || !result.quote) {
+                alert(`Error del Servidor: ${result.error}`)
+                return;
+            }
+
+            const savedQuote = result.quote
 
             // Client-Side Persistence Removed - Strictly rely on Server DB
 

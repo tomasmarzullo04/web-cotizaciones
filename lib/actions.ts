@@ -125,7 +125,10 @@ export async function saveQuote(data: {
     const cookieStore = await cookies()
     const userId = cookieStore.get('session_user_id')?.value
 
-    if (!userId) throw new Error("User ID not found in session")
+    if (!userId) {
+        console.error("SaveQuote Error: No User ID in session")
+        return { success: false, error: "No user logged in" }
+    }
 
     console.log("Saving quote for user:", userId) // DEBUG
 
@@ -143,10 +146,11 @@ export async function saveQuote(data: {
             }
         })
         console.log("Quote saved successfully:", result.id) // DEBUG
-        return result
-    } catch (e) {
+        return { success: true, quote: result }
+    } catch (e: any) {
         console.error("CRITICAL DB ERROR (saveQuote):", e)
-        throw e
+        // Return error to client to debug Vercel issue
+        return { success: false, error: e.message || "Database Insert Failed" }
     }
 }
 
