@@ -194,7 +194,10 @@ export async function getAllQuotes() {
     }
 }
 
+import { revalidatePath, unstable_noStore } from 'next/cache'
+
 export async function getAdminStats() {
+    unstable_noStore()
     try {
         const totalQuotes = await prisma.quote.count()
 
@@ -276,7 +279,7 @@ export async function updateQuoteDiagram(quoteId: string, newDiagramCode: string
     }
 }
 
-import { revalidatePath } from 'next/cache'
+
 
 export async function updateQuoteStatus(quoteId: string, status: string) {
     const cookieStore = await cookies()
