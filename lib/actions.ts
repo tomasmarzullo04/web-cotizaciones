@@ -125,6 +125,7 @@ async function sendToMonday(quote: any, params: any, breakdown: any) {
 
     try {
         const payload = {
+            action: "create",
             id: Number(quote.id) || quote.id,
             clientName: quote.clientName,
             project: quote.projectType,
@@ -352,6 +353,29 @@ export async function updateQuoteDiagram(quoteId: string, newDiagramCode: string
 
 
 
+async function sendStatusUpdateToMonday(id: string, status: string, userId: string) {
+    const webhookUrl = process.env.N8N_MONDAY_WEBHOOK
+    if (!webhookUrl) return
+
+    try {
+        const payload = {
+            action: "update",
+            id: Number(id) || id,
+            status: status,
+            ownerId: userId,
+            date: new Date().toISOString()
+        }
+
+        await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+    } catch (e: any) {
+        console.error("[n8n Status Update Failed]:", e.message)
+    }
+}
+
 export async function updateQuoteStatus(quoteId: string, status: string) {
     const cookieStore = await cookies()
     const userId = cookieStore.get('session_user_id')?.value
@@ -363,6 +387,10 @@ export async function updateQuoteStatus(quoteId: string, status: string) {
             where: { id: quoteId },
             data: { status }
         })
+
+        // Notify n8n of status change
+        await sendStatusUpdateToMonday(quoteId, status, userId)
+
         revalidatePath('/dashboard')
         revalidatePath('/admin')
         return { success: true }
