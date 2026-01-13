@@ -178,6 +178,7 @@ export async function saveQuote(data: {
         return { success: false, error: "No user logged in" }
     }
 
+    console.log("🚀 STARTING SAVE PROTOCOL v2 - DEBUG_N8N")
     console.log("Saving quote for user:", userId) // DEBUG
 
     try {
@@ -193,10 +194,12 @@ export async function saveQuote(data: {
                 status: 'BORRADOR'
             }
         })
-        console.log("Quote saved successfully:", result.id) // DEBUG
+        console.log("✅ Database Saved ID:", result.id)
 
-        // Trigger Monday Sync (Fire and forget, but return status)
+        // Trigger Monday Sync (Now checking result)
+        console.log("⚡ Initiating n8n Sync...")
         const syncResult = await sendToMonday(result, data.params, data.breakdown)
+        console.log("🏁 Sync Result:", syncResult)
 
         return { success: true, quote: result, sync: syncResult }
     } catch (e: any) {
