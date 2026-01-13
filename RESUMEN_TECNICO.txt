@@ -1,0 +1,61 @@
+RESUMEN TÉCNICO DEL SISTEMA "WEB-COTIZACIONES"
+==============================================
+Fecha: 12 de Enero, 2026
+
+1. ARQUITECTURA GENERAL
+-----------------------
+El sistema es una aplicación web moderna construida con:
+- Framework: Next.js 16 (App Router).
+- Frontend: React Server Components (RSC) para máximo rendimiento.
+- Estilado: Tailwind CSS + Shadcn UI.
+- Lenguaje: TypeScript para seguridad de tipos.
+
+2. BASE DE DATOS (DATA LAYER)
+-----------------------------
+- Motor: PostgreSQL (Alojado en Supabase / Vercel Postgres).
+- ORM: Prisma (Herramienta que comunica el código con la BD).
+- Esquema Principal (`prisma/schema.prisma`):
+  - User: Usuarios del sistema (Admin, Clientes).
+  - Quote: Las cotizaciones generadas.
+  - ServiceRate: Tarifas por rol (para el Admin).
+
+3. CONEXIÓN Y DESPLIEGUE (CLOUD)
+--------------------------------
+La aplicación vive en la nube (Vercel) y se conecta a la base de datos mediante Variables de Entorno Seguras:
+
+- POSTGRES_PRISMA_URL: Conexión optimizada (Pooling) para tráfico alto (puerto 6543).
+- POSTGRES_URL_NON_POOLING: Conexión directa para migraciones y tareas administrativas (puerto 5432).
+
+*Nota: Vercel actúa como servidor "Serverless", lo que significa que no hay un servidor encendido 24/7, sino que se enciende cuando alguien entra a la web.*
+
+4. FLUJO DE DATOS (CÓMO FUNCIONA)
+---------------------------------
+
+A. INICIO DE SESIÓN
+   - El usuario ingresa credenciales.
+   - Si es un usuario Demo, el sistema verifica si existe en la BD Postgres.
+   - Si no existe, lo crea automáticamente ("Upsert") para evitar errores de integridad.
+   - Se guarda una Cookie segura (`session_user_id`) en el navegador.
+
+B. CREACIÓN DE COTIZACIÓN
+   - El usuario llena el formulario (Parámetros Técnicos).
+   - "React Hook Form" gestiona el estado local.
+   - Al dar "Calcular", se ejecuta una Server Action (`calculateQuote`) que usa lógica de negocio privada en el servidor (nadie ve las fórmulas).
+
+C. GUARDADO (PERSISTENCIA)
+   - Al dar "Guardar", se llama a `saveQuote`.
+   - Prisma toma los datos, convierte los JSONs y los inserta en la tabla `Quote` de Postgres.
+   - Se vincula obligatoriamente al `userId` de la sesión.
+   - Si falla (ej. conexión caída), devuelve un error explicativo al usuario.
+
+D. DASHBOARD (VISUALIZACIÓN)
+   - La página `/dashboard` es dinámica (`force-dynamic`).
+   - Cada vez que entras, consulta en tiempo real a Postgres: "Dame todas las cotizaciones donde userId = X".
+   - No se usa caché antigua, asegurando que siempre veas lo último.
+
+5. ARCHIVOS CLAVE
+-----------------
+- `prisma/schema.prisma`: El "plano" de la base de datos.
+- `lib/actions.ts`: El cerebro. Contiene todas las funciones de servidor (Guardar, Calcular, Borrar).
+- `lib/auth.ts`: Maneja la seguridad y los usuarios demo.
+- `.env`: (Oculto) Contiene las llaves maestras de la base de datos.
