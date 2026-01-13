@@ -116,6 +116,43 @@ export async function calculateQuote(params: TechnicalParameters): Promise<CostB
 
 
 
+
+// Helper: Send to Monday via n8n
+async function sendToMonday(quote: any, params: any, breakdown: any) {
+    const webhookUrl = process.env.N8N_MONDAY_WEBHOOK
+    if (!webhookUrl) return { synced: false, reason: "No Webhook URL configured" }
+
+    try {
+        const payload = {
+            id: quote.id,
+            clientName: quote.clientName,
+            project: quote.projectType,
+            totalCost: quote.estimatedCost,
+            date: new Date().toISOString(),
+            status: quote.status,
+            // Construct readable items list for Monday
+            items: [
+                ...breakdown.roles.map((r: any) => `${r.role}: ${r.count} (${r.hours}h)`),
+                `Complejidad: ${params.complexity}`,
+                `Frecuencia: ${params.updateFrequency}`
+            ].join(', '),
+            owner: quote.userId
+        }
+
+        const res = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+
+        if (!res.ok) throw new Error(`n8n responded with ${res.status}`)
+        return { synced: true }
+    } catch (e: any) {
+        console.error("Monday Sync Failed:", e)
+        return { synced: false, reason: e.message }
+    }
+}
+
 export async function saveQuote(data: {
     clientName: string,
     projectType: string,
@@ -146,7 +183,11 @@ export async function saveQuote(data: {
             }
         })
         console.log("Quote saved successfully:", result.id) // DEBUG
-        return { success: true, quote: result }
+
+        // Trigger Monday Sync (Fire and forget, but return status)
+        const syncResult = await sendToMonday(result, data.params, data.breakdown)
+
+        return { success: true, quote: result, sync: syncResult }
     } catch (e: any) {
         console.error("CRITICAL DB ERROR (saveQuote):", e)
         // Return error to client to debug Vercel issue

@@ -451,8 +451,14 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
 
             // Client-Side Persistence Removed - Strictly rely on Server DB
 
+            let msg = "Cotización guardada exitosamente."
+            if (result.sync?.synced) {
+                msg += "\n✅ Sincronizado con Monday.com"
+            } else if (result.sync?.reason) {
+                console.warn("Monday Sync Warning:", result.sync.reason)
+            }
 
-            alert("Cotización guardada exitosamente.")
+            alert(msg)
             router.push('/dashboard')
         } catch (e) {
             console.error(e)
