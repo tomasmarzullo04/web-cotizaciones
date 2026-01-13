@@ -120,6 +120,8 @@ export async function calculateQuote(params: TechnicalParameters): Promise<CostB
 // Helper: Send to Monday via n8n
 async function sendToMonday(quote: any, params: any, breakdown: any) {
     const webhookUrl = process.env.N8N_MONDAY_WEBHOOK
+    console.log("🔍 [n8n Debug] URL Detected:", webhookUrl ? `${webhookUrl.substring(0, 20)}...` : "UNDEFINED")
+
     if (!webhookUrl) return { synced: false, reason: "No Webhook URL configured" }
 
     try {
@@ -139,16 +141,25 @@ async function sendToMonday(quote: any, params: any, breakdown: any) {
             owner: quote.userId
         }
 
+        console.log("📤 [n8n Debug] Sending Payload:", JSON.stringify(payload, null, 2))
+
         const res = await fetch(webhookUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         })
 
-        if (!res.ok) throw new Error(`n8n responded with ${res.status}`)
+        console.log("📥 [n8n Debug] Response Status:", res.status)
+
+        if (!res.ok) {
+            const errorText = await res.text()
+            console.error("❌ [n8n Error] Body:", errorText)
+            throw new Error(`n8n responded with ${res.status}: ${errorText}`)
+        }
+
         return { synced: true }
     } catch (e: any) {
-        console.error("Monday Sync Failed:", e)
+        console.error("❌ [n8n Sync Failed]:", e)
         return { synced: false, reason: e.message }
     }
 }
