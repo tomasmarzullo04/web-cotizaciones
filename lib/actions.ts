@@ -118,48 +118,56 @@ export async function calculateQuote(params: TechnicalParameters): Promise<CostB
 
 
 // Helper: Send to Monday via n8n
+// Helper: Send to Monday via n8n
 async function sendToMonday(quote: any, params: any, breakdown: any) {
     const webhookUrl = process.env.N8N_MONDAY_WEBHOOK
-    console.log("🔍 [n8n Debug] URL Detected:", webhookUrl ? `${webhookUrl.substring(0, 20)}...` : "UNDEFINED")
-
     if (!webhookUrl) return { synced: false, reason: "No Webhook URL configured" }
 
     try {
         const payload = {
-            id: quote.id,
+            id: Number(quote.id) || quote.id,
             clientName: quote.clientName,
             project: quote.projectType,
-            totalCost: quote.estimatedCost,
+            description: params.description || '',
+            totalCost: Number(quote.estimatedCost),
             date: new Date().toISOString(),
             status: quote.status,
-            // Construct readable items list for Monday
-            items: [
-                ...breakdown.roles.map((r: any) => `${r.role}: ${r.count} (${r.hours}h)`),
-                `Complejidad: ${params.complexity}`,
-                `Frecuencia: ${params.updateFrequency}`
-            ].join(', '),
-            owner: quote.userId
+            ownerId: quote.userId,
+
+            // 1. Desglose de Horas & Roles (Array completo)
+            roles: breakdown.roles.map((r: any) => ({
+                role: r.role,
+                count: Number(r.count),
+                hours: Number(r.hours),
+                cost: Number(r.cost)
+            })),
+
+            // 2. Parámetros Técnicos
+            technical: {
+                complexity: params.complexity,
+                frequency: params.updateFrequency,
+                dataVolume: params.dataVolume,
+                pipelines: Number(params.pipelinesCount),
+                users: Number(params.usersCount)
+            },
+
+            // 3. Arquitectura
+            architecture: {
+                diagramCode: breakdown.diagramCode
+            }
         }
 
-        console.log("📤 [n8n Debug] Sending Payload:", JSON.stringify(payload, null, 2))
-
-        const res = await fetch(webhookUrl, {
+        // Fire and forget (await but don't fail main flow)
+        await fetch(webhookUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         })
 
-        console.log("📥 [n8n Debug] Response Status:", res.status)
-
-        if (!res.ok) {
-            const errorText = await res.text()
-            console.error("❌ [n8n Error] Body:", errorText)
-            throw new Error(`n8n responded with ${res.status}: ${errorText}`)
-        }
-
         return { synced: true }
     } catch (e: any) {
-        console.error("❌ [n8n Sync Failed]:", e)
+        // Silent fail for user, but log for admin
+        console.error("[n8n Sync Warning]:", e.message)
         return { synced: false, reason: e.message }
     }
 }
@@ -178,8 +186,7 @@ export async function saveQuote(data: {
         return { success: false, error: "No user logged in" }
     }
 
-    console.log("🚀 STARTING SAVE PROTOCOL v2 - DEBUG_N8N")
-    console.log("Saving quote for user:", userId) // DEBUG
+    console.log("Saving quote for user:", userId)
 
     try {
         const result = await prisma.quote.create({
@@ -194,12 +201,9 @@ export async function saveQuote(data: {
                 status: 'BORRADOR'
             }
         })
-        console.log("✅ Database Saved ID:", result.id)
 
-        // Trigger Monday Sync (Now checking result)
-        console.log("⚡ Initiating n8n Sync...")
+        // Trigger Monday Sync (Fire and forget, but return status)
         const syncResult = await sendToMonday(result, data.params, data.breakdown)
-        console.log("🏁 Sync Result:", syncResult)
 
         return { success: true, quote: result, sync: syncResult }
     } catch (e: any) {
