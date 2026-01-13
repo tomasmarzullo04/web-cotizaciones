@@ -353,15 +353,17 @@ export async function updateQuoteDiagram(quoteId: string, newDiagramCode: string
 
 
 
-async function sendStatusUpdateToMonday(id: string, status: string, userId: string) {
+async function sendStatusUpdateToMonday(quote: any, userId: string) {
     const webhookUrl = process.env.N8N_MONDAY_WEBHOOK
     if (!webhookUrl) return
 
     try {
         const payload = {
             action: "update",
-            id: Number(id) || id,
-            status: status,
+            id: Number(quote.id) || quote.id,
+            status: quote.status,
+            clientName: quote.clientName,
+            totalCost: Number(quote.estimatedCost),
             ownerId: userId,
             date: new Date().toISOString()
         }
@@ -383,13 +385,13 @@ export async function updateQuoteStatus(quoteId: string, status: string) {
     if (!userId) throw new Error("Unauthorized")
 
     try {
-        await prisma.quote.update({
+        const updatedQuote = await prisma.quote.update({
             where: { id: quoteId },
             data: { status }
         })
 
         // Notify n8n of status change
-        await sendStatusUpdateToMonday(quoteId, status, userId)
+        await sendStatusUpdateToMonday(updatedQuote, userId)
 
         revalidatePath('/dashboard')
         revalidatePath('/admin')
