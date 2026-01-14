@@ -125,7 +125,7 @@ export function QuoteDetailsSheet({ quote, onQuoteUpdated }: QuoteDetailsSheetPr
                     Ver Detalle <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
             </SheetTrigger>
-            <SheetContent className="bg-[#171717] border-l-[#2D2D2D] w-[400px] sm:w-[600px] md:w-[800px] overflow-y-auto">
+            <SheetContent className="bg-[#171717] border-l-[#2D2D2D] w-[400px] sm:w-[600px] md:w-[800px] overflow-y-auto overflow-x-hidden">
                 <SheetHeader className="mb-8 space-y-4">
                     <div className="flex items-end justify-between">
                         <div>
@@ -187,7 +187,7 @@ export function QuoteDetailsSheet({ quote, onQuoteUpdated }: QuoteDetailsSheetPr
 
                     {/* Architecture Diagram Editor */}
                     <div className="p-6 bg-[#1F1F1F] rounded-[1.5rem] border border-[#2D2D2D] flex flex-col gap-6 group relative">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap items-center justify-between gap-4">
                             <h3 className="text-lg font-bold text-[#E8EDDF] flex items-center gap-2">
                                 <Network className="w-5 h-5 text-[#F5CB5C]" />
                                 Arquitectura Propuesta
@@ -202,28 +202,28 @@ export function QuoteDetailsSheet({ quote, onQuoteUpdated }: QuoteDetailsSheetPr
                                             setEditedDiagramCode(quote.diagramDefinition || '')
                                             setIsEditingDiagram(true)
                                         }}
-                                        className="text-[#F5CB5C] hover:text-[#E8EDDF] hover:bg-[#F5CB5C]/10"
+                                        className="text-[#F5CB5C] hover:text-[#E8EDDF] hover:bg-[#F5CB5C]/10 ml-auto"
                                     >
                                         <Edit className="w-4 h-4 mr-2" /> Editar
                                     </Button>
                                 ) : (
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                                         <Button
                                             variant="ghost"
                                             size="sm"
                                             onClick={() => setIsEditingDiagram(false)}
-                                            className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                                            className="text-red-400 hover:text-red-300 hover:bg-red-400/10 flex-1 sm:flex-none"
                                             disabled={isSavingDiagram}
                                         >
-                                            <X className="w-4 h-4 mr-2" /> Cancelar
+                                            <X className="w-4 h-4 mr-1" /> Cancelar
                                         </Button>
                                         <Button
                                             size="sm"
                                             onClick={handleSaveDiagram}
-                                            className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold"
+                                            className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold flex-1 sm:flex-none min-w-[100px]"
                                             disabled={isSavingDiagram}
                                         >
-                                            {isSavingDiagram ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                                            {isSavingDiagram ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
                                             Guardar
                                         </Button>
                                     </div>
