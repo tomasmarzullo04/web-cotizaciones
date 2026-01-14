@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { ArrowRight, Calendar, DollarSign, FileText, User, Edit, Save, X, Loader2, Network, Download, Sparkles } from "lucide-react"
 import { MermaidDiagram } from "./mermaid-diagram"
 import { updateQuoteDiagram, updateQuoteStatus } from "@/lib/actions"
