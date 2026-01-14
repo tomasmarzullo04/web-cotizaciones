@@ -235,8 +235,8 @@ export async function generateMermaidUpdate(currentCode: string, prompt: string)
         // For "Agrega un nodo", we should append.
 
         // Quick Append Logic
-        const targetRaw = p.split(' ')[1] || 'Node' // super naive
-        const id = 'NewNode'
+        const targetRaw = p.split(' ')[1] || 'Node' 
+        const id = 'Node_' + Math.floor(Math.random() * 1000)
         newCode += `\n    ${id}[${targetRaw}]`
         return newCode
     }

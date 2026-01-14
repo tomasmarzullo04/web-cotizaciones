@@ -10,10 +10,11 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { ArrowRight, Calendar, DollarSign, FileText, User, Edit, Save, X, Loader2, Network, Download } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { ArrowRight, Calendar, DollarSign, FileText, User, Edit, Save, X, Loader2, Network, Download, Sparkles } from "lucide-react"
 import { MermaidDiagram } from "./mermaid-diagram"
 import { updateQuoteDiagram, updateQuoteStatus } from "@/lib/actions"
+import { generateMermaidUpdate } from "@/lib/ai"
 import { useRouter } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
@@ -49,6 +50,26 @@ export function QuoteDetailsSheet({ quote, onQuoteUpdated }: QuoteDetailsSheetPr
     const [isSavingDiagram, setIsSavingDiagram] = useState(false)
     const [status, setStatus] = useState(quote.status || 'BORRADOR')
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+
+    // AI Assistant State
+    const [aiPrompt, setAiPrompt] = useState('')
+    const [isGeneratingAI, setIsGeneratingAI] = useState(false)
+
+    const handleAIGenerate = async () => {
+        setIsGeneratingAI(true)
+        try {
+            const currentCode = editedDiagramCode || quote.diagramDefinition || ''
+            const newCode = await generateMermaidUpdate(currentCode, aiPrompt)
+            setEditedDiagramCode(newCode)
+            setIsEditingDiagram(true) // Switch to edit mode to show result
+            setAiPrompt('')
+        } catch (e) {
+            console.error("AI Generation failed", e)
+            alert("Error generando diagrama")
+        } finally {
+            setIsGeneratingAI(false)
+        }
+    }
 
     const handleStatusChange = async (val: string) => {
         setIsUpdatingStatus(true)
@@ -208,6 +229,35 @@ export function QuoteDetailsSheet({ quote, onQuoteUpdated }: QuoteDetailsSheetPr
                                 )
                             )}
                         </div>
+
+                        {/* AI Assistant Input */}
+                        {!isEditingDiagram && (
+                            <div className="relative animate-in fade-in slide-in-from-top-2 duration-500">
+                                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                    <Sparkles className="h-4 w-4 text-[#F5CB5C]" />
+                                </div>
+                                <Input
+                                    placeholder="IA: Describe un cambio (ej: 'Agrega un nodo de Power BI conectado al Lake')"
+                                    className="pl-10 pr-12 bg-[#171717] border-[#2D2D2D] text-[#E8EDDF] placeholder:text-[#CFDBD5]/30 focus-visible:ring-[#F5CB5C] h-10 transition-all hover:border-[#F5CB5C]/50"
+                                    value={aiPrompt}
+                                    onChange={(e) => setAiPrompt(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && aiPrompt && !isGeneratingAI) {
+                                            handleAIGenerate()
+                                        }
+                                    }}
+                                />
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="absolute right-1 top-1 h-8 w-8 text-[#F5CB5C] hover:text-[#E8EDDF] hover:bg-[#F5CB5C]/20"
+                                    onClick={handleAIGenerate}
+                                    disabled={!aiPrompt || isGeneratingAI}
+                                >
+                                    {isGeneratingAI ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                                </Button>
+                            </div>
+                        )}
 
                         {quote.diagramDefinition || isEditingDiagram ? (
                             isEditingDiagram ? (
