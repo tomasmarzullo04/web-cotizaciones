@@ -42,8 +42,8 @@ export default function Home() {
                     </div>
                 </section>
 
-                {/* FEATURES GRID */}
-                <section className="grid md:grid-cols-3 gap-8 pb-20">
+                {/* FEATURES GRID - 2x2 Layout */}
+                <section className="grid md:grid-cols-2 gap-8 pb-20 max-w-5xl mx-auto">
 
                     {/* Card 1: Roles */}
                     <div className="bg-[#171717] border border-[#2D2D2D] p-10 rounded-[2.5rem] hover:border-[#F5CB5C]/50 transition-colors group relative overflow-hidden">
@@ -85,6 +85,20 @@ export default function Home() {
                         <h3 className="text-3xl font-bold text-[#E8EDDF] mb-4">Trazabilidad Total</h3>
                         <p className="text-[#CFDBD5] leading-relaxed">
                             Registro inmutable de cada cotización. Panel de administración para gestión de tarifas y exportación a Excel.
+                        </p>
+                    </div>
+
+                    {/* Card 4: Monday.com Sync */}
+                    <div className="bg-[#171717] border border-[#2D2D2D] p-10 rounded-[2.5rem] hover:border-[#00ca72]/50 transition-colors group relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                            <FileSpreadsheet className="w-32 h-32 text-[#00ca72]" />
+                        </div>
+                        <div className="w-16 h-16 bg-[#1F1F1F] rounded-3xl flex items-center justify-center mb-8 border border-[#333]">
+                            <FileSpreadsheet className="w-8 h-8 text-[#00ca72]" />
+                        </div>
+                        <h3 className="text-3xl font-bold text-[#E8EDDF] mb-4">Sincronización con Monday.com</h3>
+                        <p className="text-[#CFDBD5] leading-relaxed">
+                            Seguimiento comercial en tiempo real. Actualización automática de estados, presupuestos y alcances técnicos directamente en tu tablero corporativo.
                         </p>
                     </div>
 

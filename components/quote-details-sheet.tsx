@@ -170,19 +170,20 @@ export function QuoteDetailsSheet({ quote, onQuoteUpdated }: QuoteDetailsSheetPr
                                 <Network className="w-5 h-5 text-[#F5CB5C]" />
                                 Arquitectura Propuesta
                             </h3>
-                            {!isEditingDiagram ? (
+                            {quote.diagramDefinition && !isEditingDiagram && (
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => {
-                                        setEditedDiagramCode(quote.diagramDefinition || initialDiagram)
+                                        setEditedDiagramCode(quote.diagramDefinition || '')
                                         setIsEditingDiagram(true)
                                     }}
                                     className="text-[#F5CB5C] hover:text-[#E8EDDF] hover:bg-[#F5CB5C]/10"
                                 >
                                     <Edit className="w-4 h-4 mr-2" /> Editar
                                 </Button>
-                            ) : (
+                            )}
+                            {isEditingDiagram && (
                                 <div className="flex gap-2">
                                     <Button
                                         variant="ghost"
@@ -206,31 +207,41 @@ export function QuoteDetailsSheet({ quote, onQuoteUpdated }: QuoteDetailsSheetPr
                             )}
                         </div>
 
-                        {isEditingDiagram ? (
-                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 animate-in fade-in zoom-in-95 duration-300">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-[#CFDBD5] uppercase">Código Mermaid</label>
-                                    <Textarea
-                                        value={editedDiagramCode}
-                                        onChange={(e) => setEditedDiagramCode(e.target.value)}
-                                        className="font-mono text-xs bg-[#171717] border-[#2D2D2D] text-[#E8EDDF] resize-none h-[300px] focus-visible:ring-[#F5CB5C]"
-                                    />
-                                    <p className="text-[10px] text-[#CFDBD5]/50">
-                                        Edita los nodos y conexiones para actualizar el diagrama en tiempo real.
-                                    </p>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-[#CFDBD5] uppercase">Vista Previa</label>
-                                    <div className="bg-white rounded-xl overflow-hidden h-[300px] flex items-center justify-center border border-[#2D2D2D]">
-                                        <div className="scale-75 origin-center w-full">
-                                            <MermaidDiagram chart={editedDiagramCode} />
+                        {quote.diagramDefinition || isEditingDiagram ? (
+                            isEditingDiagram ? (
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 animate-in fade-in zoom-in-95 duration-300">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-[#CFDBD5] uppercase">Código Mermaid</label>
+                                        <Textarea
+                                            value={editedDiagramCode}
+                                            onChange={(e) => setEditedDiagramCode(e.target.value)}
+                                            className="font-mono text-xs bg-[#171717] border-[#2D2D2D] text-[#E8EDDF] resize-none h-[300px] focus-visible:ring-[#F5CB5C]"
+                                        />
+                                        <p className="text-[10px] text-[#CFDBD5]/50">
+                                            Edita los nodos y conexiones para actualizar el diagrama en tiempo real.
+                                        </p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-[#CFDBD5] uppercase">Vista Previa</label>
+                                        <div className="bg-white rounded-xl overflow-hidden h-[300px] flex items-center justify-center border border-[#2D2D2D]">
+                                            <div className="scale-75 origin-center w-full">
+                                                <MermaidDiagram chart={editedDiagramCode} />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="bg-white rounded-xl p-4 overflow-hidden min-h-[200px] border border-[#2D2D2D]">
+                                    <MermaidDiagram chart={quote.diagramDefinition} />
+                                </div>
+                            )
                         ) : (
-                            <div className="bg-white rounded-xl p-4 overflow-hidden min-h-[200px] border border-[#2D2D2D]">
-                                <MermaidDiagram chart={quote.diagramDefinition || initialDiagram} />
+                            <div className="flex flex-col items-center justify-center h-[200px] bg-[#171717] border border-dashed border-[#2D2D2D] rounded-xl text-center">
+                                <Network className="w-10 h-10 text-[#2D2D2D] mb-3" />
+                                <p className="text-[#CFDBD5] font-bold">Diagrama no disponible</p>
+                                <p className="text-xs text-[#CFDBD5]/50 mt-1 max-w-[250px]">
+                                    Esta cotización no tiene una arquitectura generada.
+                                </p>
                             </div>
                         )}
                     </div>

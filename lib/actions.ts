@@ -249,6 +249,11 @@ export async function updateRoleRate(role: string, newMonthlyRate: number) {
 export async function getAllQuotes() {
     try {
         return await prisma.quote.findMany({
+            where: {
+                user: {
+                    email: { not: 'demo@cotizador.com' }
+                }
+            },
             orderBy: { createdAt: 'desc' },
             include: { user: { select: { name: true, email: true } } }
         })
