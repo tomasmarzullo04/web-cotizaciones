@@ -293,8 +293,8 @@ export function QuoteDetailsSheet({ quote, onQuoteUpdated }: QuoteDetailsSheetPr
                         <h3 className="text-lg font-bold text-[#E8EDDF] px-2 flex items-center gap-2">
                             Especificaciones Técnicas
                         </h3>
-                        {/* Expanded Grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {/* Expanded Grid - Fixed 2 columns (4 rows) */}
+                        <div className="grid grid-cols-2 gap-4">
                             {/* Row 1: Users & Data */}
                             <div className="p-4 bg-[#1F1F1F] rounded-2xl border border-[#2D2D2D] hover:border-[#F5CB5C]/30 transition-colors">
                                 <span className="text-[10px] text-[#CFDBD5]/60 uppercase font-black block mb-2 tracking-widest">Usuarios</span>
