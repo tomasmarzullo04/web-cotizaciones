@@ -14,9 +14,8 @@ import { Wand2, Download, FileText, Check, ShieldAlert, Network, Cpu, Calculator
 import { cn } from "@/lib/utils"
 import { saveQuote } from "@/lib/actions"
 import { generateMermaidUpdate } from "@/lib/ai"
+import { exportToPDF, exportToWord } from "@/lib/export"
 import html2canvas from 'html2canvas'
-
-// --- 1. TYPES & CONSTANTS ---
 
 // Hardcoded fallback rates in case DB fails or during transition
 const FALLBACK_RATES = {
@@ -204,7 +203,7 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
             await new Promise(r => setTimeout(r, 100))
 
             // Capture Diagram
-            let diagramImage = null
+            let diagramImage = undefined
             const element = document.getElementById('diagram-capture-target')
             if (element) {
                 // Temporary style for valid capture (white background often helps readability in docs)
@@ -214,40 +213,22 @@ export default function QuoteBuilder({ dbRates }: { dbRates?: Record<string, num
                 } catch (e) { console.error("Export capture failed", e) }
             }
 
-            const quoteData = {
-                clientName: state.clientName,
-                totalCost: totalWithRisk, // Use risk adjusted
-                items: [
-                    ...Object.entries(state.roles)
-                        .filter(([_, count]) => count > 0)
-                        .map(([role, count]) => ({
-                            name: role,
-                            quantity: count,
-                            price: 0 // We don't have individual role prices easily accessible here without Recalculating, but total is correct
-                        })),
-                    // Add Services
-                    state.pipelinesCount > 0 && { name: `Pipelines de Ingesta (${state.complexity})`, quantity: state.pipelinesCount, price: findRate('Pipe') },
-                    state.notebooksCount > 0 && { name: `Notebooks/Datasets (${state.complexity})`, quantity: state.notebooksCount, price: findRate('Dataset') },
-                    state.dashboardsCount > 0 && { name: `Dashboards (${state.complexity})`, quantity: state.dashboardsCount, price: findRate('Dashboard') },
-                    state.dsModelsCount > 0 && { name: `Modelos IA (${state.complexity})`, quantity: state.dsModelsCount, price: findRate('Algoritmo') },
-                ].filter(Boolean),
+            const exportData = {
+                ...state,
+                totalMonthlyCost,
+                l2SupportCost,
+                riskCost,
+                totalWithRisk,
+                criticitnessLevel,
                 diagramImage
             }
 
-            const response = await fetch('/api/generate-pdf', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(quoteData),
-            })
+            if (type === 'pdf') {
+                await exportToPDF(exportData)
+            } else {
+                await exportToWord(exportData)
+            }
 
-            if (!response.ok) throw new Error('Failed to generate PDF')
-
-            const blob = await response.blob()
-            const url = window.URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = `cotizacion-${state.clientName || 'cliente'}.${type === 'pdf' ? 'pdf' : 'docx'}`
-            a.click()
         } catch (e) {
             console.error(e)
             alert("Error al exportar documento")
