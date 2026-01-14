@@ -232,7 +232,7 @@ export function QuoteDetailsSheet({ quote, onQuoteUpdated }: QuoteDetailsSheetPr
                                 </div>
                             ) : (
                                 <div className="bg-white rounded-xl p-4 overflow-hidden min-h-[200px] border border-[#2D2D2D]">
-                                    <MermaidDiagram chart={quote.diagramDefinition} />
+                                    <MermaidDiagram chart={quote.diagramDefinition || ''} />
                                 </div>
                             )
                         ) : (
