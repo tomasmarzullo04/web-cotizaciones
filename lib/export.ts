@@ -112,8 +112,8 @@ export async function exportToPDF(data: QuoteState & { totalMonthlyCost: number,
     doc.setFont("helvetica", "normal")
     doc.setTextColor(COLOR_TEXT)
     const descLines = doc.splitTextToSize(data.description || 'Sin descripción detallada.', pageWidth - (margin * 2))
-    doc.text(descLines, margin, y, { align: 'justify', maxWidth: pageWidth - (margin * 2) })
-    y += (descLines.length * 5) + 15
+    doc.text(descLines, margin, y, { align: 'left', maxWidth: pageWidth - (margin * 2), lineHeightFactor: 1.5 })
+    y += (descLines.length * 7) + 15 // Increased spacing multiplier for line height
 
     // 2. Executive Summary Bullets
     doc.setFontSize(14)
