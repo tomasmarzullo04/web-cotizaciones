@@ -54,28 +54,10 @@ export function AdminHistory({ quotes: serverQuotes }: AdminHistoryProps) {
 
     useEffect(() => {
         setIsClient(true)
-
-        // Load local quotes (Same key as Dashboard)
-        const storageKey = 'quotes_v1_prod'
-        const rawValue = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null
-        let localQuotes: any[] = []
-
-        if (rawValue && rawValue !== "undefined" && rawValue !== "null") {
-            try {
-                const parsed = JSON.parse(rawValue)
-                if (Array.isArray(parsed)) {
-                    localQuotes = parsed
-                }
-            } catch (e) {
-                console.error("Failed to load local quotes in admin", e)
-            }
-        }
-
-        // Merge: Local + Server
-        const combined = [...localQuotes, ...serverQuotes]
-        const unique = Array.from(new Map(combined.map(item => [item?.id || Math.random(), item])).values())
-        unique.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        setMergedQuotes(unique)
+        // Strictly use server quotes, no local merging for Admin View
+        const validQuotes = Array.isArray(serverQuotes) ? serverQuotes : []
+        validQuotes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        setMergedQuotes(validQuotes)
     }, [serverQuotes])
 
     // Filter Logic
@@ -251,7 +233,7 @@ export function AdminHistory({ quotes: serverQuotes }: AdminHistoryProps) {
                                         <TableCell className="text-[#CFDBD5] py-5">
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-[#E8EDDF] text-sm">
-                                                    {quote.user?.name || (quote.user?.email ? quote.user.email.split('@')[0] : (quote.userId === 'demo-user' ? 'Demo' : 'Sistema'))}
+                                                    {quote.user?.name || (quote.user?.email ? quote.user.email.split('@')[0] : 'Sistema')}
                                                 </span>
                                             </div>
                                         </TableCell>
