@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowRight, Calendar, DollarSign, FileText, User, Edit, Save, X, Loader2, Network, Download, Sparkles, Briefcase } from "lucide-react"
+import { ArrowRight, Calendar, DollarSign, FileText, User, Edit, Save, X, Loader2, Network, Download, Sparkles, Briefcase, Rocket, Settings } from "lucide-react"
 import { MermaidDiagram } from "./mermaid-diagram"
 import { updateQuoteDiagram, updateQuoteStatus } from "@/lib/actions"
 import { generateMermaidUpdate } from "@/lib/ai"
@@ -154,22 +154,38 @@ export function QuoteDetailsSheet({ quote, onQuoteUpdated }: QuoteDetailsSheetPr
                 <div className="space-y-8">
                     {/* Main Info */}
                     <div className="p-6 bg-[#1F1F1F] rounded-[1.5rem] border border-[#2D2D2D] space-y-4">
-                        <div className="flex items-start gap-4">
-                            <div className="p-3 bg-[#171717] rounded-xl border border-[#2D2D2D]">
-                                <User className="w-6 h-6 text-[#F5CB5C]" />
-                            </div>
-                            <div>
-                                <h3 className="text-xs font-bold text-[#CFDBD5] uppercase tracking-wider mb-1">Cliente</h3>
-                                <p className="text-xl font-bold text-[#E8EDDF]">{quote.clientName}</p>
-                            </div>
-
+                        <div className="flex flex-col gap-6">
                             <div className="flex items-start gap-4">
                                 <div className="p-3 bg-[#171717] rounded-xl border border-[#2D2D2D]">
-                                    <Briefcase className="w-6 h-6 text-[#CFDBD5]" />
+                                    <User className="w-6 h-6 text-[#F5CB5C]" />
                                 </div>
-                                <div>
-                                    <h3 className="text-xs font-bold text-[#CFDBD5] uppercase tracking-wider mb-1">Tipo de Servicio</h3>
-                                    <p className="text-xl font-bold text-[#E8EDDF]">{quote.serviceType || 'Proyecto'}</p>
+                                <div className="flex-1">
+                                    <h3 className="text-xs font-bold text-[#CFDBD5] uppercase tracking-wider mb-2">Cliente</h3>
+                                    <div className="flex items-center flex-wrap gap-3">
+                                        <p className="text-xl font-bold text-[#E8EDDF]">{quote.clientName}</p>
+
+                                        {/* Service Type Badge */}
+                                        {(() => {
+                                            const type = quote.serviceType || 'Proyecto'
+                                            let badgeStyles = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                            let Icon = Rocket
+
+                                            if (type === 'Staffing') {
+                                                badgeStyles = "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                                                Icon = User
+                                            } else if (type === 'Sustain') {
+                                                badgeStyles = "bg-orange-500/10 text-orange-400 border-orange-500/20"
+                                                Icon = Settings
+                                            }
+
+                                            return (
+                                                <Badge variant="outline" className={`${badgeStyles} flex items-center gap-1.5 px-3 py-1 text-xs font-bold border`}>
+                                                    <Icon className="w-3.5 h-3.5" />
+                                                    {type}
+                                                </Badge>
+                                            )
+                                        })()}
+                                    </div>
                                 </div>
                             </div>
                         </div>
