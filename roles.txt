@@ -17,3 +17,12 @@ Roles
 
     - darold@thestoreintelligence.com
     - darold2026
+
+    - liliana@thestoreintelligence.com
+    - liliana2026
+
+    - loudal@thestoreintelligence.com
+    - loudal2026
+
+    - ktellez@thestoreintelligence.com
+    - ktellez2026
