@@ -128,6 +128,63 @@ export async function loginAction(formData: FormData) {
                 user = { ...fallbackDarold, createdAt: new Date() }
             }
         }
+        else if (email === 'liliana@thestoreintelligence.com' && password === 'liliana2026') {
+            const fallbackLiliana = {
+                id: 'demo-liliana',
+                name: 'Liliana',
+                email,
+                password: await bcrypt.hash('liliana2026', 10),
+                role: 'USER',
+            }
+            try {
+                user = await prisma.user.upsert({
+                    where: { email },
+                    update: {},
+                    create: fallbackLiliana
+                })
+            } catch (e) {
+                console.error("Failed to upsert demo liliana", e)
+                user = { ...fallbackLiliana, createdAt: new Date() }
+            }
+        }
+        else if (email === 'loudal@thestoreintelligence.com' && password === 'loudal2026') {
+            const fallbackLoudal = {
+                id: 'demo-loudal',
+                name: 'Loudal',
+                email,
+                password: await bcrypt.hash('loudal2026', 10),
+                role: 'USER',
+            }
+            try {
+                user = await prisma.user.upsert({
+                    where: { email },
+                    update: {},
+                    create: fallbackLoudal
+                })
+            } catch (e) {
+                console.error("Failed to upsert demo loudal", e)
+                user = { ...fallbackLoudal, createdAt: new Date() }
+            }
+        }
+        else if (email === 'ktellez@thestoreintelligence.com' && password === 'ktellez2026') {
+            const fallbackKtellez = {
+                id: 'demo-ktellez',
+                name: 'Ktellez',
+                email,
+                password: await bcrypt.hash('ktellez2026', 10),
+                role: 'USER',
+            }
+            try {
+                user = await prisma.user.upsert({
+                    where: { email },
+                    update: {},
+                    create: fallbackKtellez
+                })
+            } catch (e) {
+                console.error("Failed to upsert demo ktellez", e)
+                user = { ...fallbackKtellez, createdAt: new Date() }
+            }
+        }
     }
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
