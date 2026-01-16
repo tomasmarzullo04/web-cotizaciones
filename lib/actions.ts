@@ -186,12 +186,14 @@ export async function saveQuote(data: {
     }
 
     // Fetch user details for Webhook
-    let userEmail = "unknown"
+    let userName = "Usuario Desconocido"
     try {
         const user = await prisma.user.findUnique({ where: { id: userId } })
-        if (user) userEmail = user.email
+        if (user) {
+            userName = user.name || user.email // Fallback to email if name is empty
+        }
     } catch (e) {
-        console.warn("Failed to fetch user email for webhook", e)
+        console.warn("Failed to fetch user details for webhook", e)
     }
 
     console.log("Saving quote for user:", userId)
@@ -212,7 +214,7 @@ export async function saveQuote(data: {
         })
 
         // Trigger Monday Sync (Fire and forget, but return status)
-        const syncResult = await sendToMonday(result, data.params, data.breakdown, userEmail)
+        const syncResult = await sendToMonday(result, data.params, data.breakdown, userName)
 
         return { success: true, quote: result, sync: syncResult }
     } catch (e: any) {
@@ -400,12 +402,14 @@ export async function updateQuoteStatus(quoteId: string, status: string) {
     if (!userId) throw new Error("Unauthorized")
 
     // Fetch user details for Webhook
-    let userEmail = "unknown"
+    let userName = "Usuario Desconocido"
     try {
         const user = await prisma.user.findUnique({ where: { id: userId } })
-        if (user) userEmail = user.email
+        if (user) {
+            userName = user.name || user.email // Fallback to email if name empty
+        }
     } catch (e) {
-        console.warn("Failed to fetch user email for webhook", e)
+        console.warn("Failed to fetch user details for webhook", e)
     }
 
     try {
@@ -415,7 +419,7 @@ export async function updateQuoteStatus(quoteId: string, status: string) {
         })
 
         // Notify n8n of status change
-        await sendStatusUpdateToMonday(updatedQuote, userId, userEmail)
+        await sendStatusUpdateToMonday(updatedQuote, userId, userName)
 
         revalidatePath('/dashboard')
         revalidatePath('/admin')
