@@ -127,6 +127,10 @@ async function sendToMonday(quote: any, params: any, breakdown: any, userName: s
         const payload = {
             action: "create",
             id: Number(quote.id) || quote.id,
+            userName: userName,
+            clientName: quote.clientName,
+            project: quote.projectType,
+            serviceType: quote.serviceType,
             description: params.description || '',
             totalCost: Number(quote.estimatedCost), // Already includes commercial discount
             date: new Date().toISOString(),
