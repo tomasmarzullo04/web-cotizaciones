@@ -16,6 +16,7 @@ import { saveQuote } from "@/lib/actions"
 import { generateMermaidUpdate } from "@/lib/ai"
 import { exportToPDF, exportToWord } from "@/lib/export"
 import html2canvas from 'html2canvas'
+import { motion, AnimatePresence } from "framer-motion"
 
 // Hardcoded fallback rates in case DB fails or during transition
 const FALLBACK_RATES = {
@@ -665,7 +666,13 @@ graph TD
     // --- RENDER WIZARD STEP 0 (SELECTION) ---
     if (wizardStep === 0) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-[#333533] p-4 md:p-6 animate-in fade-in zoom-in-95 duration-500">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="flex flex-col items-center justify-center min-h-screen bg-[#333533] p-4 md:p-6"
+            >
                 <div className="text-center mb-8 md:mb-16 space-y-4">
                     <h1 className="text-4xl md:text-6xl font-black text-[#E8EDDF] tracking-tighter">
                         Nueva <span className="text-[#F5CB5C]">Estimación</span>
@@ -684,22 +691,28 @@ graph TD
                         <div
                             key={item.id}
                             onClick={() => handleStepSelection(item.id as any)}
-                            className="bg-[#242423] p-10 rounded-[2.5rem] border border-[#333533] hover:border-[#F5CB5C] cursor-pointer transition-all hover:-translate-y-2 hover:shadow-[0_0_40px_rgba(245,203,92,0.1)] group"
+                            className="bg-[#242423] p-10 rounded-[2.5rem] border border-[#333533] hover:border-[#F5CB5C] cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_0_40px_rgba(245,203,92,0.15)] group hover:scale-[1.02] active:scale-95"
                         >
-                            <div className="p-4 bg-[#333533] rounded-2xl w-fit mb-6 group-hover:bg-[#F5CB5C] transition-colors">
-                                <item.icon className="w-8 h-8 text-[#F5CB5C] group-hover:text-[#242423]" />
+                            <div className="p-4 bg-[#333533] rounded-2xl w-fit mb-6 group-hover:bg-[#F5CB5C] transition-colors duration-300 shadow-sm">
+                                <item.icon className="w-8 h-8 text-[#F5CB5C] group-hover:text-[#242423] transition-colors duration-300" />
                             </div>
                             <h2 className="text-3xl font-bold text-[#E8EDDF] mb-4">{item.title}</h2>
                             <p className="text-[#CFDBD5] leading-relaxed">{item.desc}</p>
                         </div>
                     ))}
                 </div>
-            </div>
+            </motion.div>
         )
     }
 
     return (
-        <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-[#333533] font-sans pt-24 md:pt-32">
+        <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="flex flex-col lg:flex-row h-screen overflow-hidden bg-[#333533] font-sans pt-24 md:pt-32"
+        >
 
             {/* ================= LEFT COLUMN: FORM SCROLL ================= */}
             <div className="w-full lg:w-2/3 h-full overflow-y-auto scrollbar-custom p-4 md:p-8 lg:p-12">
@@ -1385,7 +1398,7 @@ graph TD
                 </div >
 
             </div >
-        </div >
+        </motion.div>
     )
 }
 

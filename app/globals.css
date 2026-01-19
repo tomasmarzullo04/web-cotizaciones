@@ -84,10 +84,20 @@
     outline: none !important;
   }
 
-  /* Custom Scrollbar - Dark */
+  /* Global Pointer Enforcement */
+  button,
+  a,
+  input[type="submit"],
+  input[type="button"],
+  select,
+  .cursor-pointer {
+    cursor: pointer !important;
+  }
+
+  /* Custom Scrollbar - Dark & Premium */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px; /* Sleeker width */
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
@@ -95,12 +105,12 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #333;
-    border-radius: 4px;
-    border: 1px solid var(--border);
+    background-color: #333;
+    border-radius: 10px;
+    border: none; /* Cleaner look */
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--gold-accent);
+    background-color: var(--gold-accent);
   }
 }

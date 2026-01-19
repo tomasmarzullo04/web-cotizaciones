@@ -170,8 +170,8 @@ export function AdminRatesEditor() {
                                 </TableHeader>
                                 <TableBody>
                                     {displayedRates.map((rate) => (
-                                        <TableRow key={rate.id} className="border-[#333533] hover:bg-[#333533]/50 transition-colors">
-                                            <TableCell className="font-bold text-[#E8EDDF] pl-8 py-5">
+                                        <TableRow key={rate.id} className="border-[#333533] hover:bg-[#333533] cursor-pointer transition-all duration-200 group">
+                                            <TableCell className="font-bold text-[#E8EDDF] pl-8 py-5 group-hover:text-[#F5CB5C] transition-colors">
                                                 {rate.service}
                                             </TableCell>
                                             <TableCell className="text-[#CFDBD5]">{rate.frequency}</TableCell>
@@ -186,11 +186,11 @@ export function AdminRatesEditor() {
                                                 ${(rate.basePrice * rate.multiplier).toFixed(0)}
                                             </TableCell>
                                             <TableCell className="pr-8 text-center">
-                                                <div className="flex justify-center gap-2">
-                                                    <Button size="icon" variant="ghost" onClick={() => handleEdit(rate)} className="h-8 w-8 text-[#CFDBD5] hover:text-white">
+                                                <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                                    <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleEdit(rate) }} className="h-8 w-8 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-[#333533]">
                                                         <Pencil className="w-4 h-4" />
                                                     </Button>
-                                                    <Button size="icon" variant="ghost" onClick={() => handleDelete(rate.id)} className="h-8 w-8 text-red-400 hover:text-red-300">
+                                                    <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleDelete(rate.id) }} className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-900/20">
                                                         <Trash2 className="w-4 h-4" />
                                                     </Button>
                                                 </div>

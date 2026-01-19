@@ -5,21 +5,21 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive cursor-pointer",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-bold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive cursor-pointer active:scale-95",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow hover:bg-primary/90 hover:scale-[1.03] active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg",
+          "bg-primary text-primary-foreground shadow-[0_0_15px_rgba(245,203,92,0.15)] hover:bg-primary/90 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(245,203,92,0.4)]",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:scale-[1.03] active:scale-95 transition-all duration-300",
+          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:scale-[1.02]",
         outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground hover:scale-[1.03] active:scale-95 transition-all duration-300",
+          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground hover:scale-[1.02] hover:border-primary/50",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 hover:scale-[1.03] active:scale-95 transition-all duration-300",
-        ghost: "hover:bg-accent hover:text-accent-foreground hover:scale-[1.05] active:scale-95 transition-all duration-300",
-        link: "text-primary underline-offset-4 hover:underline hover:scale-[1.03] active:scale-95 transition-all duration-300",
-        icon: "h-9 w-9 p-0 hover:scale-110 active:scale-90 transition-all duration-300", // New dedicated icon variant if needed, or just standard
+          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 hover:scale-[1.02]",
+        ghost: "hover:bg-accent hover:text-accent-foreground hover:scale-[1.05]",
+        link: "text-primary underline-offset-4 hover:underline hover:scale-[1.02]",
+        icon: "h-9 w-9 p-0 hover:scale-110 shadow-sm",
       },
       size: {
         default: "h-10 px-5 py-2 has-[>svg]:px-4",
