@@ -1,0 +1,201 @@
+{
+  "timestamp": "2026-01-19T13:11:20.876Z",
+  "users": [
+    {
+      "id": "demo-admin",
+      "name": "Admin Demo",
+      "email": "admin@antigravity.com",
+      "password": "$2b$10$ICBzNYHlsTlSzDeoKcUaL.Bkm5o.MlRtAO8CIZ8DHsn0epogdaLea",
+      "role": "ADMIN",
+      "createdAt": "2026-01-13T00:10:45.604Z"
+    },
+    {
+      "id": "demo-user",
+      "name": "Tomas Marzullo",
+      "email": "tomasmarzullo04@gmail.com",
+      "password": "$2b$10$3dV9oKkAUNauJLedswxiBuzpycdiEmXkz6l5qH/nEGDkP4jkcBjci",
+      "role": "USER",
+      "createdAt": "2026-01-13T00:10:11.443Z"
+    },
+    {
+      "id": "demo-max",
+      "name": "Max Higareda",
+      "email": "maxhigareda@thestoreintelligence.com",
+      "password": "$2b$10$hgS179hhihYurSVVqVIJ0e4Hpge4ZdkF.vwCm/bey3CWiqDXBwZWW",
+      "role": "USER",
+      "createdAt": "2026-01-14T11:43:01.006Z"
+    },
+    {
+      "id": "f3abe93d-c42d-4e47-b36f-ecddd6b674b8",
+      "name": "Viridiana",
+      "email": "viridiana@thestoreintelligence.com",
+      "password": "$2b$10$qPXBlCqmhdmxRObnziNAo.yHAF7qMn2fz1UkuiZUwKHAVi7D3nyo2",
+      "role": "USER",
+      "createdAt": "2026-01-16T14:22:56.554Z"
+    },
+    {
+      "id": "ec9444ba-a12a-4878-af70-26fc582119ed",
+      "name": "Darold",
+      "email": "darold@thestoreintelligence.com",
+      "password": "$2b$10$m/psEsvgFnKfrdA.V3.2Z.s4dUqezDJHxh5..enoFwmMW57Oo8BeC",
+      "role": "USER",
+      "createdAt": "2026-01-16T14:22:57.465Z"
+    },
+    {
+      "id": "c610fd44-5632-4836-888c-50405f5ad31a",
+      "name": "Liliana",
+      "email": "liliana@thestoreintelligence.com",
+      "password": "$2b$10$/l4UrsC06UtXE0rcXFRclOXMCyCetHNdgu6NJZoIs4pz6SAU7IaEe",
+      "role": "USER",
+      "createdAt": "2026-01-16T22:30:25.225Z"
+    },
+    {
+      "id": "c2d828e9-ddab-4edc-90a7-9c18b49a74f0",
+      "name": "Loudal",
+      "email": "loudal@thestoreintelligence.com",
+      "password": "$2b$10$32.hIBNp/h.1DQG7skXevO0P7EuCAK0.Oz0MTGgCmylEYNUG7IO9K",
+      "role": "USER",
+      "createdAt": "2026-01-16T22:30:26.157Z"
+    },
+    {
+      "id": "a1c78f44-258c-4cd8-a150-d89fa9ebb698",
+      "name": "Ktellez",
+      "email": "ktellez@thestoreintelligence.com",
+      "password": "$2b$10$lVrRkX9oAaSq5eXBG7eB/egC1Um0rmATAHafaFE1xY.d0gY4EM78K",
+      "role": "USER",
+      "createdAt": "2026-01-16T22:30:27.076Z"
+    }
+  ],
+  "quotes": [
+    {
+      "id": "73415a4e-e762-4b62-97e1-cd12d4badd50",
+      "clientName": "javier",
+      "projectType": "medium",
+      "technicalParameters": "{\"clientName\":\"javier\",\"description\":\"PROYECTO: javier\\n\\nOBJETIVO ESTRATÉGICO:\\nSitio web cotizador\\n\\nARQUITECTURA PROPUESTA:\\nImplementación de un ecosistema de datos moderno basado en Azure/AWS. Se diseñarán 0 pipelines de ingesta resilientes y se desplegarán 0 activos de visualización para soportar la toma de decisiones.\\n\\nALCANCE:\\n- Ingesta: daily (20% manual actual)\\n- Consumo: 0 usuarios finales\\n- Seguridad: Estándar\",\"complexity\":\"medium\",\"updateFrequency\":\"daily\",\"roles\":{\"data_engineer\":0,\"bi_developer\":0,\"data_science\":0,\"power_apps\":0,\"react_dev\":0,\"power_automate\":1,\"data_analyst\":1},\"pipelinesCount\":0,\"notebooksCount\":0,\"manualProcessPct\":20,\"automationsCount\":0,\"pipelineExecutions\":0,\"usersCount\":0,\"isFinancialOrSales\":false,\"reportsCount\":0,\"reportUsers\":0,\"techStack\":[],\"dsModelsCount\":0,\"dashboardsCount\":0,\"criticitness\":{\"enabled\":false,\"level\":\"low\",\"impactOperative\":\"low\",\"impactFinancial\":\"low\",\"dataExposure\":\"internal\",\"countriesCount\":1},\"durationMonths\":6,\"supportHours\":\"business\",\"dataVolume\":\"TB\",\"sourceSystemsCount\":2,\"aiFeatures\":false,\"reportComplexity\":\"medium\",\"securityCompliance\":\"standard\",\"databricksUsage\":\"none\",\"criticality\":\"low\"}",
+      "estimatedCost": 7150,
+      "staffingRequirements": "[{\"role\":\"data_engineer\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"bi_developer\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"data_science\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"power_apps\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"react_dev\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"power_automate\",\"count\":1,\"cost\":0,\"hours\":0},{\"role\":\"data_analyst\",\"count\":1,\"cost\":0,\"hours\":0}]",
+      "diagramDefinition": "\ngraph TD\n    %% Graphite Theme\n    classDef default fill:#242423,stroke:#CFDBD5,stroke-width:2px,color:#E8EDDF;\n    classDef highlight fill:#242423,stroke:#F5CB5C,stroke-width:2px,color:#F5CB5C;\n    linkStyle default stroke:#CFDBD5,stroke-width:2px;\n    \n    \n    Source[Fuentes]\n    Pipe[Ingesta]\n    Store[Lakehouse]\n    Vis[Power BI]\n    User((Usuario))\n        \n    Source --> Pipe\nPipe --> Store\nStore --> Vis\nVis --> User\n\n    \n    class Source,User default\n    class Pipe,Store,Vis highlight\n        ",
+      "createdAt": "2026-01-14T11:43:26.389Z",
+      "userId": "demo-max",
+      "status": "BORRADOR",
+      "serviceType": "Proyecto"
+    },
+    {
+      "id": "2b265f56-3a1d-48d5-96c6-4e4f05573eaf",
+      "clientName": "Tomas Marzullo",
+      "projectType": "medium",
+      "technicalParameters": "{\"clientName\":\"Tomas Marzullo\",\"description\":\"PROYECTO: Tomas Marzullo\\n\\nOBJETIVO ESTRATÉGICO:\\nSitio cotizador\\n\\nARQUITECTURA PROPUESTA:\\nImplementación de un ecosistema de datos moderno basado en Azure/AWS. Se diseñarán 0 pipelines de ingesta resilientes y se desplegarán 0 activos de visualización para soportar la toma de decisiones.\\n\\nALCANCE:\\n- Ingesta: daily (20% manual actual)\\n- Consumo: 0 usuarios finales\\n- Seguridad: Estándar\",\"complexity\":\"medium\",\"updateFrequency\":\"daily\",\"roles\":{\"data_engineer\":0,\"bi_developer\":0,\"data_science\":1,\"power_apps\":1,\"react_dev\":0,\"power_automate\":0,\"data_analyst\":0},\"pipelinesCount\":0,\"notebooksCount\":0,\"manualProcessPct\":20,\"automationsCount\":0,\"pipelineExecutions\":0,\"usersCount\":0,\"isFinancialOrSales\":false,\"reportsCount\":0,\"reportUsers\":0,\"techStack\":[],\"dsModelsCount\":0,\"dashboardsCount\":0,\"criticitness\":{\"enabled\":false,\"level\":\"low\",\"impactOperative\":\"low\",\"impactFinancial\":\"low\",\"dataExposure\":\"internal\",\"countriesCount\":1},\"durationMonths\":6,\"supportHours\":\"business\",\"dataVolume\":\"TB\",\"sourceSystemsCount\":2,\"aiFeatures\":false,\"reportComplexity\":\"medium\",\"securityCompliance\":\"standard\",\"databricksUsage\":\"none\",\"criticality\":\"low\"}",
+      "estimatedCost": 10010,
+      "staffingRequirements": "[{\"role\":\"data_engineer\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"bi_developer\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"data_science\",\"count\":1,\"cost\":0,\"hours\":0},{\"role\":\"power_apps\",\"count\":1,\"cost\":0,\"hours\":0},{\"role\":\"react_dev\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"power_automate\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"data_analyst\",\"count\":0,\"cost\":0,\"hours\":0}]",
+      "diagramDefinition": "\ngraph TD\n    %% Graphite Theme\n    classDef default fill:#242423,stroke:#CFDBD5,stroke-width:2px,color:#E8EDDF;\n    classDef highlight fill:#242423,stroke:#F5CB5C,stroke-width:2px,color:#F5CB5C;\n    linkStyle default stroke:#CFDBD5,stroke-width:2px;\n    \n    \n    Source[Fuentes]\n    Pipe[Ingesta]\n    Store[Lakehouse]\n    Vis[Power BI]\n    User((Usuario))\n        \n    Source --> Pipe\nPipe --> Store\nStore --> Vis\nVis --> User\n\n    \n    class Source,User default\n    class Pipe,Store,Vis highlight\n        ",
+      "createdAt": "2026-01-14T12:45:48.602Z",
+      "userId": "demo-max",
+      "status": "BORRADOR",
+      "serviceType": "Proyecto"
+    },
+    {
+      "id": "f51ad9fd-5971-4b5b-8971-2594ff5873b3",
+      "clientName": "Federico MArzullo",
+      "projectType": "high",
+      "technicalParameters": "{\"clientName\":\"Federico MArzullo\",\"description\":\"PROYECTO: Federico MArzullo\\n\\nOBJETIVO ESTRATÉGICO:\\nSitio web cotizador \\n\\nARQUITECTURA PROPUESTA:\\nImplementación de un ecosistema de datos moderno basado en Azure/AWS. Se diseñarán 0 pipelines de ingesta resilientes y se desplegarán 0 activos de visualización para soportar la toma de decisiones.\\n\\nALCANCE:\\n- Ingesta: daily (20% manual actual)\\n- Consumo: 0 usuarios finales\\n- Seguridad: Estándar\",\"complexity\":\"high\",\"updateFrequency\":\"daily\",\"roles\":{\"data_engineer\":0,\"bi_developer\":1,\"data_science\":1,\"power_apps\":0,\"react_dev\":0,\"power_automate\":0,\"data_analyst\":0},\"pipelinesCount\":0,\"notebooksCount\":1,\"manualProcessPct\":20,\"automationsCount\":0,\"pipelineExecutions\":0,\"usersCount\":0,\"isFinancialOrSales\":false,\"reportsCount\":0,\"reportUsers\":0,\"techStack\":[\"python\",\"powerbi\"],\"dsModelsCount\":0,\"dashboardsCount\":0,\"criticitness\":{\"enabled\":false,\"level\":\"low\",\"impactOperative\":\"low\",\"impactFinancial\":\"low\",\"dataExposure\":\"internal\",\"countriesCount\":1},\"durationMonths\":6,\"supportHours\":\"business\",\"dataVolume\":\"TB\",\"sourceSystemsCount\":2,\"aiFeatures\":false,\"reportComplexity\":\"medium\",\"securityCompliance\":\"standard\",\"databricksUsage\":\"none\",\"criticality\":\"low\"}",
+      "estimatedCost": 10150.8,
+      "staffingRequirements": "[{\"role\":\"data_engineer\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"bi_developer\",\"count\":1,\"cost\":0,\"hours\":0},{\"role\":\"data_science\",\"count\":1,\"cost\":0,\"hours\":0},{\"role\":\"power_apps\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"react_dev\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"power_automate\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"data_analyst\",\"count\":0,\"cost\":0,\"hours\":0}]",
+      "diagramDefinition": "\ngraph TD\n    %% Graphite Theme\n    classDef default fill:#242423,stroke:#CFDBD5,stroke-width:2px,color:#E8EDDF;\n    classDef highlight fill:#242423,stroke:#F5CB5C,stroke-width:2px,color:#F5CB5C;\n    linkStyle default stroke:#CFDBD5,stroke-width:2px;\n    \n    \n    Source[Fuentes]\n    Pipe[Ingesta]\n    Store[Lakehouse]\n    Vis[Power BI]\n    User((Usuario))\n        \n    subgraph TechStack [Stack Tecnológico]\n    direction TB\n    subgraph Row0 [ ]\n    direction LR\n        Techpython[Python/Airflow]\n        style Techpython stroke-dasharray: 5 5\n        Techpowerbi[Power BI]\n        style Techpowerbi stroke-dasharray: 5 5\n    end\n    end\n    style Row0 fill:none,stroke:none\n    Source --> Pipe\nPipe --> Store\nStore --> Vis\nVis --> User\n\n    TechStack -.- Store\n    \n    class Source,User default\n    class Pipe,Store,Vis highlight\n        ",
+      "createdAt": "2026-01-14T19:10:25.805Z",
+      "userId": "demo-max",
+      "status": "APROBADA",
+      "serviceType": "Proyecto"
+    },
+    {
+      "id": "c198e24d-dd5d-49dd-9f23-ca34afb8143d",
+      "clientName": "Max Higareda",
+      "projectType": "medium",
+      "technicalParameters": "{\"clientName\":\"Max Higareda\",\"description\":\"PROYECTO: Max Higareda\\n\\nOBJETIVO ESTRATÉGICO:\\nSitio web cotizador\\n\\nARQUITECTURA PROPUESTA:\\nImplementación de un ecosistema de datos moderno basado en Azure/AWS. Se diseñarán 0 pipelines de ingesta resilientes y se desplegarán 0 activos de visualización para soportar la toma de decisiones.\\n\\nALCANCE:\\n- Ingesta: daily (20% manual actual)\\n- Consumo: 0 usuarios finales\\n- Seguridad: Estándar\",\"complexity\":\"medium\",\"updateFrequency\":\"daily\",\"serviceType\":\"Staffing\",\"roles\":{\"data_engineer\":0,\"bi_developer\":0,\"data_science\":0,\"power_apps\":0,\"react_dev\":0,\"power_automate\":0,\"data_analyst\":0},\"pipelinesCount\":0,\"notebooksCount\":0,\"manualProcessPct\":20,\"automationsCount\":0,\"pipelineExecutions\":0,\"usersCount\":0,\"isFinancialOrSales\":false,\"reportsCount\":0,\"reportUsers\":0,\"techStack\":[\"tableau\",\"python\",\"snowflake\"],\"dsModelsCount\":0,\"dashboardsCount\":0,\"criticitness\":{\"enabled\":false,\"level\":\"low\",\"impactOperative\":\"low\",\"impactFinancial\":\"low\",\"dataExposure\":\"internal\",\"countriesCount\":1},\"durationMonths\":6,\"supportHours\":\"business\",\"staffingDetails\":{\"profiles\":[{\"id\":\"1768572712005\",\"role\":\"Python developer\",\"seniority\":\"Sr\",\"skills\":\"\",\"count\":1,\"startDate\":\"\",\"endDate\":\"\"}]},\"sustainDetails\":{\"technicalDescription\":\"\",\"tools\":[],\"operationHours\":\"business\"},\"commercialDiscount\":0,\"dataVolume\":\"TB\",\"sourceSystemsCount\":2,\"aiFeatures\":false,\"reportComplexity\":\"medium\",\"securityCompliance\":\"standard\",\"databricksUsage\":\"none\",\"criticality\":\"low\"}",
+      "estimatedCost": 6435,
+      "staffingRequirements": "[{\"role\":\"data_engineer\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"bi_developer\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"data_science\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"power_apps\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"react_dev\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"power_automate\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"data_analyst\",\"count\":0,\"cost\":0,\"hours\":0}]",
+      "diagramDefinition": "\ngraph TD\n    %% Graphite Theme\n    classDef default fill:#242423,stroke:#CFDBD5,stroke-width:2px,color:#E8EDDF;\n    classDef highlight fill:#242423,stroke:#F5CB5C,stroke-width:2px,color:#F5CB5C;\n    linkStyle default stroke:#CFDBD5,stroke-width:2px;\n    \n    \n    Source[Fuentes]\n    Pipe[Ingesta]\n    Store[Lakehouse]\n    Vis[Power BI]\n    User((Usuario))\n        \n    subgraph TechStack [Stack Tecnológico]\n    direction TB\n    subgraph Row0 [ ]\n    direction LR\n        Techtableau[Tableau]\n        style Techtableau stroke-dasharray: 5 5\n        Techpython[Python/Airflow]\n        style Techpython stroke-dasharray: 5 5\n        Techsnowflake[Snowflake]\n        style Techsnowflake stroke-dasharray: 5 5\n    end\n    end\n    style Row0 fill:none,stroke:none\n    Source --> Pipe\nPipe --> Store\nStore --> Vis\nVis --> User\n\n    TechStack -.- Store\n    \n    class Source,User default\n    class Pipe,Store,Vis highlight\n        ",
+      "createdAt": "2026-01-16T14:12:41.544Z",
+      "userId": "demo-user",
+      "status": "BORRADOR",
+      "serviceType": "Staffing"
+    },
+    {
+      "id": "fd343bb6-a868-41dc-8ac6-0a8dffea8ed5",
+      "clientName": "Nestle",
+      "projectType": "medium",
+      "technicalParameters": "{\"clientName\":\"Nestle\",\"description\":\"PROYECTO: Nestle\\n\\nOBJETIVO ESTRATÉGICO:\\nProyecto power apps, power automae y power bi\\n\\nARQUITECTURA PROPUESTA:\\nImplementación de un ecosistema de datos moderno basado en Azure/AWS. Se diseñarán 0 pipelines de ingesta resilientes y se desplegarán 0 activos de visualización para soportar la toma de decisiones.\\n\\nALCANCE:\\n- Ingesta: daily (20% manual actual)\\n- Consumo: 0 usuarios finales\\n- Seguridad: Estándar\",\"complexity\":\"medium\",\"updateFrequency\":\"daily\",\"serviceType\":\"Proyecto\",\"roles\":{\"data_engineer\":0,\"bi_developer\":1,\"data_science\":0,\"power_apps\":1,\"react_dev\":0,\"power_automate\":1,\"data_analyst\":0},\"pipelinesCount\":2,\"notebooksCount\":2,\"manualProcessPct\":20,\"automationsCount\":0,\"pipelineExecutions\":1,\"usersCount\":1,\"isFinancialOrSales\":false,\"reportsCount\":2,\"reportUsers\":1,\"techStack\":[\"powerbi\",\"python\"],\"dsModelsCount\":0,\"dashboardsCount\":2,\"criticitness\":{\"enabled\":false,\"level\":\"low\",\"impactOperative\":\"low\",\"impactFinancial\":\"low\",\"dataExposure\":\"internal\",\"countriesCount\":1},\"durationMonths\":6,\"supportHours\":\"business\",\"staffingDetails\":{\"profiles\":[]},\"sustainDetails\":{\"technicalDescription\":\"\",\"tools\":[],\"operationHours\":\"business\"},\"commercialDiscount\":0,\"dataVolume\":\"TB\",\"sourceSystemsCount\":2,\"aiFeatures\":false,\"reportComplexity\":\"medium\",\"securityCompliance\":\"standard\",\"databricksUsage\":\"none\",\"criticality\":\"low\"}",
+      "estimatedCost": 52858.96,
+      "staffingRequirements": "[{\"role\":\"data_engineer\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"bi_developer\",\"count\":1,\"cost\":0,\"hours\":0},{\"role\":\"data_science\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"power_apps\",\"count\":1,\"cost\":0,\"hours\":0},{\"role\":\"react_dev\",\"count\":0,\"cost\":0,\"hours\":0},{\"role\":\"power_automate\",\"count\":1,\"cost\":0,\"hours\":0},{\"role\":\"data_analyst\",\"count\":0,\"cost\":0,\"hours\":0}]",
+      "diagramDefinition": "\ngraph TD\n    %% Graphite Theme\n    classDef default fill:#242423,stroke:#CFDBD5,stroke-width:2px,color:#E8EDDF;\n    classDef highlight fill:#242423,stroke:#F5CB5C,stroke-width:2px,color:#F5CB5C;\n    linkStyle default stroke:#CFDBD5,stroke-width:2px;\n    \n    \n    Source[Fuentes]\n    Pipe[Ingesta]\n    Store[Lakehouse]\n    Vis[Power BI]\n    User((Usuario))\n        \n    subgraph TechStack [Stack Tecnológico]\n    direction TB\n    subgraph Row0 [ ]\n    direction LR\n        Techpowerbi[Power BI]\n        style Techpowerbi stroke-dasharray: 5 5\n        Techpython[Python/Airflow]\n        style Techpython stroke-dasharray: 5 5\n    end\n    end\n    style Row0 fill:none,stroke:none\n    Source --> Pipe\nPipe --> Store\nStore --> Vis\nVis --> User\n\n    TechStack -.- Store\n    \n    class Source,User default\n    class Pipe,Store,Vis highlight\n        ",
+      "createdAt": "2026-01-16T20:12:01.946Z",
+      "userId": "demo-max",
+      "status": "APROBADA",
+      "serviceType": "Proyecto"
+    }
+  ],
+  "rates": [
+    {
+      "id": "fcc50e9b-320e-47c1-9e92-139fe8578bde",
+      "service": "Data Analyst",
+      "frequency": "Mensual",
+      "complexity": "Ssr",
+      "basePrice": 2500,
+      "multiplier": 1,
+      "createdAt": "2026-01-19T13:04:53.063Z"
+    },
+    {
+      "id": "608938e4-3878-4ff5-9075-185a7edd1006",
+      "service": "Data Engineer",
+      "frequency": "Mensual",
+      "complexity": "Ssr",
+      "basePrice": 4950,
+      "multiplier": 1,
+      "createdAt": "2026-01-19T13:04:54.765Z"
+    },
+    {
+      "id": "3cedbc85-956b-4ae2-97aa-7660abec574a",
+      "service": "Data Science",
+      "frequency": "Mensual",
+      "complexity": "Ssr",
+      "basePrice": 5100,
+      "multiplier": 1,
+      "createdAt": "2026-01-19T13:04:56.445Z"
+    },
+    {
+      "id": "882324d2-b311-40b3-88e3-b0d0ddf0daaf",
+      "service": "BI Developer",
+      "frequency": "Mensual",
+      "complexity": "Ssr",
+      "basePrice": 4128,
+      "multiplier": 1,
+      "createdAt": "2026-01-19T13:04:58.131Z"
+    },
+    {
+      "id": "dae6231c-b3c7-4a54-a6d5-bd544a2e4409",
+      "service": "Project Manager",
+      "frequency": "Mensual",
+      "complexity": "Ssr",
+      "basePrice": 3500,
+      "multiplier": 1,
+      "createdAt": "2026-01-19T13:04:59.821Z"
+    },
+    {
+      "id": "9bb9ae26-c878-4f2f-83ca-196b005c1525",
+      "service": "QA Automation",
+      "frequency": "Mensual",
+      "complexity": "Ssr",
+      "basePrice": 3200,
+      "multiplier": 1,
+      "createdAt": "2026-01-19T13:05:01.501Z"
+    },
+    {
+      "id": "a42243b6-2224-4e37-b3f5-542f4cd664c9",
+      "service": "Arquitecto de Datos",
+      "frequency": "Mensual",
+      "complexity": "Ssr",
+      "basePrice": 6000,
+      "multiplier": 1,
+      "createdAt": "2026-01-19T13:05:03.181Z"
+    }
+  ]
+}
