@@ -591,7 +591,8 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
                     ...state,
                     totalWithRisk: finalTotal, // Use final total for Word too
                     durationMonths: state.durationMonths,
-                    diagramImage: diagramDataUrl
+                    diagramImage: diagramDataUrl,
+                    finalTotal: finalTotal
                 })
             }
         } catch (e) {
