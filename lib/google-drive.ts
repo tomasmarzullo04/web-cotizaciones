@@ -57,6 +57,8 @@ export async function uploadToDrive(formData: FormData) {
                 mimeType: 'application/pdf',
                 body: stream,
             },
+            supportsAllDrives: true, // Requested workaround for quota/permission issues
+            fields: 'id, name, webViewLink, parents',
         })
 
         console.log(`[GoogleDrive] Archivo [${fileName}] subido exitosamente a Drive. ID: ${response.data.id}`)
