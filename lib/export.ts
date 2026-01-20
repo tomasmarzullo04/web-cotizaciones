@@ -202,7 +202,7 @@ export async function exportToPDF(data: QuoteState & { totalMonthlyCost: number,
     // Footer P1
     doc.setFontSize(8)
     doc.setTextColor(150)
-    doc.text("Confidencial - Antigravity Solutions | Página 1 de 2", margin, pageHeight - 10)
+    doc.text("Confidencial - The Store Intelligence | Página 1 de 2", margin, pageHeight - 10)
 
 
     // --- PAGE 2: DIAGRAM & BUDGET ---
@@ -325,7 +325,7 @@ export async function exportToPDF(data: QuoteState & { totalMonthlyCost: number,
     // Footer P2
     doc.setFontSize(8)
     doc.setTextColor(150)
-    doc.text("Confidencial - Antigravity Solutions | Página 2 de 2", margin, pageHeight - 10)
+    doc.text("Confidencial - The Store Intelligence | Página 2 de 2", margin, pageHeight - 10)
 
     doc.save(`cotizacion_${(data.clientName || 'proyecto').replace(/\s+/g, '_')}.pdf`)
 }
