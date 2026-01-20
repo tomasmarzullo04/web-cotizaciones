@@ -523,9 +523,9 @@ export async function updateQuoteStatus(quoteId: string, status: string) {
 
         // 2. Trigger Prospect Conversion if Approved/Signed
         if (['APROBADA', 'FIRMADA', 'ACEPTADA'].includes(status.toUpperCase())) {
-            if (updatedQuote.clientId) {
+            if (updatedQuote.linkedClientId) {
                 await prisma.client.update({
-                    where: { id: updatedQuote.clientId },
+                    where: { id: updatedQuote.linkedClientId },
                     data: { status: 'CLIENTE' }
                 })
             } else {
