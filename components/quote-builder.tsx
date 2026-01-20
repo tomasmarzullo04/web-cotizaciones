@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { MermaidDiagram } from "@/components/mermaid-diagram"
-import { Wand2, Download, FileText, Check, ShieldAlert, Network, Cpu, Calculator, Save, Loader2, ClipboardList, Database, Users, Briefcase, Layers, AlertTriangle, Activity, Zap, Edit, X, RefreshCw, ImageDown, Sparkles, Undo2, ArrowRight } from "lucide-react"
+import { Wand2, Download, FileText, Check, ShieldAlert, Network, Cpu, Calculator, Save, Loader2, ClipboardList, Database, Users, Briefcase, Layers, AlertTriangle, Activity, Zap, Edit, X, RefreshCw, ImageDown, Sparkles, Undo2, ArrowRight, Plus, Minus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { saveQuote } from "@/lib/actions"
 import { generateMermaidUpdate } from "@/lib/ai"
@@ -1277,21 +1277,39 @@ graph TD
                                                 className="space-y-2"
                                             >
                                                 <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1">% Porcentaje</Label>
-                                                <div className="relative z-10">
-                                                    <Input
-                                                        type="number"
-                                                        min={0}
-                                                        max={100}
-                                                        value={state.retention.percentage}
-                                                        onChange={(e) => {
-                                                            const val = parseFloat(e.target.value)
-                                                            updateState('retention', { ...state.retention, percentage: isNaN(val) ? 0 : val })
-                                                        }}
-                                                        className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-[50px] rounded-[1rem] pl-4 pr-12 focus:border-[#F5CB5C] transition-all hover:border-[#F5CB5C]/50 text-right font-bold text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                    />
-                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none flex items-center gap-2">
-                                                        <span className="text-[#F5CB5C] font-bold text-lg">%</span>
+                                                <div className="flex items-center justify-between bg-[#242423] border border-[#4A4D4A] h-[50px] rounded-[1rem] px-2 focus-within:border-[#F5CB5C] transition-all hover:border-[#F5CB5C]/50 relative z-10">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 rounded-full hover:bg-[#F5CB5C]/10 hover:text-[#F5CB5C] text-[#CFDBD5] shrink-0"
+                                                        onClick={() => updateState('retention', { ...state.retention, percentage: Math.max(0, state.retention.percentage - 1) })}
+                                                    >
+                                                        <Minus className="w-4 h-4" />
+                                                    </Button>
+
+                                                    <div className="relative flex-1 h-full mx-2">
+                                                        <Input
+                                                            type="number"
+                                                            min={0}
+                                                            max={100}
+                                                            value={state.retention.percentage}
+                                                            onChange={(e) => {
+                                                                const val = parseFloat(e.target.value)
+                                                                updateState('retention', { ...state.retention, percentage: isNaN(val) ? 0 : Math.min(100, Math.max(0, val)) })
+                                                            }}
+                                                            className="w-full h-full bg-transparent border-0 p-0 text-center font-bold text-lg text-[#E8EDDF] focus-visible:ring-0 shadow-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                        />
+                                                        <span className="absolute right-0 top-1/2 -translate-y-1/2 text-[#F5CB5C] font-bold pointer-events-none pr-2">%</span>
                                                     </div>
+
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 rounded-full hover:bg-[#F5CB5C]/10 hover:text-[#F5CB5C] text-[#CFDBD5] shrink-0"
+                                                        onClick={() => updateState('retention', { ...state.retention, percentage: Math.min(100, state.retention.percentage + 1) })}
+                                                    >
+                                                        <Plus className="w-4 h-4" />
+                                                    </Button>
                                                 </div>
                                             </motion.div>
 
