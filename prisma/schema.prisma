@@ -35,7 +35,7 @@ model Quote {
   status               String   @default("BORRADOR") // BORRADOR, ENVIADA, APROBADA, RECHAZADA
   serviceType          String   @default("Proyecto") // Proyecto, Sustain, Staffing
   
-  linkedClientId String?
+  linkedClientId String? @map("linked_client_id")
   client               Client?  @relation(fields: [linkedClientId], references: [id])
 }
 
