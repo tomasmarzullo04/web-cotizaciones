@@ -1284,7 +1284,7 @@ graph TD
                                                         max={100}
                                                         value={state.retention.percentage}
                                                         onChange={(e) => updateState('retention', { ...state.retention, percentage: parseFloat(e.target.value) || 0 })}
-                                                        className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-[50px] rounded-[1rem] pl-4 pr-12 focus:border-[#F5CB5C] transition-all hover:border-[#F5CB5C]/50 text-right font-bold text-lg"
+                                                        className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-[50px] rounded-[1rem] pl-4 pr-12 focus:border-[#F5CB5C] transition-all hover:border-[#F5CB5C]/50 text-right font-bold text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                     />
                                                     <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none flex items-center gap-2">
                                                         <span className="text-[#F5CB5C] font-bold text-lg">%</span>
