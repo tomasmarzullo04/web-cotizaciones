@@ -217,12 +217,17 @@ export async function exportToPDF(data: QuoteState & { totalMonthlyCost: number,
     doc.text("ARQUITECTURA Y PRESUPUESTO", margin, y)
     y += 15
 
-    // 3. Diagram (Centered Large) - Skip if Staffing
-    if (data.diagramImage && data.serviceType !== 'Staffing') {
+    // 3. Diagram (Centered Large) - Enabled for all types (Staffing uses differnt title)
+    if (data.diagramImage) {
         doc.setFontSize(14)
         doc.setFont("helvetica", "bold")
         doc.setTextColor(COLOR_CHARCOAL)
-        doc.text("3. Arquitectura Propuesta", margin, y)
+
+        const diagramTitle = data.serviceType === 'Staffing'
+            ? "3. Proceso de Implementación y Seguimiento"
+            : "3. Arquitectura Propuesta"
+
+        doc.text(diagramTitle, margin, y)
         y += 10
 
         const imgProps = doc.getImageProperties(data.diagramImage)
@@ -402,10 +407,14 @@ export async function exportToWord(data: QuoteState & { diagramImage?: string, t
     children.push(new Paragraph({ text: "", pageBreakBefore: true }))
 
     // P2 Content
-    children.push(new Paragraph({ text: "3. Arquitectura Propuesta", heading: HeadingLevel.HEADING_2 }))
+    const p2Title = data.serviceType === 'Staffing'
+        ? "3. Proceso de Implementación y Seguimiento"
+        : "3. Arquitectura Propuesta"
+
+    children.push(new Paragraph({ text: p2Title, heading: HeadingLevel.HEADING_2 }))
 
     // Diagram Image
-    if (data.diagramImage && data.serviceType !== 'Staffing') {
+    if (data.diagramImage) {
         children.push(new Paragraph({
             children: [
                 new ImageRun({
@@ -417,8 +426,6 @@ export async function exportToWord(data: QuoteState & { diagramImage?: string, t
             alignment: "center",
             spacing: { after: 300 }
         }))
-    } else if (data.serviceType === 'Staffing') {
-        children.push(new Paragraph({ text: "N/A - Servicio de Staffing", spacing: { after: 200 } }))
     }
 
     // Budget
