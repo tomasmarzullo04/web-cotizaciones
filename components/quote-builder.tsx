@@ -1191,411 +1191,413 @@ graph TD
                                         )}
 
 
-                                        <div className="text-right relative z-10 w-full md:w-auto border-t md:border-t-0 border-[#4A4D4A] pt-4 md:pt-0">
-                                            <Label className="text-[#7C7F7C] text-xs uppercase font-bold mb-2 block text-left">Nivel de Soporte</Label>
-                                            <Select value={state.supportHours} onValueChange={(v: any) => updateState('supportHours', v)}>
-                                                <SelectTrigger className="w-full md:w-[180px] h-10 bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
-                                                <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                    <SelectItem value="business">Business (9-18h)</SelectItem>
-                                                    <SelectItem value="24/7">24/7 Critical</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </div>
+                                        {state.criticitness.enabled && (
+                                            <div className="animate-in fade-in slide-in-from-top-4 duration-500 delay-100 flex flex-col gap-6 mt-6 border-t border-[#4A4D4A] pt-6">
+                                                <div className="flex justify-end">
+                                                    <div className="text-right w-full md:w-auto">
+                                                        <Label className="text-[#7C7F7C] text-xs uppercase font-bold mb-2 block text-left">Nivel de Soporte</Label>
+                                                        <Select value={state.supportHours} onValueChange={(v: any) => updateState('supportHours', v)}>
+                                                            <SelectTrigger className="w-full md:w-[180px] h-10 bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
+                                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                                <SelectItem value="business">Business (9-18h)</SelectItem>
+                                                                <SelectItem value="24/7">24/7 Critical</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <Label className="text-[#CFDBD5] mb-2 block">Impacto Operativo</Label>
-                                            <Select value={state.criticitness.impactOperative} onValueChange={(v: any) => updateCriticitness('impactOperative', v)}>
-                                                <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
-                                                <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                    <SelectItem value="low">Bajo (Interno)</SelectItem>
-                                                    <SelectItem value="medium">Medio (Departamental)</SelectItem>
-                                                    <SelectItem value="high">Alto (Core Business)</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div>
-                                            <Label className="text-[#CFDBD5] mb-2 block">Exposición de Datos</Label>
-                                            <Select value={state.criticitness.dataExposure} onValueChange={(v: any) => updateCriticitness('dataExposure', v)}>
-                                                <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
-                                                <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                    <SelectItem value="internal">Interna</SelectItem>
-                                                    <SelectItem value="partners">Partners / Clientes</SelectItem>
-                                                    <SelectItem value="public">Pública / Regulatoria</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div>
+                                                        <Label className="text-[#CFDBD5] mb-2 block">Impacto Operativo</Label>
+                                                        <Select value={state.criticitness.impactOperative} onValueChange={(v: any) => updateCriticitness('impactOperative', v)}>
+                                                            <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
+                                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                                <SelectItem value="low">Bajo (Interno)</SelectItem>
+                                                                <SelectItem value="medium">Medio (Departamental)</SelectItem>
+                                                                <SelectItem value="high">Alto (Core Business)</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div>
+                                                        <Label className="text-[#CFDBD5] mb-2 block">Exposición de Datos</Label>
+                                                        <Select value={state.criticitness.dataExposure} onValueChange={(v: any) => updateCriticitness('dataExposure', v)}>
+                                                            <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
+                                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                                <SelectItem value="internal">Interna</SelectItem>
+                                                                <SelectItem value="partners">Partners / Clientes</SelectItem>
+                                                                <SelectItem value="public">Pública / Regulatoria</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                </div>
 
+                                                <div>
+                                                    <Label className="text-[#CFDBD5] mb-2 block">Impacto Financiero</Label>
+                                                    <Select value={state.criticitness.impactFinancial} onValueChange={(v: any) => updateCriticitness('impactFinancial', v)}>
+                                                        <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
+                                                        <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                            <SelectItem value="low">Bajo ({'<'} 10k USD)</SelectItem>
+                                                            <SelectItem value="medium">Medio (10k - 100k USD)</SelectItem>
+                                                            <SelectItem value="high">Alto ({'>'} 100k USD)</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="col-span-1 md:col-span-2">
+                                                    <CountInput label="Países Involucrados" value={state.criticitness.countriesCount} onChange={(v: number) => updateCriticitness('countriesCount', v)} min={1} />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </SectionCard>
 
-                                    <div>
-                                        <Label className="text-[#CFDBD5] mb-2 block">Impacto Financiero</Label>
-                                        <Select value={state.criticitness.impactFinancial} onValueChange={(v: any) => updateCriticitness('impactFinancial', v)}>
-                                            <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
-                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                <SelectItem value="low">Bajo ({'<'} 10k USD)</SelectItem>
-                                                <SelectItem value="medium">Medio (10k - 100k USD)</SelectItem>
-                                                <SelectItem value="high">Alto ({'>'} 100k USD)</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="col-span-1 md:col-span-2">
-                                        <CountInput label="Países Involucrados" value={state.criticitness.countriesCount} onChange={(v: number) => updateCriticitness('countriesCount', v)} min={1} />
-                                    </div>
                                 </div>
-                                )}
-                            </SectionCard>
-
-                </div>
-            </div >
+                            </div >
 
             {/* ================= RIGHT COLUMN: INDEPENDENT SCROLL SUMMARY ================= */}
-            <div className="w-full lg:w-1/3 h-full overflow-y-auto scrollbar-custom bg-[#242423] border-l border-[#CFDBD5]/10 p-8 lg:p-10 space-y-10 relative">
+                        <div className="w-full lg:w-1/3 h-full overflow-y-auto scrollbar-custom bg-[#242423] border-l border-[#CFDBD5]/10 p-8 lg:p-10 space-y-10 relative">
 
-                {/* Cost Summary */}
-                <div className="space-y-6">
-                    <div>
-                        <h4 className="text-[#F5CB5C] text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
-                            <Calculator className="w-4 h-4" /> Inversión Estimada
-                        </h4>
-                        <div className="text-6xl font-mono font-bold tracking-tighter text-[#E8EDDF] drop-shadow-[0_0_15px_rgba(245,203,92,0.1)]">
-                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(finalTotalProjectCost)}
-                        </div>
-                        <p className="text-[#CFDBD5] mt-2 font-medium flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-[#F5CB5C] animate-pulse" />
-                            Total proyecto ({state.durationMonths} meses)
-                        </p>
-                    </div>
-
-                    <div className="bg-[#333533] rounded-[2rem] p-8 text-sm space-y-5 border border-[#4A4D4A] shadow-xl relative overflow-hidden">
-                        <div className="flex justify-between items-center text-[#E8EDDF]">
-                            <span className="text-[#CFDBD5]">Servicios (Infra/Data)</span>
-                            <span className="font-mono text-xl">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(servicesCost)}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-[#E8EDDF]">
-                            <span className="text-[#CFDBD5]">Equipo (Roles)</span>
-                            <span className="font-mono text-xl">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(rolesCost)}</span>
-                        </div>
-                        {l2SupportCost > 0 && (
-                            <div className="flex justify-between items-center text-[#F5CB5C] bg-[#F5CB5C]/10 p-3 rounded-xl -mx-2 border border-[#F5CB5C]/20">
-                                <span className="text-xs font-bold">SOPORTE L2 (10%)</span>
-                                <span className="font-mono text-xl">+ {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(l2SupportCost)}</span>
-                            </div>
-                        )}
-                        {state.criticitness.enabled && (
-                            <div className="flex justify-between items-center text-orange-400 bg-orange-900/10 p-3 rounded-xl -mx-2 border border-orange-500/20">
-                                <span className="text-xs font-bold">RIESGO ({criticitnessLevel.label})</span>
-                                <span className="font-mono text-xl">+ {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(riskCost)}</span>
-                            </div>
-                        )}
-                        <Separator className="bg-[#4A4D4A]" />
-
-                        {/* Commercial Discount Input */}
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex flex-col">
-                                <span className="text-[#CFDBD5] font-bold">Descuento</span>
-                                <span className="text-[10px] text-[#CFDBD5]/50 uppercase tracking-wider">Comercial (%)</span>
-                            </div>
-                            <div className="flex items-center gap-2 w-[120px]">
-                                <Input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    value={state.commercialDiscount}
-                                    onChange={(e) => updateState('commercialDiscount', parseFloat(e.target.value) || 0)}
-                                    className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] text-right font-mono"
-                                />
-                                <span className="text-[#CFDBD5] font-bold">%</span>
-                            </div>
-                        </div>
-
-                        {/* Retention Input */}
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex flex-col">
-                                <span className="text-[#CFDBD5] font-bold">Retenciones</span>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <Switch
-                                        checked={state.retention.enabled}
-                                        onCheckedChange={(v) => updateState('retention', { ...state.retention, enabled: v })}
-                                        className="h-4 w-7 data-[state=checked]:bg-[#F5CB5C]"
-                                    />
-                                    <span className="text-[10px] text-[#CFDBD5]/50 uppercase tracking-wider">{state.retention.enabled ? 'Activado' : 'No'}</span>
-                                </div>
-                            </div>
-                            {state.retention.enabled && (
-                                <div className="flex items-center gap-2 w-[120px]">
-                                    <Input
-                                        type="number"
-                                        min="0"
-                                        max="100"
-                                        value={state.retention.percentage}
-                                        onChange={(e) => updateState('retention', { ...state.retention, percentage: parseFloat(e.target.value) || 0 })}
-                                        className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] text-right font-mono"
-                                    />
-                                    <span className="text-[#CFDBD5] font-bold">%</span>
-                                </div>
-                            )}
-                        </div>
-
-                        {state.commercialDiscount > 0 && (
-                            <div className="flex justify-between items-center text-green-400">
-                                <span>Ahorro Aplicado</span>
-                                <span className="font-mono">- {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(discountAmount)}</span>
-                            </div>
-                        )}
-
-                        <Separator className="bg-[#4A4D4A]" />
-                        <div className="flex justify-between items-center text-[#E8EDDF] font-black text-2xl">
-                            <span>Mensual</span>
-                            <span className="text-[#F5CB5C]">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(finalTotal)}</span>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col gap-4">
-                        <Button
-                            onClick={handleSaveQuote}
-                            disabled={isSaving}
-                            className="bg-[#F5CB5C] hover:bg-[#E0B84C] text-[#242423] border-0 rounded-2xl h-14 font-bold w-full transition-all text-base shadow-[0_0_20px_rgba(245,203,92,0.3)] hover:shadow-[0_0_25px_rgba(245,203,92,0.5)] transform hover:scale-[1.02]"
-                        >
-                            {isSaving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
-                            {isSaving ? 'Guardando...' : 'Guardar Cotización'}
-                        </Button>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <Button
-                                onClick={() => handleExport('pdf')}
-                                disabled={isExporting}
-                                className="bg-[#333533] hover:bg-[#E8EDDF] hover:text-[#242423] text-[#E8EDDF] border border-transparent rounded-2xl h-12 font-bold transition-all text-sm"
-                            >
-                                {isExporting && exportType === 'pdf' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-                                PDF
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => handleExport('word')}
-                                disabled={isExporting}
-                                className="bg-transparent border-[#4A4D4A] text-[#E8EDDF] hover:bg-[#333533] hover:text-[#E8EDDF] rounded-2xl h-12 font-medium transition-all text-sm"
-                            >
-                                {isExporting && exportType === 'word' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
-                                Word
-                            </Button>
-                        </div>
-                    </div>
-                </div >
-
-                {/* Architecture Diagram */}
-                {state.serviceType !== 'Staffing' && (
-                    <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
-                        <div className="flex items-center justify-between">
-                            <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                                <Network className="w-4 h-4 text-[#F5CB5C]" /> Arquitectura Dinámica
-                            </h4>
-                            <div className="flex gap-4">
-                                {!isEditingDiagram ? (
-                                    <>
-                                        {manualDiagramCode && (
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => {
-                                                    if (confirm("¿Restaurar diagrama automático? Se perderán los cambios manuales.")) {
-                                                        setManualDiagramCode(null)
-                                                    }
-                                                }}
-                                                className="h-7 px-2 text-[#CFDBD5] hover:text-[#F5CB5C] text-[10px]"
-                                                title="Restaurar Automático"
-                                            >
-                                                <RefreshCw className="w-3 h-3" />
-                                            </Button>
-                                        )}
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => {
-                                                setTempDiagramCode(chartCode)
-                                                setIsEditingDiagram(true)
-                                            }}
-                                            className="h-7 px-3 text-[#F5CB5C] hover:text-[#E8EDDF] hover:bg-[#F5CB5C]/10 text-[10px] uppercase font-bold tracking-wider"
-                                        >
-                                            <Edit className="w-3 h-3 mr-2" /> Editar
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={handleDownloadDiagram}
-                                            className="h-7 px-3 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-transparent text-[10px] uppercase font-bold tracking-wider transition-colors"
-                                        >
-                                            <ImageDown className="w-3 h-3 mr-2" />
-                                            Descargar Diagrama
-                                        </Button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setIsEditingDiagram(false)}
-                                            className="h-7 px-3 text-red-400 hover:text-red-300 hover:bg-red-400/10 text-[10px] uppercase font-bold tracking-wider"
-                                        >
-                                            <X className="w-3 h-3 mr-2" /> Cancelar
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            onClick={() => {
-                                                setManualDiagramCode(tempDiagramCode)
-                                                setChartCode(tempDiagramCode)
-                                                setIsEditingDiagram(false)
-                                            }}
-                                            className="h-7 px-3 bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] text-[10px] uppercase font-bold tracking-wider"
-                                        >
-                                            <Check className="w-3 h-3 mr-2" /> Aplicar
-                                        </Button>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-
-                        {isEditingDiagram ? (
-                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 animate-in fade-in zoom-in-95 duration-300">
-                                {/* AI Input Section */}
-                                <div className="col-span-1 xl:col-span-2 bg-[#2D2D2D] p-3 rounded-xl border border-[#F5CB5C]/20 flex gap-2 items-center mb-2">
-                                    <div className="p-2 bg-[#F5CB5C]/10 rounded-lg">
-                                        <Sparkles className="w-5 h-5 text-[#F5CB5C]" />
+                            {/* Cost Summary */}
+                            <div className="space-y-6">
+                                <div>
+                                    <h4 className="text-[#F5CB5C] text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
+                                        <Calculator className="w-4 h-4" /> Inversión Estimada
+                                    </h4>
+                                    <div className="text-6xl font-mono font-bold tracking-tighter text-[#E8EDDF] drop-shadow-[0_0_15px_rgba(245,203,92,0.1)]">
+                                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(finalTotalProjectCost)}
                                     </div>
-                                    <Input
-                                        placeholder="Describe cambios con IA (ej: 'Agrega validación entre origen e ingesta')"
-                                        value={aiPrompt}
-                                        onChange={(e) => setAiPrompt(e.target.value)}
-                                        className="bg-transparent border-none text-[#E8EDDF] placeholder:text-[#CFDBD5]/50 focus-visible:ring-0"
-                                        onKeyDown={(e) => e.key === 'Enter' && handleAiGenerate()}
-                                    />
-                                    <Button
-                                        size="sm"
-                                        onClick={handleAiGenerate}
-                                        disabled={isAiLoading || !aiPrompt.trim()}
-                                        className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold"
-                                    >
-                                        {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-                                    </Button>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <div className="flex justify-between items-center">
-                                        <label className="text-[10px] font-bold text-[#CFDBD5] uppercase tracking-wider">Código Mermaid</label>
-                                        {diagramHistory.length > 0 && (
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={handleUndo}
-                                                className="h-6 text-xs text-[#CFDBD5] hover:text-[#E8EDDF]"
-                                            >
-                                                <Undo2 className="w-3 h-3 mr-1" /> Deshacer
-                                            </Button>
-                                        )}
-                                    </div>
-                                    <Textarea
-                                        value={tempDiagramCode}
-                                        onChange={(e) => setTempDiagramCode(e.target.value)}
-                                        className="font-mono text-xs bg-[#171717] border border-[#CFDBD5]/20 text-[#E8EDDF] resize-none h-[600px] focus-visible:ring-[#F5CB5C] rounded-[1rem] p-4 w-full"
-                                        placeholder="graph TD..."
-                                    />
-                                    <p className="text-[10px] text-[#CFDBD5]/50 flex items-center gap-1">
-                                        <ShieldAlert className="w-3 h-3" />
-                                        La edición manual desactiva las actualizaciones automáticas.
+                                    <p className="text-[#CFDBD5] mt-2 font-medium flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-[#F5CB5C] animate-pulse" />
+                                        Total proyecto ({state.durationMonths} meses)
                                     </p>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-[#CFDBD5] uppercase">Vista Previa</label>
-                                    <div className="rounded-[1rem] border border-[#CFDBD5]/20 bg-[#333533] p-4 h-[600px] flex items-center justify-center relative overflow-hidden bg-white">
-                                        <MermaidDiagram chart={tempDiagramCode} />
+
+                                <div className="bg-[#333533] rounded-[2rem] p-8 text-sm space-y-5 border border-[#4A4D4A] shadow-xl relative overflow-hidden">
+                                    <div className="flex justify-between items-center text-[#E8EDDF]">
+                                        <span className="text-[#CFDBD5]">Servicios (Infra/Data)</span>
+                                        <span className="font-mono text-xl">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(servicesCost)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[#E8EDDF]">
+                                        <span className="text-[#CFDBD5]">Equipo (Roles)</span>
+                                        <span className="font-mono text-xl">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(rolesCost)}</span>
+                                    </div>
+                                    {l2SupportCost > 0 && (
+                                        <div className="flex justify-between items-center text-[#F5CB5C] bg-[#F5CB5C]/10 p-3 rounded-xl -mx-2 border border-[#F5CB5C]/20">
+                                            <span className="text-xs font-bold">SOPORTE L2 (10%)</span>
+                                            <span className="font-mono text-xl">+ {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(l2SupportCost)}</span>
+                                        </div>
+                                    )}
+                                    {state.criticitness.enabled && (
+                                        <div className="flex justify-between items-center text-orange-400 bg-orange-900/10 p-3 rounded-xl -mx-2 border border-orange-500/20">
+                                            <span className="text-xs font-bold">RIESGO ({criticitnessLevel.label})</span>
+                                            <span className="font-mono text-xl">+ {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(riskCost)}</span>
+                                        </div>
+                                    )}
+                                    <Separator className="bg-[#4A4D4A]" />
+
+                                    {/* Commercial Discount Input */}
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="flex flex-col">
+                                            <span className="text-[#CFDBD5] font-bold">Descuento</span>
+                                            <span className="text-[10px] text-[#CFDBD5]/50 uppercase tracking-wider">Comercial (%)</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 w-[120px]">
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                max="100"
+                                                value={state.commercialDiscount}
+                                                onChange={(e) => updateState('commercialDiscount', parseFloat(e.target.value) || 0)}
+                                                className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] text-right font-mono"
+                                            />
+                                            <span className="text-[#CFDBD5] font-bold">%</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Retention Input */}
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="flex flex-col">
+                                            <span className="text-[#CFDBD5] font-bold">Retenciones</span>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <Switch
+                                                    checked={state.retention.enabled}
+                                                    onCheckedChange={(v) => updateState('retention', { ...state.retention, enabled: v })}
+                                                    className="h-4 w-7 data-[state=checked]:bg-[#F5CB5C]"
+                                                />
+                                                <span className="text-[10px] text-[#CFDBD5]/50 uppercase tracking-wider">{state.retention.enabled ? 'Activado' : 'No'}</span>
+                                            </div>
+                                        </div>
+                                        {state.retention.enabled && (
+                                            <div className="flex items-center gap-2 w-[120px]">
+                                                <Input
+                                                    type="number"
+                                                    min="0"
+                                                    max="100"
+                                                    value={state.retention.percentage}
+                                                    onChange={(e) => updateState('retention', { ...state.retention, percentage: parseFloat(e.target.value) || 0 })}
+                                                    className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] text-right font-mono"
+                                                />
+                                                <span className="text-[#CFDBD5] font-bold">%</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {state.commercialDiscount > 0 && (
+                                        <div className="flex justify-between items-center text-green-400">
+                                            <span>Ahorro Aplicado</span>
+                                            <span className="font-mono">- {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(discountAmount)}</span>
+                                        </div>
+                                    )}
+
+                                    <Separator className="bg-[#4A4D4A]" />
+                                    <div className="flex justify-between items-center text-[#E8EDDF] font-black text-2xl">
+                                        <span>Mensual</span>
+                                        <span className="text-[#F5CB5C]">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(finalTotal)}</span>
                                     </div>
                                 </div>
-                            </div>
-                        ) : (
-                            <div id="diagram-capture-target" className="rounded-[2rem] border border-[#CFDBD5]/20 bg-[#333533] p-4 min-h-[250px] flex items-center justify-center relative overflow-hidden bg-white group">
-                                <MermaidDiagram chart={chartCode} />
-                                {manualDiagramCode && (
-                                    <div className="absolute top-4 left-4 bg-[#F5CB5C] text-[#242423] text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider shadow-lg">
-                                        Editado Manualmente
+
+                                <div className="flex flex-col gap-4">
+                                    <Button
+                                        onClick={handleSaveQuote}
+                                        disabled={isSaving}
+                                        className="bg-[#F5CB5C] hover:bg-[#E0B84C] text-[#242423] border-0 rounded-2xl h-14 font-bold w-full transition-all text-base shadow-[0_0_20px_rgba(245,203,92,0.3)] hover:shadow-[0_0_25px_rgba(245,203,92,0.5)] transform hover:scale-[1.02]"
+                                    >
+                                        {isSaving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
+                                        {isSaving ? 'Guardando...' : 'Guardar Cotización'}
+                                    </Button>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Button
+                                            onClick={() => handleExport('pdf')}
+                                            disabled={isExporting}
+                                            className="bg-[#333533] hover:bg-[#E8EDDF] hover:text-[#242423] text-[#E8EDDF] border border-transparent rounded-2xl h-12 font-bold transition-all text-sm"
+                                        >
+                                            {isExporting && exportType === 'pdf' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+                                            PDF
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => handleExport('word')}
+                                            disabled={isExporting}
+                                            className="bg-transparent border-[#4A4D4A] text-[#E8EDDF] hover:bg-[#333533] hover:text-[#E8EDDF] rounded-2xl h-12 font-medium transition-all text-sm"
+                                        >
+                                            {isExporting && exportType === 'word' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+                                            Word
+                                        </Button>
                                     </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
+                                </div>
+                            </div >
 
-                {/* Tech Summary */}
-                < div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10" >
-                    <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                        <Cpu className="w-4 h-4 text-[#F5CB5C]" /> Resumen Técnico
-                    </h4>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-[#333533] p-5 rounded-2xl border border-[#4A4D4A] text-center">
-                            <span className="block text-3xl font-black text-[#E8EDDF]">{state.pipelinesCount}</span>
-                            <span className="text-xs text-[#CFDBD5] uppercase tracking-wider font-bold">Pipelines</span>
-                        </div>
-                        <div className="bg-[#333533] p-5 rounded-2xl border border-[#4A4D4A] text-center">
-                            <span className="block text-3xl font-black text-[#E8EDDF]">{state.dashboardsCount + state.reportsCount}</span>
-                            <span className="text-xs text-[#CFDBD5] uppercase tracking-wider font-bold">Visualizaciones</span>
-                        </div>
-                    </div>
-                </div >
+                            {/* Architecture Diagram */}
+                            {state.serviceType !== 'Staffing' && (
+                                <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                                            <Network className="w-4 h-4 text-[#F5CB5C]" /> Arquitectura Dinámica
+                                        </h4>
+                                        <div className="flex gap-4">
+                                            {!isEditingDiagram ? (
+                                                <>
+                                                    {manualDiagramCode && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                if (confirm("¿Restaurar diagrama automático? Se perderán los cambios manuales.")) {
+                                                                    setManualDiagramCode(null)
+                                                                }
+                                                            }}
+                                                            className="h-7 px-2 text-[#CFDBD5] hover:text-[#F5CB5C] text-[10px]"
+                                                            title="Restaurar Automático"
+                                                        >
+                                                            <RefreshCw className="w-3 h-3" />
+                                                        </Button>
+                                                    )}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setTempDiagramCode(chartCode)
+                                                            setIsEditingDiagram(true)
+                                                        }}
+                                                        className="h-7 px-3 text-[#F5CB5C] hover:text-[#E8EDDF] hover:bg-[#F5CB5C]/10 text-[10px] uppercase font-bold tracking-wider"
+                                                    >
+                                                        <Edit className="w-3 h-3 mr-2" /> Editar
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={handleDownloadDiagram}
+                                                        className="h-7 px-3 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-transparent text-[10px] uppercase font-bold tracking-wider transition-colors"
+                                                    >
+                                                        <ImageDown className="w-3 h-3 mr-2" />
+                                                        Descargar Diagrama
+                                                    </Button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => setIsEditingDiagram(false)}
+                                                        className="h-7 px-3 text-red-400 hover:text-red-300 hover:bg-red-400/10 text-[10px] uppercase font-bold tracking-wider"
+                                                    >
+                                                        <X className="w-3 h-3 mr-2" /> Cancelar
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setManualDiagramCode(tempDiagramCode)
+                                                            setChartCode(tempDiagramCode)
+                                                            setIsEditingDiagram(false)
+                                                        }}
+                                                        className="h-7 px-3 bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] text-[10px] uppercase font-bold tracking-wider"
+                                                    >
+                                                        <Check className="w-3 h-3 mr-2" /> Aplicar
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
 
-            </div >
-        </motion.div>
-    )
+                                    {isEditingDiagram ? (
+                                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 animate-in fade-in zoom-in-95 duration-300">
+                                            {/* AI Input Section */}
+                                            <div className="col-span-1 xl:col-span-2 bg-[#2D2D2D] p-3 rounded-xl border border-[#F5CB5C]/20 flex gap-2 items-center mb-2">
+                                                <div className="p-2 bg-[#F5CB5C]/10 rounded-lg">
+                                                    <Sparkles className="w-5 h-5 text-[#F5CB5C]" />
+                                                </div>
+                                                <Input
+                                                    placeholder="Describe cambios con IA (ej: 'Agrega validación entre origen e ingesta')"
+                                                    value={aiPrompt}
+                                                    onChange={(e) => setAiPrompt(e.target.value)}
+                                                    className="bg-transparent border-none text-[#E8EDDF] placeholder:text-[#CFDBD5]/50 focus-visible:ring-0"
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleAiGenerate()}
+                                                />
+                                                <Button
+                                                    size="sm"
+                                                    onClick={handleAiGenerate}
+                                                    disabled={isAiLoading || !aiPrompt.trim()}
+                                                    className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold"
+                                                >
+                                                    {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                                                </Button>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between items-center">
+                                                    <label className="text-[10px] font-bold text-[#CFDBD5] uppercase tracking-wider">Código Mermaid</label>
+                                                    {diagramHistory.length > 0 && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={handleUndo}
+                                                            className="h-6 text-xs text-[#CFDBD5] hover:text-[#E8EDDF]"
+                                                        >
+                                                            <Undo2 className="w-3 h-3 mr-1" /> Deshacer
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                                <Textarea
+                                                    value={tempDiagramCode}
+                                                    onChange={(e) => setTempDiagramCode(e.target.value)}
+                                                    className="font-mono text-xs bg-[#171717] border border-[#CFDBD5]/20 text-[#E8EDDF] resize-none h-[600px] focus-visible:ring-[#F5CB5C] rounded-[1rem] p-4 w-full"
+                                                    placeholder="graph TD..."
+                                                />
+                                                <p className="text-[10px] text-[#CFDBD5]/50 flex items-center gap-1">
+                                                    <ShieldAlert className="w-3 h-3" />
+                                                    La edición manual desactiva las actualizaciones automáticas.
+                                                </p>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-bold text-[#CFDBD5] uppercase">Vista Previa</label>
+                                                <div className="rounded-[1rem] border border-[#CFDBD5]/20 bg-[#333533] p-4 h-[600px] flex items-center justify-center relative overflow-hidden bg-white">
+                                                    <MermaidDiagram chart={tempDiagramCode} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div id="diagram-capture-target" className="rounded-[2rem] border border-[#CFDBD5]/20 bg-[#333533] p-4 min-h-[250px] flex items-center justify-center relative overflow-hidden bg-white group">
+                                            <MermaidDiagram chart={chartCode} />
+                                            {manualDiagramCode && (
+                                                <div className="absolute top-4 left-4 bg-[#F5CB5C] text-[#242423] text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider shadow-lg">
+                                                    Editado Manualmente
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Tech Summary */}
+                            < div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10" >
+                                <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                                    <Cpu className="w-4 h-4 text-[#F5CB5C]" /> Resumen Técnico
+                                </h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-[#333533] p-5 rounded-2xl border border-[#4A4D4A] text-center">
+                                        <span className="block text-3xl font-black text-[#E8EDDF]">{state.pipelinesCount}</span>
+                                        <span className="text-xs text-[#CFDBD5] uppercase tracking-wider font-bold">Pipelines</span>
+                                    </div>
+                                    <div className="bg-[#333533] p-5 rounded-2xl border border-[#4A4D4A] text-center">
+                                        <span className="block text-3xl font-black text-[#E8EDDF]">{state.dashboardsCount + state.reportsCount}</span>
+                                        <span className="text-xs text-[#CFDBD5] uppercase tracking-wider font-bold">Visualizaciones</span>
+                                    </div>
+                                </div>
+                            </div >
+
+                        </div >
+                    </motion.div>
+                    )
 }
 
-interface SectionCardProps {
-    title: string
-    number: string
-    icon: React.ElementType
-    children: React.ReactNode
+                    interface SectionCardProps {
+                        title: string
+                    number: string
+                    icon: React.ElementType
+                    children: React.ReactNode
 }
 
-function SectionCard({ title, number, icon: Icon, children }: SectionCardProps) {
+                    function SectionCard({title, number, icon: Icon, children }: SectionCardProps) {
     return (
-        <div className="bg-[#242423] rounded-[2rem] p-10 lg:p-12 border border-[#333533] shadow-sm relative overflow-hidden group hover:border-[#F5CB5C]/30 transition-colors">
-            <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
-                <Icon className="w-32 h-32 text-[#F5CB5C]" />
-            </div>
-            <div className="flex items-center gap-6 mb-10 border-b border-[#333533] pb-6 relative z-10">
-                <div className="w-12 h-12 rounded-2xl bg-[#333533] text-[#F5CB5C] flex items-center justify-center font-bold text-xl border border-[#4A4D4A] shadow-[0_0_15px_rgba(245,203,92,0.1)]">{number}</div>
-                <h2 className="text-3xl font-bold tracking-tight text-[#E8EDDF] flex items-center gap-4">
-                    {title}
-                    <Icon className="w-8 h-8 text-[#CFDBD5]/50" />
-                </h2>
-            </div>
-            <div className="relative z-10">
-                {children}
-            </div>
-        </div>
-    )
+                    <div className="bg-[#242423] rounded-[2rem] p-10 lg:p-12 border border-[#333533] shadow-sm relative overflow-hidden group hover:border-[#F5CB5C]/30 transition-colors">
+                        <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
+                            <Icon className="w-32 h-32 text-[#F5CB5C]" />
+                        </div>
+                        <div className="flex items-center gap-6 mb-10 border-b border-[#333533] pb-6 relative z-10">
+                            <div className="w-12 h-12 rounded-2xl bg-[#333533] text-[#F5CB5C] flex items-center justify-center font-bold text-xl border border-[#4A4D4A] shadow-[0_0_15px_rgba(245,203,92,0.1)]">{number}</div>
+                            <h2 className="text-3xl font-bold tracking-tight text-[#E8EDDF] flex items-center gap-4">
+                                {title}
+                                <Icon className="w-8 h-8 text-[#CFDBD5]/50" />
+                            </h2>
+                        </div>
+                        <div className="relative z-10">
+                            {children}
+                        </div>
+                    </div>
+                    )
 }
 
-interface CountInputProps {
-    label: string
-    value: number
+                    interface CountInputProps {
+                        label: string
+                    value: number
     onChange: (val: number) => void
-    max?: number
-    min?: number
+                    max?: number
+                    min?: number
 }
 
-function CountInput({ label, value, onChange, max, min = 0 }: CountInputProps) {
+                    function CountInput({label, value, onChange, max, min = 0}: CountInputProps) {
     return (
-        <div className="space-y-4">
-            <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider text-center block">{label}</Label>
-            <div className="relative">
-                <Input
-                    type="number"
-                    min={min}
-                    max={max}
-                    value={value}
-                    onChange={(e) => onChange(parseInt(e.target.value) || 0)}
-                    className="text-center font-mono text-2xl h-16 bg-[#333533] text-[#E8EDDF] border-[#4A4D4A]"
-                />
-            </div>
-        </div>
-    )
+                    <div className="space-y-4">
+                        <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider text-center block">{label}</Label>
+                        <div className="relative">
+                            <Input
+                                type="number"
+                                min={min}
+                                max={max}
+                                value={value}
+                                onChange={(e) => onChange(parseInt(e.target.value) || 0)}
+                                className="text-center font-mono text-2xl h-16 bg-[#333533] text-[#E8EDDF] border-[#4A4D4A]"
+                            />
+                        </div>
+                    </div>
+                    )
 }
