@@ -936,7 +936,7 @@ graph TD
 
                                             {/* 1. Rol / Perfil */}
                                             <div className="space-y-2">
-                                                <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1 block">Rol / Perfil</Label>
+                                                <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1 block h-4">Rol / Perfil</Label>
                                                 <Input
                                                     placeholder="Ej. Java Developer"
                                                     value={profile.role}
@@ -951,7 +951,7 @@ graph TD
 
                                             {/* 2. Seniority */}
                                             <div className="space-y-2">
-                                                <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1 block">Seniority</Label>
+                                                <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1 block h-4">Seniority</Label>
                                                 <Select value={profile.seniority} onValueChange={(v) => {
                                                     const newProfiles = [...state.staffingDetails.profiles]
                                                     newProfiles[idx].seniority = v
@@ -969,9 +969,7 @@ graph TD
 
                                             {/* 3. Dedicación (Strict 50px & Minimalist) */}
                                             <div className="space-y-2">
-                                                <div className="flex justify-between items-baseline px-1">
-                                                    <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider block">Dedicación</Label>
-                                                </div>
+                                                <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1 block h-4">Dedicación</Label>
                                                 <div className="flex h-[50px] bg-[#242423] border border-[#4A4D4A] rounded-[1rem] overflow-hidden hover:border-[#F5CB5C]/50 transition-colors group/dedication relative">
                                                     <Button
                                                         variant="ghost"
@@ -1017,7 +1015,7 @@ graph TD
 
                                             {/* 4. Cantidad */}
                                             <div className="space-y-2">
-                                                <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1 block">Cantidad</Label>
+                                                <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1 block h-4">Cantidad</Label>
                                                 <Input
                                                     type="number"
                                                     min={1}
@@ -1031,7 +1029,7 @@ graph TD
                                                 />
                                             </div>
 
-                                        </div>{/* 5. Skills (Full Row - Below) */}
+                                        </div>
                                         <div className="mt-4">
                                             <Input
                                                 placeholder="Skills / Tecnologías (Ej. React, Node.js, AWS, Kubernetes)"
