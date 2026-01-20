@@ -1289,20 +1289,12 @@ graph TD
                                                     </Button>
 
                                                     {/* Center Group: Input + % */}
-                                                    <div className="flex-1 flex flex-col items-center justify-center h-full relative z-10 pointer-events-none">
-                                                        <div className="flex items-baseline justify-center gap-0.5 w-full pointer-events-auto">
-                                                            <Input
-                                                                type="number"
-                                                                min={0}
-                                                                max={100}
-                                                                value={state.retention.percentage}
-                                                                onChange={(e) => {
-                                                                    const val = parseFloat(e.target.value)
-                                                                    updateState('retention', { ...state.retention, percentage: isNaN(val) ? 0 : Math.min(100, Math.max(0, val)) })
-                                                                }}
-                                                                className="w-[48px] bg-transparent border-0 p-0 text-right font-bold text-base text-[#E8EDDF] focus-visible:ring-0 shadow-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                            />
-                                                            <span className="text-[#F5CB5C] text-xs font-bold">%</span>
+                                                    <div className="flex-1 flex flex-col items-center justify-center h-full pointer-events-none">
+                                                        <div className="flex items-baseline gap-0.5">
+                                                            <span className="text-[#E8EDDF] text-base font-bold tracking-tight">
+                                                                {state.retention.percentage}
+                                                            </span>
+                                                            <span className="text-[#F5CB5C] text-xs font-bold mb-0.5">%</span>
                                                         </div>
                                                     </div>
 
