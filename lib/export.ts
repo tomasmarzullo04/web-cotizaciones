@@ -1,3 +1,4 @@
+// Synced for Vercel
 import jsPDF from 'jspdf'
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, BorderStyle, WidthType, ImageRun, ShadingType } from 'docx'
 import { saveAs } from 'file-saver'

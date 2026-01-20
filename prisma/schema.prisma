@@ -1,3 +1,4 @@
+// Synced for Vercel
 generator client {
   provider = "prisma-client-js"
 }
