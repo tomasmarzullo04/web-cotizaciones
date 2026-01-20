@@ -333,7 +333,26 @@ export async function exportToPDF(data: QuoteState & { totalMonthlyCost: number,
     doc.setTextColor(150)
     doc.text("Confidencial - The Store Intelligence | Página 2 de 2", margin, pageHeight - 10)
 
-    doc.save(`cotizacion_${(data.clientName || 'proyecto').replace(/\s+/g, '_')}.pdf`)
+    // Save PDF Locally
+    const filename = `cotizacion_${(data.clientName || 'proyecto').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+    doc.save(filename)
+
+    // Save to Google Drive (Non-blocking)
+    try {
+        const blob = doc.output('blob')
+        const formData = new FormData()
+        formData.append('file', blob)
+        formData.append('filename', filename)
+
+        // Fire and forget - handled by server action
+        import('./google-drive').then(({ uploadToDrive }) => {
+            uploadToDrive(formData).then(res => {
+                if (!res.success) console.warn("Background Drive Upload Warning:", res.error)
+            })
+        })
+    } catch (e) {
+        console.warn("Failed to initiate Drive upload:", e)
+    }
 }
 
 // -- Word Export --
