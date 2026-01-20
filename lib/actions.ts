@@ -176,6 +176,38 @@ async function sendToMonday(quote: any, params: any, breakdown: any, userName: s
     }
 }
 
+export async function sendQuoteToN8N(quoteData: any, pdfBase64: string, filename: string) {
+    const webhookUrl = process.env.N8N_WEBHOOK_URL
+    if (!webhookUrl) {
+        console.warn("N8N_WEBHOOK_URL not configured")
+        return { success: false, error: "Configuration missing" }
+    }
+
+    try {
+        console.log(`Sending quote to n8n Webhook: ${filename}`)
+        const res = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                filename,
+                fileBase64: pdfBase64,
+                quote: quoteData,
+                timestamp: new Date().toISOString()
+            })
+        })
+
+        if (!res.ok) {
+            console.error(`n8n Webhook failed with status ${res.status}`)
+            return { success: false, error: `Webhook status ${res.status}` }
+        }
+
+        return { success: true }
+    } catch (e: any) {
+        console.error("Failed to send to n8n:", e)
+        return { success: false, error: e.message }
+    }
+}
+
 export async function saveQuote(data: {
     clientName: string,
     projectType: string,

@@ -564,51 +564,53 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
                 return;
             }
 
-            // 2. Upload to Drive (CRITICAL: Await to ensure completion before redirect)
-            // FORCE SYNC: Drive Upload Trigger
-            const uploadToDrivePromise = (async () => {
-                try {
-                    console.log("Generating PDF for Drive Backup...")
-                    let diagramDataUrl = undefined
-                    // Capture diagram if relevant
-                    const element = document.getElementById('diagram-capture-target')
-                    if (element && state.serviceType !== 'Staffing') {
-                        const canvas = await html2canvas(element, { backgroundColor: '#ffffff', scale: 2, useCORS: true })
-                        diagramDataUrl = canvas.toDataURL('image/png')
-                    }
-
-                    const blob = await generatePDFBlob({
-                        ...state,
-                        totalMonthlyCost,
-                        l2SupportCost,
-                        riskCost,
-                        totalWithRisk,
-                        criticitnessLevel,
-                        diagramImage: diagramDataUrl,
-                        serviceType: state.serviceType,
-                        commercialDiscount: state.commercialDiscount,
-                        discountAmount,
-                        finalTotal
-                    })
-
-                    const filename = `${state.clientName}_${state.serviceType}_${new Date().toISOString().split('T')[0]}.pdf`.replace(/\s+/g, '_')
-                    const formData = new FormData()
-                    formData.append('file', blob)
-                    formData.append('filename', filename)
-
-                    // Dynamic Import to avoid server action issues if any
-                    const { uploadToDrive } = await import('@/lib/google-drive')
-                    const driveResult = await uploadToDrive(formData)
-
-                    if (driveResult.success) {
-                        console.log("Drive Backup Success", driveResult.fileId)
-                    } else {
-                        console.warn("Drive Backup Warning", driveResult.error)
-                    }
-                } catch (driveErr) {
-                    console.error("Drive Backup Failed", driveErr)
+            // 2. Upload to Drive via n8n Webhook
+            // FORCE SYNC: n8n Webhook Trigger
+            try {
+                console.log("Generating PDF for n8n Backup...")
+                let diagramDataUrl = undefined
+                const element = document.getElementById('diagram-capture-target')
+                if (element && state.serviceType !== 'Staffing') {
+                    const canvas = await html2canvas(element, { backgroundColor: '#ffffff', scale: 2, useCORS: true })
+                    diagramDataUrl = canvas.toDataURL('image/png')
                 }
-            })()
+
+                const blob = await generatePDFBlob({
+                    ...state,
+                    totalMonthlyCost,
+                    l2SupportCost,
+                    riskCost,
+                    totalWithRisk,
+                    criticitnessLevel: criticitnessLevel as any,
+                    diagramImage: diagramDataUrl,
+                    serviceType: state.serviceType,
+                    commercialDiscount: state.commercialDiscount,
+                    discountAmount,
+                    finalTotal
+                })
+
+                const filename = `${state.clientName}_${state.serviceType}_${new Date().toISOString().split('T')[0]}.pdf`.replace(/\s+/g, '_')
+
+                // Convert Blob to Base64
+                const base64String = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(blob);
+                    reader.onloadend = () => {
+                        const result = reader.result as string;
+                        // Remove data:application/pdf;base64, prefix
+                        const base64 = result.split(',')[1];
+                        resolve(base64);
+                    };
+                    reader.onerror = reject;
+                });
+
+                // Send to n8n (Server Action)
+                const { sendQuoteToN8N } = await import('@/lib/actions')
+                await sendQuoteToN8N(result.quote, base64String, filename)
+
+            } catch (e) {
+                console.warn("Failed to initiate n8n upload:", e)
+            }
 
             alert("Cotización guardada exitosamente.")
             router.push('/dashboard')
