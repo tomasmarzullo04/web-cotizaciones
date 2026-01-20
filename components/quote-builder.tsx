@@ -1268,7 +1268,6 @@ graph TD
                                 <AnimatePresence mode="popLayout">
                                     {state.retention.enabled && (
                                         <>
-                                            {/* Input % (Col 2) */}
                                             <motion.div
                                                 initial={{ opacity: 0, x: -20 }}
                                                 animate={{ opacity: 1, x: 0 }}
@@ -1277,17 +1276,20 @@ graph TD
                                                 className="space-y-2"
                                             >
                                                 <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1">% Porcentaje</Label>
-                                                <div className="flex items-center justify-between bg-[#242423] border border-[#4A4D4A] h-[50px] rounded-[1rem] px-2 focus-within:border-[#F5CB5C] transition-all hover:border-[#F5CB5C]/50 relative z-10">
+                                                {/* Dedication-Style Container */}
+                                                <div className="flex h-[50px] bg-[#242423] border border-[#4A4D4A] rounded-[1rem] overflow-hidden hover:border-[#F5CB5C]/50 transition-colors relative z-10 group/retention">
+
+                                                    {/* Button Minus (Full Height, Text) */}
                                                     <Button
                                                         variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 rounded-full hover:bg-[#F5CB5C]/10 hover:text-[#F5CB5C] text-[#CFDBD5] shrink-0"
                                                         onClick={() => updateState('retention', { ...state.retention, percentage: Math.max(0, state.retention.percentage - 1) })}
+                                                        className="h-full w-10 absolute left-0 top-0 z-20 hover:bg-[#F5CB5C]/10 hover:text-[#F5CB5C] text-[#CFDBD5]/30 rounded-none transition-colors text-xl font-light"
                                                     >
-                                                        <Minus className="w-4 h-4" />
+                                                        -
                                                     </Button>
 
-                                                    <div className="relative flex-1 h-full mx-2">
+                                                    {/* Central Input (Typed) */}
+                                                    <div className="flex-1 h-full relative">
                                                         <Input
                                                             type="number"
                                                             min={0}
@@ -1297,18 +1299,19 @@ graph TD
                                                                 const val = parseFloat(e.target.value)
                                                                 updateState('retention', { ...state.retention, percentage: isNaN(val) ? 0 : Math.min(100, Math.max(0, val)) })
                                                             }}
-                                                            className="w-full h-full bg-transparent border-0 p-0 text-center font-bold text-lg text-[#E8EDDF] focus-visible:ring-0 shadow-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            className="w-full h-full bg-transparent border-0 p-0 text-center font-bold text-lg text-[#E8EDDF] focus-visible:ring-0 shadow-none px-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                         />
-                                                        <span className="absolute right-0 top-1/2 -translate-y-1/2 text-[#F5CB5C] font-bold pointer-events-none pr-2">%</span>
+                                                        {/* Percent Symbol (Absolute, Dedication Style) */}
+                                                        <span className="absolute right-10 top-1/2 -translate-y-1/2 text-[#F5CB5C] text-xs font-bold pointer-events-none">%</span>
                                                     </div>
 
+                                                    {/* Button Plus (Full Height, Text) */}
                                                     <Button
                                                         variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 rounded-full hover:bg-[#F5CB5C]/10 hover:text-[#F5CB5C] text-[#CFDBD5] shrink-0"
                                                         onClick={() => updateState('retention', { ...state.retention, percentage: Math.min(100, state.retention.percentage + 1) })}
+                                                        className="h-full w-10 absolute right-0 top-0 z-20 hover:bg-[#F5CB5C]/10 hover:text-[#F5CB5C] text-[#CFDBD5]/30 rounded-none transition-colors text-xl font-light"
                                                     >
-                                                        <Plus className="w-4 h-4" />
+                                                        +
                                                     </Button>
                                                 </div>
                                             </motion.div>
