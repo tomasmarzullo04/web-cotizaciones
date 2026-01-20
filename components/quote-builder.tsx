@@ -196,6 +196,10 @@ const TECH_OPTIONS = [
     { id: 'purview', name: 'Microsoft Purview' },
     { id: 'tableau', name: 'Tableau' },
     { id: 'python', name: 'Python/Airflow' },
+    { id: 'n8n', name: 'n8n' },
+    { id: 'antigravity', name: 'Google Antigravity' },
+    { id: 'lovable', name: 'Lovable' },
+    { id: 'powerapps', name: 'Power Apps' },
 ]
 
 // --- 2. COMPONENT ---
@@ -629,10 +633,8 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
         `
         let flow = 'Source --> Pipe\nPipe --> Store\nStore --> Vis\nVis --> User\n'
 
-        if (state.criticitness.enabled) {
-            nodes += '\n    Gov[Gobierno/Seguridad]'
-            flow += 'Gov -.-> Store\n'
-        }
+        // Default Flow Logic
+        // Gov/Security Node removed by request
 
         if (techStack.includes('databricks') || dsModelsCount > 0) {
             nodes += '\n    Process[Databricks ML]'
@@ -1466,7 +1468,7 @@ graph TD
 
                 {/* Architecture Diagram */}
                 {
-                    state.serviceType !== 'Staffing' && (
+                    (
                         <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
                             <div className="flex items-center justify-between">
                                 <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
