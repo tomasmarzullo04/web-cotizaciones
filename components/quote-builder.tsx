@@ -1543,169 +1543,169 @@ graph TD
                             </Button>
                         </div>
                     </div>
-                </div >
 
-                {/* Architecture Diagram */}
-                {
-                    (
-                        <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
-                            <div className="flex items-center justify-between">
-                                <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                                    <Network className="w-4 h-4 text-[#F5CB5C]" /> Arquitectura Dinámica
-                                </h4>
-                                <div className="flex gap-4">
-                                    {!isEditingDiagram ? (
-                                        <>
-                                            {manualDiagramCode && (
+
+                    {/* Architecture Diagram */}
+                    {
+                        (
+                            <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                                        <Network className="w-4 h-4 text-[#F5CB5C]" /> Arquitectura Dinámica
+                                    </h4>
+                                    <div className="flex gap-4">
+                                        {!isEditingDiagram ? (
+                                            <>
+                                                {manualDiagramCode && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            if (confirm("¿Restaurar diagrama automático? Se perderán los cambios manuales.")) {
+                                                                setManualDiagramCode(null)
+                                                            }
+                                                        }}
+                                                        className="h-7 px-2 text-[#CFDBD5] hover:text-[#F5CB5C] text-[10px]"
+                                                        title="Restaurar Automático"
+                                                    >
+                                                        <RefreshCw className="w-3 h-3" />
+                                                    </Button>
+                                                )}
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => {
-                                                        if (confirm("¿Restaurar diagrama automático? Se perderán los cambios manuales.")) {
-                                                            setManualDiagramCode(null)
-                                                        }
+                                                        setTempDiagramCode(chartCode)
+                                                        setIsEditingDiagram(true)
                                                     }}
-                                                    className="h-7 px-2 text-[#CFDBD5] hover:text-[#F5CB5C] text-[10px]"
-                                                    title="Restaurar Automático"
+                                                    className="h-7 px-3 text-[#F5CB5C] hover:text-[#E8EDDF] hover:bg-[#F5CB5C]/10 text-[10px] uppercase font-bold tracking-wider"
                                                 >
-                                                    <RefreshCw className="w-3 h-3" />
+                                                    <Edit className="w-3 h-3 mr-2" /> Editar
                                                 </Button>
-                                            )}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => {
-                                                    setTempDiagramCode(chartCode)
-                                                    setIsEditingDiagram(true)
-                                                }}
-                                                className="h-7 px-3 text-[#F5CB5C] hover:text-[#E8EDDF] hover:bg-[#F5CB5C]/10 text-[10px] uppercase font-bold tracking-wider"
-                                            >
-                                                <Edit className="w-3 h-3 mr-2" /> Editar
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={handleDownloadDiagram}
-                                                className="h-7 px-3 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-transparent text-[10px] uppercase font-bold tracking-wider transition-colors"
-                                            >
-                                                <ImageDown className="w-3 h-3 mr-2" />
-                                                Descargar Diagrama
-                                            </Button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => setIsEditingDiagram(false)}
-                                                className="h-7 px-3 text-red-400 hover:text-red-300 hover:bg-red-400/10 text-[10px] uppercase font-bold tracking-wider"
-                                            >
-                                                <X className="w-3 h-3 mr-2" /> Cancelar
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                onClick={() => {
-                                                    setManualDiagramCode(tempDiagramCode)
-                                                    setChartCode(tempDiagramCode)
-                                                    setIsEditingDiagram(false)
-                                                }}
-                                                className="h-7 px-3 bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] text-[10px] uppercase font-bold tracking-wider"
-                                            >
-                                                <Check className="w-3 h-3 mr-2" /> Aplicar
-                                            </Button>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-
-                            {isEditingDiagram ? (
-                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 animate-in fade-in zoom-in-95 duration-300">
-                                    {/* AI Input Section */}
-                                    <div className="col-span-1 xl:col-span-2 bg-[#2D2D2D] p-3 rounded-xl border border-[#F5CB5C]/20 flex gap-2 items-center mb-2">
-                                        <div className="p-2 bg-[#F5CB5C]/10 rounded-lg">
-                                            <Sparkles className="w-5 h-5 text-[#F5CB5C]" />
-                                        </div>
-                                        <Input
-                                            placeholder="Describe cambios con IA (ej: 'Agrega validación entre origen e ingesta')"
-                                            value={aiPrompt}
-                                            onChange={(e) => setAiPrompt(e.target.value)}
-                                            className="bg-transparent border-none text-[#E8EDDF] placeholder:text-[#CFDBD5]/50 focus-visible:ring-0"
-                                            onKeyDown={(e) => e.key === 'Enter' && handleAiGenerate()}
-                                        />
-                                        <Button
-                                            size="sm"
-                                            onClick={handleAiGenerate}
-                                            disabled={isAiLoading || !aiPrompt.trim()}
-                                            className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold"
-                                        >
-                                            {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-                                        </Button>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between items-center">
-                                            <label className="text-[10px] font-bold text-[#CFDBD5] uppercase tracking-wider">Código Mermaid</label>
-                                            {diagramHistory.length > 0 && (
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={handleUndo}
-                                                    className="h-6 text-xs text-[#CFDBD5] hover:text-[#E8EDDF]"
+                                                    onClick={handleDownloadDiagram}
+                                                    className="h-7 px-3 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-transparent text-[10px] uppercase font-bold tracking-wider transition-colors"
                                                 >
-                                                    <Undo2 className="w-3 h-3 mr-1" /> Deshacer
+                                                    <ImageDown className="w-3 h-3 mr-2" />
+                                                    Descargar Diagrama
                                                 </Button>
-                                            )}
-                                        </div>
-                                        <Textarea
-                                            value={tempDiagramCode}
-                                            onChange={(e) => setTempDiagramCode(e.target.value)}
-                                            className="font-mono text-xs bg-[#171717] border border-[#CFDBD5]/20 text-[#E8EDDF] resize-none h-[600px] focus-visible:ring-[#F5CB5C] rounded-[1rem] p-4 w-full"
-                                            placeholder="graph TD..."
-                                        />
-                                        <p className="text-[10px] text-[#CFDBD5]/50 flex items-center gap-1">
-                                            <ShieldAlert className="w-3 h-3" />
-                                            La edición manual desactiva las actualizaciones automáticas.
-                                        </p>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-[#CFDBD5] uppercase">Vista Previa</label>
-                                        <div className="rounded-[1rem] border border-[#CFDBD5]/20 bg-[#333533] p-4 h-[600px] flex items-center justify-center relative overflow-hidden bg-white">
-                                            <MermaidDiagram chart={tempDiagramCode} />
-                                        </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => setIsEditingDiagram(false)}
+                                                    className="h-7 px-3 text-red-400 hover:text-red-300 hover:bg-red-400/10 text-[10px] uppercase font-bold tracking-wider"
+                                                >
+                                                    <X className="w-3 h-3 mr-2" /> Cancelar
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setManualDiagramCode(tempDiagramCode)
+                                                        setChartCode(tempDiagramCode)
+                                                        setIsEditingDiagram(false)
+                                                    }}
+                                                    className="h-7 px-3 bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] text-[10px] uppercase font-bold tracking-wider"
+                                                >
+                                                    <Check className="w-3 h-3 mr-2" /> Aplicar
+                                                </Button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
-                            ) : (
-                                <div id="diagram-capture-target" className="rounded-[2rem] border border-[#CFDBD5]/20 bg-[#333533] p-4 min-h-[250px] flex items-center justify-center relative overflow-hidden bg-white group">
-                                    <MermaidDiagram chart={chartCode} />
-                                    {manualDiagramCode && (
-                                        <div className="absolute top-4 left-4 bg-[#F5CB5C] text-[#242423] text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider shadow-lg">
-                                            Editado Manualmente
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    )
-                }
 
-                {/* Tech Summary */}
-                < div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10" >
-                    <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                        <Cpu className="w-4 h-4 text-[#F5CB5C]" /> Resumen Técnico
-                    </h4>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-[#333533] p-5 rounded-2xl border border-[#4A4D4A] text-center">
-                            <span className="block text-3xl font-black text-[#E8EDDF]">{state.pipelinesCount}</span>
-                            <span className="text-xs text-[#CFDBD5] uppercase tracking-wider font-bold">Pipelines</span>
+                                {isEditingDiagram ? (
+                                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 animate-in fade-in zoom-in-95 duration-300">
+                                        {/* AI Input Section */}
+                                        <div className="col-span-1 xl:col-span-2 bg-[#2D2D2D] p-3 rounded-xl border border-[#F5CB5C]/20 flex gap-2 items-center mb-2">
+                                            <div className="p-2 bg-[#F5CB5C]/10 rounded-lg">
+                                                <Sparkles className="w-5 h-5 text-[#F5CB5C]" />
+                                            </div>
+                                            <Input
+                                                placeholder="Describe cambios con IA (ej: 'Agrega validación entre origen e ingesta')"
+                                                value={aiPrompt}
+                                                onChange={(e) => setAiPrompt(e.target.value)}
+                                                className="bg-transparent border-none text-[#E8EDDF] placeholder:text-[#CFDBD5]/50 focus-visible:ring-0"
+                                                onKeyDown={(e) => e.key === 'Enter' && handleAiGenerate()}
+                                            />
+                                            <Button
+                                                size="sm"
+                                                onClick={handleAiGenerate}
+                                                disabled={isAiLoading || !aiPrompt.trim()}
+                                                className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold"
+                                            >
+                                                {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                                            </Button>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <label className="text-[10px] font-bold text-[#CFDBD5] uppercase tracking-wider">Código Mermaid</label>
+                                                {diagramHistory.length > 0 && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={handleUndo}
+                                                        className="h-6 text-xs text-[#CFDBD5] hover:text-[#E8EDDF]"
+                                                    >
+                                                        <Undo2 className="w-3 h-3 mr-1" /> Deshacer
+                                                    </Button>
+                                                )}
+                                            </div>
+                                            <Textarea
+                                                value={tempDiagramCode}
+                                                onChange={(e) => setTempDiagramCode(e.target.value)}
+                                                className="font-mono text-xs bg-[#171717] border border-[#CFDBD5]/20 text-[#E8EDDF] resize-none h-[600px] focus-visible:ring-[#F5CB5C] rounded-[1rem] p-4 w-full"
+                                                placeholder="graph TD..."
+                                            />
+                                            <p className="text-[10px] text-[#CFDBD5]/50 flex items-center gap-1">
+                                                <ShieldAlert className="w-3 h-3" />
+                                                La edición manual desactiva las actualizaciones automáticas.
+                                            </p>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-[#CFDBD5] uppercase">Vista Previa</label>
+                                            <div className="rounded-[1rem] border border-[#CFDBD5]/20 bg-[#333533] p-4 h-[600px] flex items-center justify-center relative overflow-hidden bg-white">
+                                                <MermaidDiagram chart={tempDiagramCode} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div id="diagram-capture-target" className="rounded-[2rem] border border-[#CFDBD5]/20 bg-[#333533] p-4 min-h-[250px] flex items-center justify-center relative overflow-hidden bg-white group">
+                                        <MermaidDiagram chart={chartCode} />
+                                        {manualDiagramCode && (
+                                            <div className="absolute top-4 left-4 bg-[#F5CB5C] text-[#242423] text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider shadow-lg">
+                                                Editado Manualmente
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    }
+
+                    {/* Tech Summary */}
+                    < div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10" >
+                        <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                            <Cpu className="w-4 h-4 text-[#F5CB5C]" /> Resumen Técnico
+                        </h4>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-[#333533] p-5 rounded-2xl border border-[#4A4D4A] text-center">
+                                <span className="block text-3xl font-black text-[#E8EDDF]">{state.pipelinesCount}</span>
+                                <span className="text-xs text-[#CFDBD5] uppercase tracking-wider font-bold">Pipelines</span>
+                            </div>
+                            <div className="bg-[#333533] p-5 rounded-2xl border border-[#4A4D4A] text-center">
+                                <span className="block text-3xl font-black text-[#E8EDDF]">{state.dashboardsCount + state.reportsCount}</span>
+                                <span className="text-xs text-[#CFDBD5] uppercase tracking-wider font-bold">Visualizaciones</span>
+                            </div>
                         </div>
-                        <div className="bg-[#333533] p-5 rounded-2xl border border-[#4A4D4A] text-center">
-                            <span className="block text-3xl font-black text-[#E8EDDF]">{state.dashboardsCount + state.reportsCount}</span>
-                            <span className="text-xs text-[#CFDBD5] uppercase tracking-wider font-bold">Visualizaciones</span>
-                        </div>
-                    </div>
+                    </div >
+
                 </div >
-
-            </div >
         </motion.div >
     )
 }
