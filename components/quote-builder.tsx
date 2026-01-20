@@ -432,15 +432,15 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
             return base * mod
         }
 
-        if (state.serviceType === 'Staffing') {
-            // Staffing: Explicit Profile List
+        if (state.serviceType === 'Staffing' || state.serviceType === 'Sustain') {
+            // Staffing & Sustain: Explicit Profile List
             state.staffingDetails.profiles.forEach(p => {
                 const cost = getRate(p.role, p.seniority)
                 const allocation = (p.allocationPercentage ?? 100) / 100
                 baseRoles += cost * p.count * allocation
             })
         } else {
-            // Project & Sustain (Role Counters)
+            // Project (Role Counters)
             Object.entries(state.roles).forEach(([roleKey, count]) => {
                 if (count > 0) {
                     // Assume Ssr/Standard for bulk counters unless we add granularity there
