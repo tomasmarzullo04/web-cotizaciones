@@ -1279,7 +1279,7 @@ graph TD
                                                 {/* Dedication-Style Container */}
                                                 <div className="flex h-[50px] bg-[#242423] border border-[#4A4D4A] rounded-[1rem] overflow-hidden hover:border-[#F5CB5C]/50 transition-colors relative z-10 group/retention">
 
-                                                    {/* Button Minus (Full Height, Text) */}
+                                                    {/* Button Minus */}
                                                     <Button
                                                         variant="ghost"
                                                         onClick={() => updateState('retention', { ...state.retention, percentage: Math.max(0, state.retention.percentage - 1) })}
@@ -1288,24 +1288,25 @@ graph TD
                                                         -
                                                     </Button>
 
-                                                    {/* Central Input (Typed) */}
-                                                    <div className="flex-1 h-full relative">
-                                                        <Input
-                                                            type="number"
-                                                            min={0}
-                                                            max={100}
-                                                            value={state.retention.percentage}
-                                                            onChange={(e) => {
-                                                                const val = parseFloat(e.target.value)
-                                                                updateState('retention', { ...state.retention, percentage: isNaN(val) ? 0 : Math.min(100, Math.max(0, val)) })
-                                                            }}
-                                                            className="w-full h-full bg-transparent border-0 p-0 text-center font-bold text-lg text-[#E8EDDF] focus-visible:ring-0 shadow-none px-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                        />
-                                                        {/* Percent Symbol (Absolute, Dedication Style) */}
-                                                        <span className="absolute right-10 top-1/2 -translate-y-1/2 text-[#F5CB5C] text-xs font-bold pointer-events-none">%</span>
+                                                    {/* Center Group: Input + % */}
+                                                    <div className="flex-1 flex flex-col items-center justify-center h-full relative z-10 pointer-events-none">
+                                                        <div className="flex items-baseline justify-center gap-0.5 w-full pointer-events-auto">
+                                                            <Input
+                                                                type="number"
+                                                                min={0}
+                                                                max={100}
+                                                                value={state.retention.percentage}
+                                                                onChange={(e) => {
+                                                                    const val = parseFloat(e.target.value)
+                                                                    updateState('retention', { ...state.retention, percentage: isNaN(val) ? 0 : Math.min(100, Math.max(0, val)) })
+                                                                }}
+                                                                className="w-[48px] bg-transparent border-0 p-0 text-right font-bold text-base text-[#E8EDDF] focus-visible:ring-0 shadow-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            />
+                                                            <span className="text-[#F5CB5C] text-xs font-bold">%</span>
+                                                        </div>
                                                     </div>
 
-                                                    {/* Button Plus (Full Height, Text) */}
+                                                    {/* Button Plus */}
                                                     <Button
                                                         variant="ghost"
                                                         onClick={() => updateState('retention', { ...state.retention, percentage: Math.min(100, state.retention.percentage + 1) })}
