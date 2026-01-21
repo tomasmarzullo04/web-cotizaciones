@@ -635,14 +635,25 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
                 }
 
                 // D. Send to N8N (Always send, even if PDF is empty string, let action handle it)
-                const filename = `[${state.clientName}][${state.serviceType}].pdf`.replace(/\s+/g, '_')
-                await sendQuoteToN8N(result.quote, base64String || "", filename, result.userEmail, result.userName);
-                console.log("N8N Webhook fired successfully")
+                // D. Webhook moved to FINALLY block to guarantee execution
+                // await sendQuoteToN8N(result.quote, base64String || "", filename, result.userEmail, result.userName);
+                console.log("PDF generated. Proceeding to Webhook...")
 
             } catch (pdfError: any) {
                 // CORE FIX: Make this non-blocking!
-                console.error("CRITICAL: PDF Generation or N8N failed, but DB Saved.", pdfError)
+                console.error("CRITICAL: PDF Generation failed (skipping PDF in webhook).", pdfError)
                 console.error("Error Detail:", pdfError.message)
+            } finally {
+                // 3. FORCE WEBHOOK EXECUTION (Regardless of PDF success)
+                try {
+                    console.log("Attempting to send Webhook (Force Run)...")
+                    const filename = `[${state.clientName}][${state.serviceType}].pdf`.replace(/\s+/g, '_')
+                    // base64String is scoped above, might be empty string if failed
+                    await sendQuoteToN8N(result.quote, base64String || "", filename, result.userEmail, result.userName);
+                    console.log("Webhook Triggered.")
+                } catch (webhookError) {
+                    console.error("Webhook finally block failed:", webhookError)
+                }
             }
 
             // 3. FINAL SUCCESS UI (Guaranteed Execution)

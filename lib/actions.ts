@@ -177,11 +177,14 @@ async function sendToMonday(quote: any, params: any, breakdown: any, userName: s
 }
 
 // --- N8N WEBHOOK SENDER (Strict Schema Compliance) ---
+// --- N8N WEBHOOK SENDER (Strict Schema Compliance) ---
 export async function sendQuoteToN8N(quoteData: any, pdfBase64: string, filename: string, userEmail: string = "", userName: string = "") {
-    const webhookUrl = process.env.N8N_WEBHOOK_URL || process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || process.env.N8N_MONDAY_WEBHOOK
+    // PRIORITY: User asked for NEXT_PUBLIC_N8N_MONDAY_WEBHOOK specifically
+    const webhookUrl = process.env.NEXT_PUBLIC_N8N_MONDAY_WEBHOOK || process.env.N8N_MONDAY_WEBHOOK || process.env.N8N_WEBHOOK_URL || process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL
+
     if (!webhookUrl) {
-        console.warn("N8N Webhook URL not configured")
-        return { success: false, error: "Configuration missing" }
+        console.warn("CRITICAL: N8N Webhook URL not configured. Checked all variants.")
+        return { success: false, error: "Configuration missing: No Webhook URL found" }
     }
 
     try {
@@ -248,7 +251,8 @@ export async function sendQuoteToN8N(quoteData: any, pdfBase64: string, filename
             finalPayload.technicalParameters = technicalParameters
         }
 
-        console.log("N8N Payload Preview (Type):", quoteData.serviceType)
+        console.log("N8N Payload Prepared. Action:", finalPayload.action)
+        console.log("Sending to URL:", webhookUrl)
 
         const res = await fetch(webhookUrl, {
             method: 'POST',
@@ -258,9 +262,11 @@ export async function sendQuoteToN8N(quoteData: any, pdfBase64: string, filename
 
         if (!res.ok) {
             console.error(`n8n Webhook failed with status ${res.status}`)
+            console.error(`Response Text: ${await res.text()}`)
             return { success: false, error: `Webhook status ${res.status}` }
         }
 
+        console.log("N8N Webhook Sent Successfully!")
         return { success: true }
     } catch (e: any) {
         console.error("Failed to send to n8n:", e)
