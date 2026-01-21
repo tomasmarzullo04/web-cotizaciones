@@ -97,7 +97,12 @@ export function downloadCSV(data: any[], filename: string) {
 
 // -- PDF Export --
 export async function exportToPDF(data: QuoteState & { totalMonthlyCost: number, l2SupportCost: number, riskCost: number, totalWithRisk: number, discountAmount: number, finalTotal: number, criticitnessLevel: any, diagramImage?: string }) {
-    const doc = new jsPDF()
+    const doc = new jsPDF({
+        orientation: 'p',
+        unit: 'mm',
+        format: 'a4',
+        compress: true // Enable compression
+    })
     const pageWidth = doc.internal.pageSize.width
     const pageHeight = doc.internal.pageSize.height
     const margin = 20
@@ -771,14 +776,12 @@ export async function exportToWord(data: QuoteState & { diagramImage?: string, t
     // Assuming the jsPDF constructor is part of a different function not fully provided,
     // but the user wants to insert this specific constructor with the compress option.
     // This change will replace the docx Document constructor with a jsPDF constructor.
-    const doc = new jsPDF({
-        orientation: 'p',
-        unit: 'mm',
-        format: 'a4',
-        compress: true // Enable compression for images and text
+    const doc = new Document({
+        sections: [{
+            children: children
+        }]
     })
 
     const blob = await Packer.toBlob(doc)
     saveAs(blob, `cotizacion_${(data.clientName || 'proyecto').replace(/\s+/g, '_')}.docx`)
 }
-```
