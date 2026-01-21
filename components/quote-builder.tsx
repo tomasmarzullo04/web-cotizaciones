@@ -639,9 +639,10 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
                 await sendQuoteToN8N(result.quote, base64String || "", filename, result.userEmail, result.userName);
                 console.log("N8N Webhook fired successfully")
 
-            } catch (pdfError) {
+            } catch (pdfError: any) {
                 // CORE FIX: Make this non-blocking!
                 console.error("CRITICAL: PDF Generation or N8N failed, but DB Saved.", pdfError)
+                console.error("Error Detail:", pdfError.message)
             }
 
             // 3. FINAL SUCCESS UI (Guaranteed Execution)
