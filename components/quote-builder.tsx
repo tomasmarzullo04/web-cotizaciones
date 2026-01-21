@@ -709,7 +709,7 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
             },
             commercialDiscount: 0,
             retention: { enabled: false, percentage: 0 },
-            clientContact: { name: '', role: '', email: '' }
+            clientContact: { name: '', role: '', email: '', areaLeader: '' }
         })
         setChartCode('graph LR\n  Start --> End') // Reset Diagram
     }
