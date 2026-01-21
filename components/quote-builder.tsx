@@ -591,13 +591,13 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
                 diagramCode: chartCode
             }
 
-            // Calculate Totals
-            const totalMonthlyCostVal = calculateTotalMonthlyCost()
-            const l2SupportCostVal = calculateL2SupportCost(totalMonthlyCostVal)
-            const riskCostVal = calculateRiskCost(totalMonthlyCostVal)
-            const totalWithRiskVal = calculateTotalWithRisk()
-            const discountAmountVal = totalWithRiskVal * (state.commercialDiscount / 100)
-            const finalTotalUSD = totalWithRiskVal - discountAmountVal
+            // Use existing calculated values (from useMemo)
+            const totalMonthlyCostVal = totalMonthlyCost
+            const l2SupportCostVal = l2SupportCost
+            const riskCostVal = riskCost
+            const totalWithRiskVal = totalWithRisk
+            const discountAmountVal = discountAmount
+            const finalTotalUSD = finalTotal
 
             // Convert using Global Hooks
             const finalTotalConverted = convert(finalTotalUSD)
