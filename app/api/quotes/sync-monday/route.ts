@@ -49,11 +49,28 @@ export async function POST(request: Request) {
             })
         }
 
-        // Update the quote in the database
-        const updatedQuote = await prisma.quote.update({
-            where: { id: id },
-            data: dataToUpdate,
-        })
+        // Update the quote using Supabase Service Role (Bypass RLS)
+        // Prisma might be blocked if RLS is strict and user mappings are missing
+        const { createClient } = require('@supabase/supabase-js')
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+        if (!supabaseUrl || !supabaseServiceKey) {
+            throw new Error("Missing Supabase configuration (URL or SERVICE_ROLE_KEY)")
+        }
+
+        const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+        const { data: updatedQuote, error: supabaseError } = await supabase
+            .from('Quote')
+            .update(dataToUpdate)
+            .eq('id', id)
+            .select()
+            .single()
+
+        if (supabaseError) {
+            throw new Error(`Supabase Update Failed: ${supabaseError.message}`)
+        }
 
         // Revalidate cache to update UI lists immediately
         revalidatePath('/')

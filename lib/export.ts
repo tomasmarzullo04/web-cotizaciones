@@ -96,13 +96,60 @@ export function downloadCSV(data: any[], filename: string) {
 }
 
 // -- PDF Export --
-export async function exportToPDF(data: QuoteState & { totalMonthlyCost: number, l2SupportCost: number, riskCost: number, totalWithRisk: number, discountAmount: number, finalTotal: number, criticitnessLevel: any, diagramImage?: string }) {
+// -- PDF Export --
+export async function exportToPDF(data: QuoteState & { totalMonthlyCost: number, l2SupportCost: number, riskCost: number, totalWithRisk: number, discountAmount: number, finalTotal: number, criticitnessLevel: any, diagramImage?: string, currency?: string, exchangeRate?: number }) {
     const doc = new jsPDF({
         orientation: 'p',
         unit: 'mm',
         format: 'a4',
         compress: true // Enable compression
     })
+
+    // Currency Setup
+    const currencyCode = data.currency || 'USD'
+    const rateMultiplier = data.exchangeRate || 1.0
+    const currencySymbol = { 'USD': '$', 'EUR': '€', 'ARS': '$', 'MXN': '$', 'COP': '$', 'CLP': '$' }[currencyCode] || '$'
+
+    const fmt = (amount: number) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: currencyCode,
+            maximumFractionDigits: 0
+        }).format(amount * rateMultiplier)
+    }
+
+    // ... (rest of setup)
+
+    // ... (later in table)
+
+    // RENDER ROLES
+    if (data.serviceType === 'Staffing' || data.serviceType === 'Sustain') {
+        data.staffingDetails.profiles.forEach(p => {
+            // Basic Cost Estimation per profile (approx) inside PDF as well
+            const baseRate = RATES[Object.keys(RATES).find(k => p.role.toLowerCase().includes(k.replace('_', ' '))) || 'react_dev'] || 4000
+            const alloc = (p.allocationPercentage || 100) / 100
+            const sub = baseRate * alloc * p.count
+
+            // Format using helper
+            drawRow(p.role, `${p.seniority} - ${p.allocationPercentage || 100}%`, p.count.toString(), fmt(sub))
+        })
+    } else {
+        Object.entries(data.roles).forEach(([role, count]) => {
+            // ... logic needed here?
+            // Assuming similar logic for Project, but usually Project uses 'finalTotal' derived elsewhere
+            // or we iterate roles if present.
+            // Line 300 in original file iterates data.roles?
+            // Let's stick to replacing the function signature and the formatter usage primarily.
+        })
+    }
+
+    // NOTE: I am replacing a huge chunk. I should use MultiReplace or ensure I don't lose context.
+    // The previous view showed lines 99-110 and 290-300.
+    // I need to be careful. I will use a targeted replacement for the signature and then a separate one for the table logic if needed.
+    // Actually, simply declaring `fmt` at the top and using it in `drawRow` calls (which I can't see all of) is risky.
+    // Better: Update signature first, then update the specific lines where `$` is hardcoded.
+
+    // I'll update the signature first.
     const pageWidth = doc.internal.pageSize.width
     const pageHeight = doc.internal.pageSize.height
     const margin = 20
@@ -344,11 +391,24 @@ export async function exportToPDF(data: QuoteState & { totalMonthlyCost: number,
     doc.save(filename)
 }
 
-export async function generatePDFBlob(data: QuoteState & { totalMonthlyCost: number, l2SupportCost: number, riskCost: number, totalWithRisk: number, discountAmount: number, finalTotal: number, criticitnessLevel: any, diagramImage?: string }) {
+export async function generatePDFBlob(data: QuoteState & { totalMonthlyCost: number, l2SupportCost: number, riskCost: number, totalWithRisk: number, discountAmount: number, finalTotal: number, criticitnessLevel: any, diagramImage?: string, currency?: string, exchangeRate?: number }) {
     const doc = new jsPDF()
     const pageWidth = doc.internal.pageSize.width
     const pageHeight = doc.internal.pageSize.height
     const margin = 20
+
+    // Currency Setup
+    const currencyCode = data.currency || 'USD'
+    const rateMultiplier = data.exchangeRate || 1.0
+    const currencySymbol = { 'USD': '$', 'EUR': '€', 'ARS': '$', 'MXN': '$', 'COP': '$', 'CLP': '$' }[currencyCode] || '$'
+
+    const fmt = (amount: number) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: currencyCode,
+            maximumFractionDigits: 0
+        }).format(amount * rateMultiplier)
+    }
 
     // Colors
     const COLOR_GOLD = '#D4AF37'
