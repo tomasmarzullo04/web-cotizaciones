@@ -619,41 +619,34 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
                 if (blob) {
                     const filename = `[${state.clientName}][${state.serviceType}][${new Date().toISOString().split('T')[0]}].pdf`.replace(/\s+/g, '_')
 
-                    // Convert Blob to Base64
-                    const reader = new FileReader();
-                    reader.readAsDataURL(blob);
+                    // STRICT ASYNC/AWAIT BASE64 GENERATION
+                    const base64String = await new Promise<string>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(blob);
+                        reader.onload = () => {
+                            const result = reader.result as string;
+                            const base64 = result.split(',')[1];
+                            resolve(base64);
+                        };
+                        reader.onerror = (error) => reject(error);
+                    });
 
-                    reader.onloadend = async () => {
-                        try {
-                            const base64String = (reader.result as string).split(',')[1];
-                            console.log("PDF Base64 Length:", base64String.length); // EXACT USER LOG
+                    console.log("PDF Base64 Length:", base64String.length); // EXACT USER LOG
 
-                            // Validate URL client-side just in case (optional, but requested)
-                            if (!process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL && !process.env.N8N_WEBHOOK_URL) {
-                                console.warn("WARNING: No N8N Webhook URL found in client env vars.");
-                            }
-
-                            // Send to n8n (Server Action)
-                            await sendQuoteToN8N(result.quote, base64String, filename);
-
-                            console.log("Quote sent to n8n successfully");
-                            alert("Cotización guardada exitosamente y enviada a respaldo.");
-                            router.push('/dashboard');
-                        } catch (uploadError) {
-                            console.error("Error uploading to n8n:", uploadError);
-                            // Still redirect as DB save was successful
-                            alert("Cotización guardada en BD, pero falló el respaldo PDF.");
-                            router.push('/dashboard');
-                        }
-                    };
-
-                    reader.onerror = (readError) => {
-                        console.error("Error reading PDF Blob:", readError);
-                        alert("Cotización guardada, error al generar PDF.");
-                        router.push('/dashboard');
+                    // Validate URL client-side just in case
+                    if (!process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL && !process.env.N8N_WEBHOOK_URL && !process.env.N8N_MONDAY_WEBHOOK) {
+                        console.warn("WARNING: No N8N Webhook URL found in client env vars.");
                     }
+
+                    // Send to n8n (Server Action) - Wait for it
+                    await sendQuoteToN8N(result.quote, base64String, filename);
+
+                    console.log("Quote sent to n8n successfully");
+                    alert("Cotización guardada exitosamente y enviada a respaldo.");
+                    router.push('/dashboard');
                 } else {
                     console.error("Failed to generate PDF Blob");
+                    alert("Error crítico: No se pudo generar el PDF.");
                     router.push('/dashboard');
                 }
 
