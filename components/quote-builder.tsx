@@ -1818,56 +1818,60 @@ graph TD
             )
         }
 
-interface SectionCardProps {
-            title: string
-            number: string
-            icon: React.ElementType
-            children: React.ReactNode
-        }
-
-        function SectionCard({ title, number, icon: Icon, children }: SectionCardProps) {
-            return (
-                <div className="bg-[#242423] rounded-[2rem] p-10 lg:p-12 border border-[#333533] shadow-sm relative overflow-hidden group hover:border-[#F5CB5C]/30 transition-colors">
-                    <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Icon className="w-32 h-32 text-[#F5CB5C]" />
-                    </div>
-                    <div className="flex items-center gap-6 mb-10 border-b border-[#333533] pb-6 relative z-10">
-                        <div className="w-12 h-12 rounded-2xl bg-[#333533] text-[#F5CB5C] flex items-center justify-center font-bold text-xl border border-[#4A4D4A] shadow-[0_0_15px_rgba(245,203,92,0.1)]">{number}</div>
-                        <h2 className="text-3xl font-bold tracking-tight text-[#E8EDDF] flex items-center gap-4">
-                            {title}
-                            <Icon className="w-8 h-8 text-[#CFDBD5]/50" />
-                        </h2>
-                    </div>
-                    <div className="relative z-10">
-                        {children}
-                    </div>
-                </div>
-            )
-        }
-
-        interface CountInputProps {
-            label: string
-            value: number
-            onChange: (val: number) => void
-            max?: number
-            min?: number
-        }
-
-        function CountInput({ label, value, onChange, max, min = 0 }: CountInputProps) {
-            return (
-                <div className="space-y-4">
-                    <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider text-center block">{label}</Label>
-                    <div className="relative">
-                        <Input
-                            type="number"
-                            min={min}
-                            max={max}
-                            value={value}
-                            onChange={(e) => onChange(parseInt(e.target.value) || 0)}
-                            className="text-center font-mono text-2xl h-16 bg-[#333533] text-[#E8EDDF] border-[#4A4D4A]"
-                        />
-                    </div>
-                </div>
-            )
-        }
     }
+
+
+// --- HELPERS ---
+
+interface SectionCardProps {
+    title: string
+    number: string
+    icon: React.ElementType
+    children: React.ReactNode
+}
+
+function SectionCard({ title, number, icon: Icon, children }: SectionCardProps) {
+    return (
+        <div className="bg-[#242423] rounded-[2rem] p-10 lg:p-12 border border-[#333533] shadow-sm relative overflow-hidden group hover:border-[#F5CB5C]/30 transition-colors">
+            <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Icon className="w-32 h-32 text-[#F5CB5C]" />
+            </div>
+            <div className="flex items-center gap-6 mb-10 border-b border-[#333533] pb-6 relative z-10">
+                <div className="w-12 h-12 rounded-2xl bg-[#333533] text-[#F5CB5C] flex items-center justify-center font-bold text-xl border border-[#4A4D4A] shadow-[0_0_15px_rgba(245,203,92,0.1)]">{number}</div>
+                <h2 className="text-3xl font-bold tracking-tight text-[#E8EDDF] flex items-center gap-4">
+                    {title}
+                    <Icon className="w-8 h-8 text-[#CFDBD5]/50" />
+                </h2>
+            </div>
+            <div className="relative z-10">
+                {children}
+            </div>
+        </div>
+    )
+}
+
+interface CountInputProps {
+    label: string
+    value: number
+    onChange: (val: number) => void
+    max?: number
+    min?: number
+}
+
+function CountInput({ label, value, onChange, max, min = 0 }: CountInputProps) {
+    return (
+        <div className="space-y-4">
+            <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider text-center block">{label}</Label>
+            <div className="relative">
+                <Input
+                    type="number"
+                    min={min}
+                    max={max}
+                    value={value}
+                    onChange={(e) => onChange(parseInt(e.target.value) || 0)}
+                    className="text-center font-mono text-2xl h-16 bg-[#333533] text-[#E8EDDF] border-[#4A4D4A]"
+                />
+            </div>
+        </div>
+    )
+}
