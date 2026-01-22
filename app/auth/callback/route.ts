@@ -19,7 +19,6 @@ export async function GET(request: Request) {
 
         if (!error && data.session?.user?.email) {
             const email = data.session.user.email
-
             let user = null
 
             // 1. Check Database First
@@ -31,24 +30,29 @@ export async function GET(request: Request) {
                 console.error("DB Check Failed in Callback:", e)
             }
 
-            // 2. Check Allowed List (Fallback logic mirroring lib/auth.ts)
+            // 2. Open Registration Strategy (Auto-Create)
             if (!user) {
-                const ALLOWED_EMAILS: Record<string, { role: string, name: string, id: string }> = {
-                    'admin@antigravity.com': { role: 'ADMIN', name: 'Admin Demo', id: 'demo-admin' },
-                    'tomasmarzullo04@gmail.com': { role: 'USER', name: 'Tomas Marzullo', id: 'demo-user' },
-                    'maxhigareda@thestoreintelligence.com': { role: 'USER', name: 'Max Higareda', id: 'demo-max' },
-                    'viridiana@thestoreintelligence.com': { role: 'USER', name: 'Viridiana', id: 'demo-viridiana' },
-                    'darold@thestoreintelligence.com': { role: 'USER', name: 'Darold', id: 'demo-darold' },
-                    'liliana@thestoreintelligence.com': { role: 'USER', name: 'Liliana', id: 'demo-liliana' },
-                    'loudal@thestoreintelligence.com': { role: 'USER', name: 'Loudal', id: 'demo-loudal' },
-                    'ktellez@thestoreintelligence.com': { role: 'USER', name: 'Ktellez', id: 'demo-ktellez' },
-                }
+                // Create new user automatically
+                try {
+                    const newName = data.session.user.user_metadata?.full_name || email.split('@')[0]
 
-                const fallback = ALLOWED_EMAILS[email]
-
-                if (fallback) {
-                    // Use fallback user data
-                    user = { ...fallback, email } as any
+                    user = await prisma.user.create({
+                        data: {
+                            name: newName,
+                            email: email,
+                            password: '', // No password for OAuth users
+                            role: 'USER', // Default role for everyone is 'consultor' (USER)
+                        }
+                    })
+                    console.log(`[Auth] New user created: ${email}`)
+                } catch (e) {
+                    console.error("[Auth] Failed to auto-create user:", e)
+                    // If create fails (e.g. race condition), try to fetch again
+                    try {
+                        user = await prisma.user.findUnique({ where: { email } })
+                    } catch (inner) {
+                        console.error("[Auth] Recovery fetch failed:", inner)
+                    }
                 }
             }
 
@@ -61,6 +65,7 @@ export async function GET(request: Request) {
                 const cookieOptions = { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' }
 
                 cookieStore.set('session_role', user.role, cookieOptions)
+                // Use a proper name field if available, otherwise email
                 cookieStore.set('session_user', user.name || user.email, cookieOptions)
                 cookieStore.set('session_user_id', user.id, cookieOptions)
 
@@ -70,6 +75,6 @@ export async function GET(request: Request) {
         }
     }
 
-    // Error (Invalid Code) or Unauthorized (Email not in list)
-    return NextResponse.redirect(`${origin}/login?error=Unauthorized`)
+    // Error (Invalid Code) or Creation Failed
+    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent("Error al crear cuenta o iniciar sesión.")}`)
 }

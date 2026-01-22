@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { loginAction } from '@/lib/auth'
 import { Label } from '@/components/ui/label'
 import { Loader2, ArrowRight, Lock } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
 
 import { createClient } from '@supabase/supabase-js'
 
@@ -20,9 +21,12 @@ const getSupabaseClient = () => {
 }
 
 export default function LoginPage() {
+    const searchParams = useSearchParams()
+
+    // State
     const [loading, setLoading] = useState(false)
-    const [isGoogleLoading, setIsGoogleLoading] = useState(false) // Separate loading state
-    const [error, setError] = useState<string | null>(null)
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+    const [error, setError] = useState<string | null>(searchParams.get('error'))
 
     const handleGoogleLogin = async () => {
         setIsGoogleLoading(true)
