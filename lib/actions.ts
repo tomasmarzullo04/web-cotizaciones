@@ -632,10 +632,28 @@ export async function convertProspectToClient(email: string) {
 
 
 export async function deleteQuote(quoteId: string) {
+    const cookieStore = await cookies()
+    const userId = cookieStore.get('session_user_id')?.value
+
+    if (!userId) return { success: false, error: "Unauthorized" }
+
     try {
-        return await prisma.quote.delete({ where: { id: quoteId } })
-    } catch (e) {
+        // Ensure user owns the quote
+        const quote = await prisma.quote.findUnique({ where: { id: quoteId } })
+        if (!quote) return { success: false, error: "Quote not found" }
+
+        // Admin can delete any? Or strict ownership? Sticking to strict ownership for multitenancy unless admin role check.
+        const role = cookieStore.get('session_role')?.value
+        if (quote.userId !== userId && role !== 'ADMIN') {
+            return { success: false, error: "Forbidden: You do not own this quote" }
+        }
+
+        await prisma.quote.delete({ where: { id: quoteId } })
+        revalidatePath('/dashboard')
         return { success: true }
+    } catch (e) {
+        console.error("Delete failed", e)
+        return { success: false, error: "Deletion failed" }
     }
 }
 
@@ -707,6 +725,16 @@ export async function updateQuoteStatus(quoteId: string, status: string) {
     }
 
     try {
+        // Check ownership before update
+        const existingQuote = await prisma.quote.findUnique({ where: { id: quoteId } })
+        if (!existingQuote) return { success: false, error: "Quote not found" }
+
+        // Admin override or Owner check
+        const role = cookieStore.get('session_role')?.value
+        if (existingQuote.userId !== userId && role !== 'ADMIN') {
+            return { success: false, error: "Forbidden" }
+        }
+
         const updatedQuote = await prisma.quote.update({
             where: { id: quoteId },
             data: { status }
