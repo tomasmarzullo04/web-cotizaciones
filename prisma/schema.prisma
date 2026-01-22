@@ -57,6 +57,7 @@ model Client {
   contactRole String?
   email       String?
   status      String   @default("PROSPECTO") // PROSPECTO, CLIENTE
+  monday_id   String?  @map("monday_id")
   driveFolder String?
   createdAt   DateTime @default(now())
   quotes      Quote[]

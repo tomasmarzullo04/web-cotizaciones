@@ -214,7 +214,11 @@ export async function sendQuoteToN8N(quoteData: any, pdfBase64: string, filename
             originalUSDAmount: Number(originalUSDAmount).toFixed(2), // NEW FIELD
             fileBase64: pdfBase64,
             fileName: filename,
-            date: new Date().toISOString()
+            date: new Date().toISOString(),
+            // --- CRM FIELDS ---
+            clientId: (quoteData as any).crmContext?.clientId || quoteData.linkedClientId,
+            isNewClient: (quoteData as any).crmContext?.isNewClient || false,
+            newClientData: (quoteData as any).crmContext?.clientData || null
         }
 
         // 3. Construct Specific Payload based on Type
@@ -300,6 +304,51 @@ export async function sendQuoteToN8N(quoteData: any, pdfBase64: string, filename
     }
 }
 
+
+// --- CLIENT / CRM ACTIONS ---
+
+export async function searchClients(query: string) {
+    if (!query || query.length < 2) return []
+    try {
+        const clients = await prisma.client.findMany({
+            where: {
+                companyName: {
+                    contains: query,
+                    mode: 'insensitive'
+                }
+            },
+            take: 10,
+            select: { id: true, companyName: true, contactName: true, email: true, status: true }
+        })
+        return clients
+    } catch (e) {
+        console.error("Search Clients Failed", e)
+        return []
+    }
+}
+
+export async function createClient(data: { companyName: string, contactName: string, email: string }) {
+    try {
+        const newClient = await prisma.client.create({
+            data: {
+                companyName: data.companyName,
+                contactName: data.contactName,
+                email: data.email,
+                status: 'PROSPECTO'
+            }
+        })
+        return { success: true, client: newClient }
+    } catch (e: any) {
+        // Handle unique constraint error
+        if (e.code === 'P2002') {
+            return { success: false, error: "Ya existe un cliente con ese nombre de empresa." }
+        }
+        console.error("Create Client Failed", e)
+        return { success: false, error: e.message }
+    }
+}
+
+
 export async function saveQuote(data: {
     clientName: string,
     projectType: string,
@@ -307,7 +356,10 @@ export async function saveQuote(data: {
     params: TechnicalParameters,
     breakdown: CostBreakdown,
     estimatedCost?: number, // Optional override
-    technicalParameters?: string // Optional override (JSON string)
+    technicalParameters?: string, // Optional override (JSON string)
+    clientId?: string, // NEW: Linked Client ID
+    isNewClient?: boolean, // NEW: Flag for n8n
+    clientData?: { name: string, contact: string, email: string } // NEW: For creating in Monday
 }) {
     const cookieStore = await cookies()
     const userId = cookieStore.get('session_user_id')?.value
@@ -343,7 +395,8 @@ export async function saveQuote(data: {
                 staffingRequirements: JSON.stringify(data.breakdown.roles),
                 diagramDefinition: data.breakdown.diagramCode,
                 userId: userId,
-                status: 'BORRADOR'
+                status: 'BORRADOR',
+                linkedClientId: data.clientId || undefined // Link to DB Client
             }
         })
 
@@ -352,7 +405,19 @@ export async function saveQuote(data: {
         // const syncResult = await sendToMonday(result, data.params, data.breakdown, userName, userEmail)
         const syncResult = { synced: false, reason: "Consolidated into PDF upload" }
 
-        return { success: true, quote: result, sync: syncResult, userEmail, userName }
+        return {
+            success: true,
+            quote: result,
+            sync: syncResult,
+            userEmail,
+            userName,
+            // Pass back context for the next step (n8n PDF upload)
+            crmContext: {
+                clientId: data.clientId,
+                isNewClient: data.isNewClient,
+                clientData: data.clientData
+            }
+        }
     } catch (e: any) {
         console.error("CRITICAL DB ERROR (saveQuote):", e)
         // Return error to client to debug Vercel issue

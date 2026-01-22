@@ -19,6 +19,7 @@ import { exportToPDF, exportToWord, generatePDFBlob } from "@/lib/export"
 import html2canvas from 'html2canvas'
 import { motion, AnimatePresence } from "framer-motion"
 import { sendQuoteToN8N } from "@/lib/actions"
+import { ClientSelector, ClientData } from "@/components/client-selector"
 
 // Hardcoded fallback rates in case DB fails or during transition
 const FALLBACK_RATES = {
@@ -55,6 +56,9 @@ type RoleKey = keyof typeof FALLBACK_RATES;
 interface QuoteState {
     // 1. General
     clientName: string
+    clientId?: string // NEW: Linked Client ID
+    isNewClient?: boolean // NEW: Flag
+    newClientData?: ClientData // NEW: For Context
     description: string
     complexity: 'low' | 'medium' | 'high'
     updateFrequency: 'daily' | 'weekly' | 'monthly' | 'realtime'
@@ -134,6 +138,9 @@ interface QuoteState {
 
 const INITIAL_STATE: QuoteState = {
     clientName: '',
+    clientId: undefined,
+    isNewClient: false,
+    newClientData: undefined,
     description: '',
     complexity: 'medium',
     updateFrequency: 'daily',
@@ -628,7 +635,15 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
                     currency: currency,
                     exchangeRate: exchangeRate,
                     originalUSDAmount: finalTotalUSD
-                })
+                }),
+                // CRM Context
+                clientId: state.clientId,
+                isNewClient: state.isNewClient,
+                clientData: state.newClientData ? {
+                    name: state.newClientData.companyName,
+                    contact: state.newClientData.contactName || '',
+                    email: state.newClientData.email || ''
+                } : undefined
             })
 
             if (!result.success || !result.quote) {
@@ -709,6 +724,9 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
     const resetQuoteState = () => {
         setState({
             clientName: '',
+            clientId: undefined,
+            isNewClient: false,
+            newClientData: undefined,
             description: '',
             complexity: 'medium',
             updateFrequency: 'daily',
@@ -944,11 +962,25 @@ graph TD
                         <div className="space-y-8">
                             <div>
                                 <Label className="text-[#CFDBD5] text-sm font-bold uppercase tracking-wider mb-2 block">Cliente / Prospecto</Label>
-                                <Input
-                                    placeholder="Ej. Banco Global - Migración Cloud"
-                                    value={state.clientName}
-                                    onChange={e => updateState('clientName', e.target.value)}
-                                    className="text-lg bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"
+                                <ClientSelector
+                                    value={state.clientId}
+                                    clientName={state.clientName}
+                                    onClientSelect={(client, isNew) => {
+                                        console.log("Client Selected:", client)
+                                        setState(prev => ({
+                                            ...prev,
+                                            clientName: client.companyName,
+                                            clientId: client.id,
+                                            isNewClient: isNew,
+                                            newClientData: client,
+                                            // Auto-fill contact info if available
+                                            clientContact: {
+                                                ...prev.clientContact,
+                                                name: client.contactName || prev.clientContact.name,
+                                                email: client.email || prev.clientContact.email
+                                            }
+                                        }))
+                                    }}
                                 />
                             </div>
                             <div className="relative">
