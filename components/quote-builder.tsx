@@ -20,6 +20,7 @@ import html2canvas from 'html2canvas'
 import { motion, AnimatePresence } from "framer-motion"
 import { sendQuoteToN8N } from "@/lib/actions"
 import { ClientSelector, ClientData } from "@/components/client-selector"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 // Hardcoded fallback rates in case DB fails or during transition
 const FALLBACK_RATES = {
@@ -116,10 +117,38 @@ interface QuoteState {
             allocationPercentage?: number
         }>
     }
+    // Sustain Specific Data (New)
     sustainDetails: {
+        // Section 1: Technical Profile
+        solutionName: string
         technicalDescription: string
-        tools: string[]
-        operationHours: string
+        techStack: string[] // Specific for Sustain
+        metrics: {
+            pipelinesCount: number
+            notebooksCount: number
+            reportsCount: number
+            dsModelsCount: number
+            automationLevel: number
+            updateFrequency: string
+        }
+
+        // Section 2: Operational Definition
+        businessOwner: string
+        devHours: number
+        incidentRate: number
+        supportWindow: string
+        criticalHours: string
+        criticalDays: string
+
+        // Section 3: Criticality Matrix (Values 1, 3, 5)
+        criticalityMatrix: {
+            impactOperative: number
+            impactFinancial: number
+            userCoverage: number
+            countryCoverage: number
+            technicalMaturity: number
+            dependencies: number
+        }
     }
 
     // Commercial
@@ -184,9 +213,31 @@ const INITIAL_STATE: QuoteState = {
         profiles: []
     },
     sustainDetails: {
+        solutionName: '',
         technicalDescription: '',
-        tools: [],
-        operationHours: 'business'
+        techStack: [],
+        metrics: {
+            pipelinesCount: 0,
+            notebooksCount: 0,
+            reportsCount: 0,
+            dsModelsCount: 0,
+            automationLevel: 0,
+            updateFrequency: 'daily'
+        },
+        businessOwner: '',
+        devHours: 0,
+        incidentRate: 0,
+        supportWindow: '9x5',
+        criticalHours: '',
+        criticalDays: '',
+        criticalityMatrix: {
+            impactOperative: 1,
+            impactFinancial: 1,
+            userCoverage: 1,
+            countryCoverage: 1,
+            technicalMaturity: 1,
+            dependencies: 1
+        }
     },
     commercialDiscount: 0,
     retention: { enabled: false, percentage: 0 },
@@ -207,6 +258,20 @@ const TECH_OPTIONS = [
     { id: 'antigravity', name: 'Google Antigravity' },
     { id: 'lovable', name: 'Lovable' },
     { id: 'powerapps', name: 'Power Apps' },
+]
+
+const SUSTAIN_TECH_OPTIONS = [
+    { id: 'azure_df', name: 'Azure Data Factory' },
+    { id: 'databricks', name: 'Databricks' },
+    { id: 'powerbi', name: 'Power BI' },
+    { id: 'dotnet', name: '.NET' },
+    { id: 'react', name: 'React' },
+    { id: 'python', name: 'Python' },
+    { id: 'sql', name: 'SQL' },
+    { id: 'streamlit', name: 'Streamlit' },
+    { id: 'datascience', name: 'Data Science / ML' },
+    { id: 'snowflake', name: 'Snowflake' },
+    { id: 'other', name: 'Otros' }
 ]
 
 // --- 2. COMPONENT ---
@@ -409,6 +474,19 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
         return { label: 'BAJA', margin: 0.0, color: 'text-[#F5CB5C]' }
     }, [criticitnessScore])
 
+    // --- SUSTAIN LOGIC ---
+    const sustainScore = useMemo(() => {
+        if (state.serviceType !== 'Sustain') return 0
+        const { impactOperative, impactFinancial, userCoverage, countryCoverage, technicalMaturity, dependencies } = state.sustainDetails.criticalityMatrix
+        return impactOperative + impactFinancial + userCoverage + countryCoverage + technicalMaturity + dependencies
+    }, [state.sustainDetails.criticalityMatrix, state.serviceType])
+
+    const sustainLevel = useMemo(() => {
+        if (sustainScore >= 15) return { label: 'ALTA', color: 'bg-red-500/10 text-red-400 border-red-500/20' }
+        if (sustainScore >= 9) return { label: 'MEDIA', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' }
+        return { label: 'BAJA', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' }
+    }, [sustainScore])
+
     const handleAiPolish = async () => {
         if (!state.description) return
         setPolishLoading(true)
@@ -545,7 +623,15 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
         const subTotal = baseRoles + baseServices + l2SupportCost
 
         // Risk (Criticality)
-        const riskVal = state.criticitness.enabled ? subTotal * criticitnessLevel.margin : 0
+        let riskMargin = 0
+        if (state.serviceType === 'Sustain') {
+            if (sustainLevel.label === 'ALTA') riskMargin = 0.20
+            else if (sustainLevel.label === 'MEDIA') riskMargin = 0.10
+        } else if (state.criticitness.enabled) {
+            riskMargin = criticitnessLevel.margin
+        }
+
+        const riskVal = subTotal * riskMargin
 
         const preDiscountTotal = subTotal + riskVal
 
@@ -983,52 +1069,335 @@ graph TD
                                     }}
                                 />
                             </div>
-                            <div className="relative">
-                                <Label className="text-[#CFDBD5] text-sm font-bold uppercase tracking-wider mb-2 block">
-                                    {state.serviceType === 'Staffing' ? 'Contexto de la Búsqueda' : 'Contexto del Proyecto'}
-                                </Label>
-                                <Textarea
-                                    placeholder={
-                                        state.serviceType === 'Staffing' ? "Descripción del equipo actual, cultura, y por qué se necesitan estos perfiles..." :
-                                            state.serviceType === 'Sustain' ? "Descripción del ecosistema a soportar, dolores actuales en la operación..." :
+
+                            {/* SUSTAIN SCORECARD */}
+                            {state.serviceType === 'Sustain' ? (
+                                <div className="space-y-6">
+                                    <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
+
+                                        {/* SECTION 1: PERFIL TÉCNICO */}
+                                        <AccordionItem value="item-1" className="border-b border-[#4A4D4A]">
+                                            <AccordionTrigger className="text-[#E8EDDF] hover:text-[#F5CB5C] hover:no-underline">
+                                                <span className="font-bold uppercase tracking-wider text-sm flex items-center gap-2">
+                                                    <Cpu className="w-4 h-4 text-[#F5CB5C]" /> 1. Perfil Técnico
+                                                </span>
+                                            </AccordionTrigger>
+                                            <AccordionContent className="p-4 space-y-6 bg-[#242423]/50 rounded-b-xl">
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Nombre Solución / Producto</Label>
+                                                        <Input
+                                                            value={state.sustainDetails.solutionName}
+                                                            onChange={e => updateState('sustainDetails', { ...state.sustainDetails, solutionName: e.target.value })}
+                                                            className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"
+                                                            placeholder="Ej. Data Lake Comercial"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Descripción Funcional</Label>
+                                                        <Textarea
+                                                            value={state.sustainDetails.technicalDescription}
+                                                            onChange={e => updateState('sustainDetails', { ...state.sustainDetails, technicalDescription: e.target.value })}
+                                                            className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] min-h-[100px]"
+                                                            placeholder="Describe qué hace la solución, usuarios clave y flujo de datos..."
+                                                        />
+                                                    </div>
+
+                                                    {/* Tech Stack Multi-Select */}
+                                                    <div>
+                                                        <Label className="text-[#CFDBD5] mb-3 block text-xs uppercase font-bold">Stack Tecnológico</Label>
+                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                            {SUSTAIN_TECH_OPTIONS.map((item) => {
+                                                                const isSelected = state.sustainDetails.techStack.includes(item.id)
+                                                                return (
+                                                                    <div
+                                                                        key={item.id}
+                                                                        onClick={() => {
+                                                                            const current = state.sustainDetails.techStack
+                                                                            const newVal = isSelected ? current.filter(i => i !== item.id) : [...current, item.id]
+                                                                            updateState('sustainDetails', { ...state.sustainDetails, techStack: newVal })
+                                                                        }}
+                                                                        className={cn(
+                                                                            "cursor-pointer text-xs px-3 py-2 rounded-lg border transition-all flex items-center gap-2",
+                                                                            isSelected ? "bg-[#F5CB5C]/10 border-[#F5CB5C] text-[#F5CB5C]" : "bg-[#333533] border-[#4A4D4A] text-[#CFDBD5] hover:border-[#CFDBD5]"
+                                                                        )}
+                                                                    >
+                                                                        <div className={cn("w-3 h-3 rounded border flex items-center justify-center", isSelected ? "border-[#F5CB5C] bg-[#F5CB5C]" : "border-[#CFDBD5]")}>
+                                                                            {isSelected && <Check className="w-2 h-2 text-[#242423]" />}
+                                                                        </div>
+                                                                        {item.name}
+                                                                    </div>
+                                                                )
+                                                            })}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Metrics Grid */}
+                                                    <div>
+                                                        <Label className="text-[#CFDBD5] mb-3 block text-xs uppercase font-bold">Métricas Volumetría</Label>
+                                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[#7C7F7C] text-[10px] uppercase">Pipelines</Label>
+                                                                <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-9"
+                                                                    value={state.sustainDetails.metrics.pipelinesCount} onChange={e => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, pipelinesCount: parseInt(e.target.value) || 0 } })} />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[#7C7F7C] text-[10px] uppercase">Notebooks</Label>
+                                                                <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-9"
+                                                                    value={state.sustainDetails.metrics.notebooksCount} onChange={e => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, notebooksCount: parseInt(e.target.value) || 0 } })} />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[#7C7F7C] text-[10px] uppercase">Nivel Auto %</Label>
+                                                                <Input type="number" max={100} className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-9"
+                                                                    value={state.sustainDetails.metrics.automationLevel} onChange={e => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, automationLevel: parseInt(e.target.value) || 0 } })} />
+                                                            </div>
+                                                            {state.sustainDetails.techStack.includes('powerbi') && (
+                                                                <div className="space-y-1 animate-in fade-in">
+                                                                    <Label className="text-[#7C7F7C] text-[10px] uppercase">Reportes</Label>
+                                                                    <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-9"
+                                                                        value={state.sustainDetails.metrics.reportsCount} onChange={e => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, reportsCount: parseInt(e.target.value) || 0 } })} />
+                                                                </div>
+                                                            )}
+                                                            {(state.sustainDetails.techStack.includes('datascience') || state.sustainDetails.techStack.includes('databricks')) && (
+                                                                <div className="space-y-1 animate-in fade-in">
+                                                                    <Label className="text-[#7C7F7C] text-[10px] uppercase">Modelos ML</Label>
+                                                                    <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-9"
+                                                                        value={state.sustainDetails.metrics.dsModelsCount} onChange={e => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dsModelsCount: parseInt(e.target.value) || 0 } })} />
+                                                                </div>
+                                                            )}
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[#7C7F7C] text-[10px] uppercase">Frecuencia Update</Label>
+                                                                <Select value={state.sustainDetails.metrics.updateFrequency} onValueChange={v => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, updateFrequency: v } })}>
+                                                                    <SelectTrigger className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-9 text-xs"><SelectValue /></SelectTrigger>
+                                                                    <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                                        <SelectItem value="realtime">Real-time</SelectItem>
+                                                                        <SelectItem value="hourly">Hora</SelectItem>
+                                                                        <SelectItem value="daily">Diaria</SelectItem>
+                                                                        <SelectItem value="weekly">Semanal</SelectItem>
+                                                                        <SelectItem value="monthly">Mensual</SelectItem>
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </AccordionContent>
+                                        </AccordionItem>
+
+                                        {/* SECTION 2: OPERACIONAL */}
+                                        <AccordionItem value="item-2" className="border-b border-[#4A4D4A]">
+                                            <AccordionTrigger className="text-[#E8EDDF] hover:text-[#F5CB5C] hover:no-underline">
+                                                <span className="font-bold uppercase tracking-wider text-sm flex items-center gap-2">
+                                                    <Activity className="w-4 h-4 text-[#F5CB5C]" /> 2. Definición Operacional
+                                                </span>
+                                            </AccordionTrigger>
+                                            <AccordionContent className="p-4 space-y-6 bg-[#242423]/50 rounded-b-xl">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Owner de Negocio</Label>
+                                                        <Input
+                                                            value={state.sustainDetails.businessOwner}
+                                                            onChange={e => updateState('sustainDetails', { ...state.sustainDetails, businessOwner: e.target.value })}
+                                                            className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Horas Dev Mensuales</Label>
+                                                        <Input type="number"
+                                                            value={state.sustainDetails.devHours}
+                                                            onChange={e => updateState('sustainDetails', { ...state.sustainDetails, devHours: parseInt(e.target.value) || 0 })}
+                                                            className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Tasa Incidentes (Mes)</Label>
+                                                        <Input type="number"
+                                                            value={state.sustainDetails.incidentRate}
+                                                            onChange={e => updateState('sustainDetails', { ...state.sustainDetails, incidentRate: parseInt(e.target.value) || 0 })}
+                                                            className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Ventana Soporte</Label>
+                                                        <Select value={state.sustainDetails.supportWindow} onValueChange={v => updateState('sustainDetails', { ...state.sustainDetails, supportWindow: v })}>
+                                                            <SelectTrigger className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
+                                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                                <SelectItem value="9x5">9x5 (Horario Oficina)</SelectItem>
+                                                                <SelectItem value="24x7">24x7 (Crítico)</SelectItem>
+                                                                <SelectItem value="custom">Personalizado</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div className="col-span-1 md:col-span-2">
+                                                        <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Horario/Días Críticos</Label>
+                                                        <Input
+                                                            placeholder="Ej. Cierre de mes, Lunes mañana"
+                                                            value={state.sustainDetails.criticalDays}
+                                                            onChange={e => updateState('sustainDetails', { ...state.sustainDetails, criticalDays: e.target.value })}
+                                                            className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </AccordionContent>
+                                        </AccordionItem>
+
+                                        {/* SECTION 3: MATRIZ CRITICIDAD */}
+                                        <AccordionItem value="item-3" className="border-b-0">
+                                            <AccordionTrigger className="text-[#E8EDDF] hover:text-[#F5CB5C] hover:no-underline">
+                                                <span className="font-bold uppercase tracking-wider text-sm flex items-center gap-2">
+                                                    <Calculator className="w-4 h-4 text-[#F5CB5C]" /> 3. Matriz de Criticidad
+                                                </span>
+                                            </AccordionTrigger>
+                                            <AccordionContent className="p-4 space-y-6 bg-[#242423]/50 rounded-b-xl">
+
+                                                {/* SCORECARD BADGE */}
+                                                <div className={cn("flex items-center justify-between p-4 rounded-xl border mb-6 transition-all", sustainLevel.color)}>
+                                                    <div>
+                                                        <h4 className="font-black text-2xl tracking-tighter">NIVEL {sustainLevel.label}</h4>
+                                                        <p className="text-xs opacity-80">Score Acumulado: {sustainScore} puntos</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="text-xs font-bold uppercase tracking-wider block">Recomendación</span>
+                                                        <span className="text-sm font-medium">
+                                                            {sustainLevel.label === 'ALTA' ? 'Soporte Dedicado / 24x7' :
+                                                                sustainLevel.label === 'MEDIA' ? 'Soporte Semi-Dedicado' : 'Bolsa de Horas'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    {/* 1. Impacto Operativo */}
+                                                    <div className="space-y-2">
+                                                        <div className="flex justify-between">
+                                                            <Label className="text-[#CFDBD5] text-xs uppercase font-bold">1. Impacto Operativo</Label>
+                                                            <span className="text-[#F5CB5C] text-xs font-mono">{state.sustainDetails.criticalityMatrix.impactOperative} pts</span>
+                                                        </div>
+                                                        <Select value={state.sustainDetails.criticalityMatrix.impactOperative.toString()}
+                                                            onValueChange={v => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, impactOperative: parseInt(v) } })}>
+                                                            <SelectTrigger className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
+                                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                                <SelectItem value="1">Bajo (1) - Impacto menor</SelectItem>
+                                                                <SelectItem value="3">Importante (3) - Afecta área</SelectItem>
+                                                                <SelectItem value="5">Crítico (5) - Detiene operación</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+
+                                                    {/* 2. Impacto Financiero */}
+                                                    <div className="space-y-2">
+                                                        <div className="flex justify-between">
+                                                            <Label className="text-[#CFDBD5] text-xs uppercase font-bold">2. Impacto Financiero</Label>
+                                                            <span className="text-[#F5CB5C] text-xs font-mono">{state.sustainDetails.criticalityMatrix.impactFinancial} pts</span>
+                                                        </div>
+                                                        <Select value={state.sustainDetails.criticalityMatrix.impactFinancial.toString()}
+                                                            onValueChange={v => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, impactFinancial: parseInt(v) } })}>
+                                                            <SelectTrigger className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
+                                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                                <SelectItem value="1">Bajo (1)</SelectItem>
+                                                                <SelectItem value="3">Medio (3)</SelectItem>
+                                                                <SelectItem value="5">Alto (5)</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+
+                                                    {/* 3. Cobertura Usuarios */}
+                                                    <div className="space-y-2">
+                                                        <div className="flex justify-between">
+                                                            <Label className="text-[#CFDBD5] text-xs uppercase font-bold">3. Usuarios</Label>
+                                                            <span className="text-[#F5CB5C] text-xs font-mono">{state.sustainDetails.criticalityMatrix.userCoverage} pts</span>
+                                                        </div>
+                                                        <Select value={state.sustainDetails.criticalityMatrix.userCoverage.toString()}
+                                                            onValueChange={v => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, userCoverage: parseInt(v) } })}>
+                                                            <SelectTrigger className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
+                                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                                <SelectItem value="1">Menos de 100 (1)</SelectItem>
+                                                                <SelectItem value="3">100 - 500 (3)</SelectItem>
+                                                                <SelectItem value="5">Más de 500 (5)</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+
+                                                    {/* 4. Cobertura Países */}
+                                                    <div className="space-y-2">
+                                                        <div className="flex justify-between">
+                                                            <Label className="text-[#CFDBD5] text-xs uppercase font-bold">4. Países</Label>
+                                                            <span className="text-[#F5CB5C] text-xs font-mono">{state.sustainDetails.criticalityMatrix.countryCoverage} pts</span>
+                                                        </div>
+                                                        <Select value={state.sustainDetails.criticalityMatrix.countryCoverage.toString()}
+                                                            onValueChange={v => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, countryCoverage: parseInt(v) } })}>
+                                                            <SelectTrigger className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
+                                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                                <SelectItem value="1">Local / 1 País (1)</SelectItem>
+                                                                <SelectItem value="3">Regional / 2-3 Países (3)</SelectItem>
+                                                                <SelectItem value="5">Global / 4+ Países (5)</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+
+                                                    {/* 5. Madurez Técnica */}
+                                                    <div className="space-y-2">
+                                                        <div className="flex justify-between">
+                                                            <Label className="text-[#CFDBD5] text-xs uppercase font-bold">5. Madurez Técnica</Label>
+                                                            <span className="text-[#F5CB5C] text-xs font-mono">{state.sustainDetails.criticalityMatrix.technicalMaturity} pts</span>
+                                                        </div>
+                                                        <Select value={state.sustainDetails.criticalityMatrix.technicalMaturity.toString()}
+                                                            onValueChange={v => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, technicalMaturity: parseInt(v) } })}>
+                                                            <SelectTrigger className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
+                                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                                <SelectItem value="1">Alta / Estable (1)</SelectItem>
+                                                                <SelectItem value="3">Media (3)</SelectItem>
+                                                                <SelectItem value="5">Baja / Incidentes (5)</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+
+                                                    {/* 6. Dependencias */}
+                                                    <div className="space-y-2">
+                                                        <div className="flex justify-between">
+                                                            <Label className="text-[#CFDBD5] text-xs uppercase font-bold">6. Dependencias</Label>
+                                                            <span className="text-[#F5CB5C] text-xs font-mono">{state.sustainDetails.criticalityMatrix.dependencies} pts</span>
+                                                        </div>
+                                                        <Select value={state.sustainDetails.criticalityMatrix.dependencies.toString()}
+                                                            onValueChange={v => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, dependencies: parseInt(v) } })}>
+                                                            <SelectTrigger className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
+                                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                                <SelectItem value="1">Ninguna / Baja (1)</SelectItem>
+                                                                <SelectItem value="3">Media (3)</SelectItem>
+                                                                <SelectItem value="5">Alta / Compleja (5)</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+
+                                                </div>
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    </Accordion>
+                                </div>
+                            ) : (
+                                /* OLD TEXTAREA FOR OTHER TYPES */
+                                <div className="relative">
+                                    <Label className="text-[#CFDBD5] text-sm font-bold uppercase tracking-wider mb-2 block">
+                                        {state.serviceType === 'Staffing' ? 'Contexto de la Búsqueda' : 'Contexto del Proyecto'}
+                                    </Label>
+                                    <Textarea
+                                        placeholder={
+                                            state.serviceType === 'Staffing' ? "Descripción del equipo actual, cultura, y por qué se necesitan estos perfiles..." :
                                                 "Detalle los objetivos de negocio, dolores actuales y requerimientos técnicos..."
-                                    }
-                                    value={state.description}
-                                    onChange={e => updateState('description', e.target.value)}
-                                    className="min-h-[120px] resize-none text-base leading-relaxed bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"
-                                />
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={handleAiPolish}
-                                    className="absolute bottom-4 right-4 text-[#F5CB5C] hover:text-[#242423] hover:bg-[#F5CB5C] border border-[#F5CB5C]/20 bg-[#242423]"
-                                    disabled={!state.description || polishLoading}
-                                >
-                                    <Wand2 className="w-4 h-4 mr-2" />
-                                    {polishLoading ? 'Optimizando...' : 'Pulir con IA'}
-                                </Button>
-                            </div>
-
-
-
-
-
-
-
-                            {/* Type Specific Fields for Section 1 */}
-                            {state.serviceType === 'Sustain' && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div>
-                                        <Label className="text-[#CFDBD5] mb-2 block">Horario de Operación</Label>
-                                        <Select value={state.sustainDetails.operationHours} onValueChange={(v: any) => updateState('sustainDetails', { ...state.sustainDetails, operationHours: v })}>
-                                            <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
-                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                <SelectItem value="business">Horario de Oficina (9-18)</SelectItem>
-                                                <SelectItem value="extended">Extendido (8-20)</SelectItem>
-                                                <SelectItem value="24/7">24/7 Crítico</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
+                                        }
+                                        value={state.description}
+                                        onChange={e => updateState('description', e.target.value)}
+                                        className="min-h-[120px] resize-none text-base leading-relaxed bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"
+                                    />
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={handleAiPolish}
+                                        className="absolute bottom-4 right-4 text-[#F5CB5C] hover:text-[#242423] hover:bg-[#F5CB5C] border border-[#F5CB5C]/20 bg-[#242423]"
+                                        disabled={!state.description || polishLoading}
+                                    >
+                                        <Wand2 className="w-4 h-4 mr-2" />
+                                        {polishLoading ? 'Optimizando...' : 'Pulir con IA'}
+                                    </Button>
                                 </div>
                             )}
 
@@ -1074,8 +1443,8 @@ graph TD
                         </div>
                     </SectionCard>
 
-                    {/* 2. VOLUMETRY - Hidden for Staffing */}
-                    {state.serviceType !== 'Staffing' && (
+                    {/* 2. VOLUMETRY - Hidden for Staffing & Sustain */}
+                    {state.serviceType !== 'Staffing' && state.serviceType !== 'Sustain' && (
                         <>
                             <SectionCard number="02" title="Volumetría y Técnica" icon={Database}>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-10">
@@ -1271,142 +1640,148 @@ graph TD
                             </div>
                         )}
                     </SectionCard>
+                    )}
 
                     {/* 5. TECH */}
-                    <SectionCard number="05" title="Stack Tecnológico" icon={Layers}>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                            {TECH_OPTIONS.map(tech => (
-                                <div
-                                    key={tech.id}
-                                    onClick={() => toggleTech(tech.id)}
-                                    className={cn(
-                                        "p-6 rounded-[1.5rem] border transition-all flex flex-col justify-between h-32 hover:scale-[1.02] cursor-pointer",
-                                        state.techStack.includes(tech.id)
-                                            ? "bg-[#242423] border-[#F5CB5C] text-[#E8EDDF] shadow-[0_0_20px_rgba(245,203,92,0.15)]"
-                                            : "bg-[#333533] text-[#CFDBD5] border-[#4A4D4A] hover:border-[#CFDBD5]"
-                                    )}
-                                >
-                                    <span className="font-bold text-sm leading-tight">{tech.name}</span>
-                                    {state.techStack.includes(tech.id) && <Check className="w-6 h-6 self-end text-[#F5CB5C]" />}
-                                </div>
-                            ))}
-                        </div>
-                    </SectionCard>
+                    {/* 5. TECH - Included in Scorecard for Sustain */}
+                    {state.serviceType !== 'Sustain' && (
+                        <SectionCard number="05" title="Stack Tecnológico" icon={Layers}>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                {TECH_OPTIONS.map(tech => (
+                                    <div
+                                        key={tech.id}
+                                        onClick={() => toggleTech(tech.id)}
+                                        className={cn(
+                                            "p-6 rounded-[1.5rem] border transition-all flex flex-col justify-between h-32 hover:scale-[1.02] cursor-pointer",
+                                            state.techStack.includes(tech.id)
+                                                ? "bg-[#242423] border-[#F5CB5C] text-[#E8EDDF] shadow-[0_0_20px_rgba(245,203,92,0.15)]"
+                                                : "bg-[#333533] text-[#CFDBD5] border-[#4A4D4A] hover:border-[#CFDBD5]"
+                                        )}
+                                    >
+                                        <span className="font-bold text-sm leading-tight">{tech.name}</span>
+                                        {state.techStack.includes(tech.id) && <Check className="w-6 h-6 self-end text-[#F5CB5C]" />}
+                                    </div>
+                                ))}
+                            </div>
+                        </SectionCard>
+                    )}
 
                     {/* 6. CRITICITNESS */}
                     {/* 6. CRITICITNESS (Upgraded v2) */}
-                    {/* 6. CRITICITNESS (Fixed) */}
-                    <SectionCard number="06" title={state.serviceType === 'Sustain' ? "Niveles de Servicio (SLA)" : "Evaluación de Criticidad"} icon={ShieldAlert}>
-                        <div className="flex items-center justify-between mb-8">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-[#333533] rounded-xl border border-[#4A4D4A]">
-                                    <ShieldAlert className="w-6 h-6 text-[#F5CB5C]" />
-                                </div>
-                                <div>
-                                    <p className="text-[#E8EDDF] font-bold">{state.serviceType === 'Sustain' ? 'Continuidad Operativa' : 'Análisis de Riesgo y SLA'}</p>
-                                    <p className="text-sm text-[#CFDBD5]">{state.serviceType === 'Sustain' ? 'Garantías de Uptime y Respuesta' : 'Calculadora de mÃ¡rgenes operativos'}</p>
-                                </div>
-                            </div>
-                            <Switch checked={state.criticitness.enabled} onCheckedChange={v => updateCriticitness('enabled', v)} className="data-[state=checked]:bg-[#F5CB5C]" />
-                        </div>
-
-                        {/* Predictive Logic Alert (Only if enabled and update frequency/complexity mismatch) */}
-                        {(state.criticitness.enabled && state.complexity === 'high' && (state.updateFrequency === 'weekly' || state.updateFrequency === 'realtime') && state.supportHours !== '24/7') && (
-                            <div className="bg-orange-900/20 border border-orange-500/30 rounded-2xl p-4 flex items-start gap-4 mb-6">
-                                <AlertTriangle className="w-6 h-6 text-orange-400 shrink-0 mt-1" />
-                                <div>
-                                    <h4 className="text-orange-300 font-bold text-sm">Nivel de Criticidad Elevado</h4>
-                                    <p className="text-xs text-orange-200/70 mt-1">
-                                        La combinación de complejidad <strong>Alta</strong> y frecuencia <strong>{state.updateFrequency}</strong> sugiere un esquema de soporte <strong>24/7</strong>.
-                                    </p>
-                                    <Button
-                                        variant="link"
-                                        className="text-orange-400 p-0 h-auto text-xs mt-2 underline"
-                                        onClick={() => updateState('supportHours', '24/7')}
-                                    >
-                                        Actualizar a Soporte 24/7
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Conditional Criticality Inputs */}
-                        {state.criticitness.enabled && (
-                            <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
-
-                                {/* Score Display (Moved inside for context) */}
-                                <div className="relative z-10 flex flex-col md:flex-row gap-4 items-center bg-[#F5CB5C]/5 p-4 rounded-2xl border border-[#F5CB5C]/20 w-full">
-                                    <div className="flex-1">
-                                        <span className="text-xs font-bold text-[#CFDBD5] uppercase tracking-widest flex items-center gap-2">
-                                            <Activity className="w-4 h-4 text-[#F5CB5C]" /> Score de Riesgo Calculado
-                                        </span>
+                    {/* 6. CRITICITNESS (Fixed) - Hidden for Sustain (now in Scorecard) */}
+                    {state.serviceType !== 'Sustain' && (
+                        <SectionCard number="06" title="Evaluación de Criticidad" icon={ShieldAlert}>
+                            <div className="flex items-center justify-between mb-8">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-[#333533] rounded-xl border border-[#4A4D4A]">
+                                        <ShieldAlert className="w-6 h-6 text-[#F5CB5C]" />
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                        <div className="text-4xl font-black text-[#E8EDDF] flex items-baseline gap-2">
-                                            {criticitnessScore}
-                                            <span className="text-lg text-[#7C7F7C] font-normal">/100</span>
+                                    <div>
+                                        <p className="text-[#E8EDDF] font-bold">Análisis de Riesgo y SLA</p>
+                                        <p className="text-sm text-[#CFDBD5]">Calculadora de márgenes operativos</p>
+                                    </div>
+                                </div>
+                                <Switch checked={state.criticitness.enabled} onCheckedChange={v => updateCriticitness('enabled', v)} className="data-[state=checked]:bg-[#F5CB5C]" />
+                            </div>
+
+                            {/* Predictive Logic Alert (Only if enabled and update frequency/complexity mismatch) */}
+                            {(state.criticitness.enabled && state.complexity === 'high' && (state.updateFrequency === 'weekly' || state.updateFrequency === 'realtime') && state.supportHours !== '24/7') && (
+                                <div className="bg-orange-900/20 border border-orange-500/30 rounded-2xl p-4 flex items-start gap-4 mb-6">
+                                    <AlertTriangle className="w-6 h-6 text-orange-400 shrink-0 mt-1" />
+                                    <div>
+                                        <h4 className="text-orange-300 font-bold text-sm">Nivel de Criticidad Elevado</h4>
+                                        <p className="text-xs text-orange-200/70 mt-1">
+                                            La combinación de complejidad <strong>Alta</strong> y frecuencia <strong>{state.updateFrequency}</strong> sugiere un esquema de soporte <strong>24/7</strong>.
+                                        </p>
+                                        <Button
+                                            variant="link"
+                                            className="text-orange-400 p-0 h-auto text-xs mt-2 underline"
+                                            onClick={() => updateState('supportHours', '24/7')}
+                                        >
+                                            Actualizar a Soporte 24/7
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Conditional Criticality Inputs */}
+                            {state.criticitness.enabled && (
+                                <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+
+                                    {/* Score Display (Moved inside for context) */}
+                                    <div className="relative z-10 flex flex-col md:flex-row gap-4 items-center bg-[#F5CB5C]/5 p-4 rounded-2xl border border-[#F5CB5C]/20 w-full">
+                                        <div className="flex-1">
+                                            <span className="text-xs font-bold text-[#CFDBD5] uppercase tracking-widest flex items-center gap-2">
+                                                <Activity className="w-4 h-4 text-[#F5CB5C]" /> Score de Riesgo Calculado
+                                            </span>
                                         </div>
-                                        <div className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-full border w-fit text-sm font-bold", criticitnessLevel.color)}>
-                                            <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
-                                            {criticitnessLevel.label}
+                                        <div className="flex items-center gap-4">
+                                            <div className="text-4xl font-black text-[#E8EDDF] flex items-baseline gap-2">
+                                                {criticitnessScore}
+                                                <span className="text-lg text-[#7C7F7C] font-normal">/100</span>
+                                            </div>
+                                            <div className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-full border w-fit text-sm font-bold", criticitnessLevel.color)}>
+                                                <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
+                                                {criticitnessLevel.label}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <Label className="text-[#CFDBD5] mb-2 block">Nivel de Soporte</Label>
-                                        <Select value={state.supportHours} onValueChange={(v: any) => updateState('supportHours', v)}>
-                                            <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
-                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                <SelectItem value="business">Business (9-18h)</SelectItem>
-                                                <SelectItem value="24/7">24/7 Critical</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <Label className="text-[#CFDBD5] mb-2 block">Nivel de Soporte</Label>
+                                            <Select value={state.supportHours} onValueChange={(v: any) => updateState('supportHours', v)}>
+                                                <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
+                                                <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                    <SelectItem value="business">Business (9-18h)</SelectItem>
+                                                    <SelectItem value="24/7">24/7 Critical</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div>
+                                            <Label className="text-[#CFDBD5] mb-2 block">Impacto Operativo</Label>
+                                            <Select value={state.criticitness.impactOperative} onValueChange={(v: any) => updateCriticitness('impactOperative', v)}>
+                                                <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
+                                                <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                    <SelectItem value="low">Bajo (Interno)</SelectItem>
+                                                    <SelectItem value="medium">Medio (Departamental)</SelectItem>
+                                                    <SelectItem value="high">Alto (Core Business)</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <Label className="text-[#CFDBD5] mb-2 block">Impacto Operativo</Label>
-                                        <Select value={state.criticitness.impactOperative} onValueChange={(v: any) => updateCriticitness('impactOperative', v)}>
-                                            <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
-                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                <SelectItem value="low">Bajo (Interno)</SelectItem>
-                                                <SelectItem value="medium">Medio (Departamental)</SelectItem>
-                                                <SelectItem value="high">Alto (Core Business)</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <Label className="text-[#CFDBD5] mb-2 block">Exposición de Datos</Label>
-                                        <Select value={state.criticitness.dataExposure} onValueChange={(v: any) => updateCriticitness('dataExposure', v)}>
-                                            <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
-                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                <SelectItem value="internal">Interna</SelectItem>
-                                                <SelectItem value="partners">Partners / Clientes</SelectItem>
-                                                <SelectItem value="public">Pública / Regulatoria</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <Label className="text-[#CFDBD5] mb-2 block">Exposición de Datos</Label>
+                                            <Select value={state.criticitness.dataExposure} onValueChange={(v: any) => updateCriticitness('dataExposure', v)}>
+                                                <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
+                                                <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                    <SelectItem value="internal">Interna</SelectItem>
+                                                    <SelectItem value="partners">Partners / Clientes</SelectItem>
+                                                    <SelectItem value="public">Pública / Regulatoria</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div>
+                                            <Label className="text-[#CFDBD5] mb-2 block">Impacto Financiero</Label>
+                                            <Select value={state.criticitness.impactFinancial} onValueChange={(v: any) => updateCriticitness('impactFinancial', v)}>
+                                                <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
+                                                <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                    <SelectItem value="low">Bajo ({'<'} 10k USD)</SelectItem>
+                                                    <SelectItem value="medium">Medio (10k - 100k USD)</SelectItem>
+                                                    <SelectItem value="high">Alto ({'>'} 100k USD)</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <Label className="text-[#CFDBD5] mb-2 block">Impacto Financiero</Label>
-                                        <Select value={state.criticitness.impactFinancial} onValueChange={(v: any) => updateCriticitness('impactFinancial', v)}>
-                                            <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
-                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                <SelectItem value="low">Bajo ({'<'} 10k USD)</SelectItem>
-                                                <SelectItem value="medium">Medio (10k - 100k USD)</SelectItem>
-                                                <SelectItem value="high">Alto ({'>'} 100k USD)</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                    <div className="col-span-1 md:col-span-2">
+                                        <CountInput label="Países Involucrados" value={state.criticitness.countriesCount} onChange={(v: number) => updateCriticitness('countriesCount', v)} min={1} />
                                     </div>
                                 </div>
-                                <div className="col-span-1 md:col-span-2">
-                                    <CountInput label="Países Involucrados" value={state.criticitness.countriesCount} onChange={(v: number) => updateCriticitness('countriesCount', v)} min={1} />
-                                </div>
-                            </div>
-                        )}
-                    </SectionCard>
+                            )}
+                        </SectionCard>
+                    )}
 
                     {/* 7. COMMERCIAL DATA & RETENTION */}
                     <SectionCard number="07" title="Datos Comercial & Retenciones" icon={Users}>
