@@ -408,7 +408,7 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
         // Simulate AI delay
         await new Promise(r => setTimeout(r, 1500))
         updateState('description',
-            `PROYECTO: ${state.clientName || 'Empresa'}\n\nOBJETIVO ESTRATÃ‰GICO:\n${state.description}\n\nARQUITECTURA PROPUESTA:\nImplementaciÃ³n de un ecosistema de datos moderno basado en ${state.techStack.join(', ') || 'Azure/AWS'}. Se diseÃ±arÃ¡n ${state.pipelinesCount} pipelines de ingesta resilientes y se desplegarÃ¡n ${state.dashboardsCount + state.reportsCount} activos de visualizaciÃ³n para soportar la toma de decisiones.\n\nALCANCE:\n- Ingesta: ${state.updateFrequency} (${state.manualProcessPct}% manual actual)\n- Consumo: ${state.reportUsers} usuarios finales\n- Seguridad: ${state.criticitness.enabled ? 'Alta Criticidad (Audit Logs + RLS)' : 'EstÃ¡ndar'}`)
+            `PROYECTO: ${state.clientName || 'Empresa'}\n\nOBJETIVO ESTRATÉGICO:\n${state.description}\n\nARQUITECTURA PROPUESTA:\nImplementaciÃ³n de un ecosistema de datos moderno basado en ${state.techStack.join(', ') || 'Azure/AWS'}. Se diseñarán ${state.pipelinesCount} pipelines de ingesta resilientes y se desplegarán ${state.dashboardsCount + state.reportsCount} activos de visualización para soportar la toma de decisiones.\n\nALCANCE:\n- Ingesta: ${state.updateFrequency} (${state.manualProcessPct}% manual actual)\n- Consumo: ${state.reportUsers} usuarios finales\n- Seguridad: ${state.criticitness.enabled ? 'Alta Criticidad (Audit Logs + RLS)' : 'Estándar'}`)
         setPolishLoading(false)
     }
 
@@ -693,7 +693,7 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
                 } catch (whErr) { console.error("Webhook fail", whErr) }
             }
 
-            alert("CotizaciÃ³n guardada exitosamente.")
+            alert("Cotización guardada exitosamente.")
             resetQuoteState()
             router.push('/dashboard')
 
@@ -814,7 +814,7 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
         }
         // Explode Tech Stack into Subgraph with Row Layout
         if (techStack.length > 0) {
-            nodes += '\n    subgraph TechStack [Stack TecnolÃ³gico]'
+            nodes += '\n    subgraph TechStack [Stack Tecnológico]'
             nodes += '\n    direction TB' // Main stack is top-bottom
 
             // Helper function to chunk array
@@ -881,17 +881,17 @@ graph TD
             >
                 <div className="text-center mb-8 md:mb-16 space-y-4">
                     <h1 className="text-4xl md:text-6xl font-black text-[#E8EDDF] tracking-tighter">
-                        Nueva <span className="text-[#F5CB5C]">EstimaciÃ³n</span>
+                        Nueva <span className="text-[#F5CB5C]">Estimación</span>
                     </h1>
                     <p className="text-[#CFDBD5] text-lg md:text-xl max-w-2xl mx-auto">
-                        Seleccione el tipo de servicio para configurar la cotizaciÃ³n adecuada.
+                        Seleccione el tipo de servicio para configurar la cotización adecuada.
                     </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl w-full">
                     {[
-                        { id: 'Proyecto', icon: Network, title: 'Proyecto', desc: 'EstimaciÃ³n basada en entregables, arquitectura de datos y roadmap de implementaciÃ³n.' },
-                        { id: 'Staffing', icon: Briefcase, title: 'Staffing', desc: 'Solicitud de perfiles IT especializados. Defina seniority, skills y duraciÃ³n.' },
+                        { id: 'Proyecto', icon: Network, title: 'Proyecto', desc: 'Estimación basada en entregables, arquitectura de datos y roadmap de implementación.' },
+                        { id: 'Staffing', icon: Briefcase, title: 'Staffing', desc: 'Solicitud de perfiles IT especializados. Defina seniority, skills y duración.' },
                         { id: 'Sustain', icon: ShieldAlert, title: 'Sustain', desc: 'Servicios de soporte y mantenimiento. Configure niveles de servicio (SLA) y criticidad.' }
                     ].map((item) => (
                         <div
@@ -940,12 +940,12 @@ graph TD
                     </div>
 
                     {/* 1. GENERAL */}
-                    <SectionCard number="01" title="InformaciÃ³n General" icon={ClipboardList}>
+                    <SectionCard number="01" title="Información General" icon={ClipboardList}>
                         <div className="space-y-8">
                             <div>
                                 <Label className="text-[#CFDBD5] text-sm font-bold uppercase tracking-wider mb-2 block">Cliente / Prospecto</Label>
                                 <Input
-                                    placeholder="Ej. Banco Global - MigraciÃ³n Cloud"
+                                    placeholder="Ej. Banco Global - Migración Cloud"
                                     value={state.clientName}
                                     onChange={e => updateState('clientName', e.target.value)}
                                     className="text-lg bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"
@@ -953,13 +953,13 @@ graph TD
                             </div>
                             <div className="relative">
                                 <Label className="text-[#CFDBD5] text-sm font-bold uppercase tracking-wider mb-2 block">
-                                    {state.serviceType === 'Staffing' ? 'Contexto de la BÃºsqueda' : 'Contexto del Proyecto'}
+                                    {state.serviceType === 'Staffing' ? 'Contexto de la Búsqueda' : 'Contexto del Proyecto'}
                                 </Label>
                                 <Textarea
                                     placeholder={
-                                        state.serviceType === 'Staffing' ? "DescripciÃ³n del equipo actual, cultura, y por quÃ© se necesitan estos perfiles..." :
-                                            state.serviceType === 'Sustain' ? "DescripciÃ³n del ecosistema a soportar, dolores actuales en la operaciÃ³n..." :
-                                                "Detalle los objetivos de negocio, dolores actuales y requerimientos tÃ©cnicos..."
+                                        state.serviceType === 'Staffing' ? "Descripción del equipo actual, cultura, y por qué se necesitan estos perfiles..." :
+                                            state.serviceType === 'Sustain' ? "Descripción del ecosistema a soportar, dolores actuales en la operación..." :
+                                                "Detalle los objetivos de negocio, dolores actuales y requerimientos técnicos..."
                                     }
                                     value={state.description}
                                     onChange={e => updateState('description', e.target.value)}
@@ -987,13 +987,13 @@ graph TD
                             {state.serviceType === 'Sustain' && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div>
-                                        <Label className="text-[#CFDBD5] mb-2 block">Horario de OperaciÃ³n</Label>
+                                        <Label className="text-[#CFDBD5] mb-2 block">Horario de Operación</Label>
                                         <Select value={state.sustainDetails.operationHours} onValueChange={(v: any) => updateState('sustainDetails', { ...state.sustainDetails, operationHours: v })}>
                                             <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
                                             <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
                                                 <SelectItem value="business">Horario de Oficina (9-18)</SelectItem>
                                                 <SelectItem value="extended">Extendido (8-20)</SelectItem>
-                                                <SelectItem value="24/7">24/7 CrÃ­tico</SelectItem>
+                                                <SelectItem value="24/7">24/7 Crítico</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -1014,18 +1014,18 @@ graph TD
                                         </Select>
                                     </div>
                                     <div>
-                                        <Label className="text-[#CFDBD5] mb-2 block">Complejidad TÃ©cnica</Label>
+                                        <Label className="text-[#CFDBD5] mb-2 block">Complejidad Técnica</Label>
                                         <Select value={state.complexity} onValueChange={(v: any) => updateState('complexity', v)}>
                                             <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
                                             <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                <SelectItem value="low">Baja (EstÃ¡ndar)</SelectItem>
+                                                <SelectItem value="low">Baja (Estándar)</SelectItem>
                                                 <SelectItem value="medium">Media (Integraciones)</SelectItem>
                                                 <SelectItem value="high">Alta (Arquitectura Compleja)</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
                                     <div>
-                                        <Label className="text-[#CFDBD5] mb-2 block">Frecuencia ActualizaciÃ³n</Label>
+                                        <Label className="text-[#CFDBD5] mb-2 block">Frecuencia Actualización</Label>
                                         <Select value={state.updateFrequency} onValueChange={(v: any) => updateState('updateFrequency', v)}>
                                             <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
                                             <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
@@ -1045,7 +1045,7 @@ graph TD
                     {/* 2. VOLUMETRY - Hidden for Staffing */}
                     {state.serviceType !== 'Staffing' && (
                         <>
-                            <SectionCard number="02" title="VolumetrÃ­a y TÃ©cnica" icon={Database}>
+                            <SectionCard number="02" title="Volumetría y Técnica" icon={Database}>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-10">
                                     <CountInput label="Pipelines" value={state.pipelinesCount} onChange={(v: number) => updateState('pipelinesCount', v)} />
                                     <CountInput label="Notebooks" value={state.notebooksCount} onChange={(v: number) => updateState('notebooksCount', v)} />
@@ -1063,8 +1063,8 @@ graph TD
                                     <CountInput label="# Usuarios Finales" value={state.reportUsers} onChange={(v: number) => updateState('reportUsers', v)} />
                                     <div className="col-span-1 md:col-span-2 bg-[#333533] rounded-[1.5rem] p-8 flex items-center justify-between border border-[#4A4D4A]">
                                         <div>
-                                            <h4 className="font-bold text-[#E8EDDF] text-lg">Uso CrÃ­tico</h4>
-                                            <p className="text-sm text-[#CFDBD5]">Â¿Impacta Cierre Financiero o Ventas?</p>
+                                            <h4 className="font-bold text-[#E8EDDF] text-lg">Uso Crítico</h4>
+                                            <p className="text-sm text-[#CFDBD5]">¿Impacta Cierre Financiero o Ventas?</p>
                                         </div>
                                         <Switch checked={state.isFinancialOrSales} onCheckedChange={v => updateState('isFinancialOrSales', v)} className="data-[state=checked]:bg-[#F5CB5C]" />
                                     </div>
@@ -1098,7 +1098,7 @@ graph TD
                                             {/* Row 1: Labels (Perfect Alignment) */}
                                             <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1">Rol / Perfil</Label>
                                             <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1">Seniority</Label>
-                                            <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1">DedicaciÃ³n</Label>
+                                            <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1">Dedicación</Label>
                                             <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1 text-center">Cantidad</Label>
 
                                             {/* Row 2: Inputs (Perfect Alignment) */}
@@ -1130,7 +1130,7 @@ graph TD
                                                 </SelectContent>
                                             </Select>
 
-                                            {/* 3. DedicaciÃ³n Input (Clon Visual) */}
+                                            {/* 3. Dedicación Input (Clon Visual) */}
                                             <div className="flex h-[50px] bg-[#242423] border border-[#4A4D4A] rounded-[1rem] overflow-hidden hover:border-[#F5CB5C]/50 transition-colors group/dedication relative">
                                                 <Button
                                                     variant="ghost"
@@ -1189,7 +1189,7 @@ graph TD
                                         </div>
                                         <div className="mt-4">
                                             <Input
-                                                placeholder="Skills / TecnologÃ­as (Ej. React, Node.js, AWS, Kubernetes)"
+                                                placeholder="Skills / Tecnologías (Ej. React, Node.js, AWS, Kubernetes)"
                                                 value={profile.skills}
                                                 onChange={(e) => {
                                                     const newProfiles = [...state.staffingDetails.profiles]
@@ -1241,7 +1241,7 @@ graph TD
                     </SectionCard>
 
                     {/* 5. TECH */}
-                    <SectionCard number="05" title="Stack TecnolÃ³gico" icon={Layers}>
+                    <SectionCard number="05" title="Stack Tecnológico" icon={Layers}>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                             {TECH_OPTIONS.map(tech => (
                                 <div
@@ -1264,15 +1264,15 @@ graph TD
                     {/* 6. CRITICITNESS */}
                     {/* 6. CRITICITNESS (Upgraded v2) */}
                     {/* 6. CRITICITNESS (Fixed) */}
-                    <SectionCard number="06" title={state.serviceType === 'Sustain' ? "Niveles de Servicio (SLA)" : "EvaluaciÃ³n de Criticidad"} icon={ShieldAlert}>
+                    <SectionCard number="06" title={state.serviceType === 'Sustain' ? "Niveles de Servicio (SLA)" : "Evaluación de Criticidad"} icon={ShieldAlert}>
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-[#333533] rounded-xl border border-[#4A4D4A]">
                                     <ShieldAlert className="w-6 h-6 text-[#F5CB5C]" />
                                 </div>
                                 <div>
-                                    <p className="text-[#E8EDDF] font-bold">{state.serviceType === 'Sustain' ? 'Continuidad Operativa' : 'AnÃ¡lisis de Riesgo y SLA'}</p>
-                                    <p className="text-sm text-[#CFDBD5]">{state.serviceType === 'Sustain' ? 'GarantÃ­as de Uptime y Respuesta' : 'Calculadora de mÃ¡rgenes operativos'}</p>
+                                    <p className="text-[#E8EDDF] font-bold">{state.serviceType === 'Sustain' ? 'Continuidad Operativa' : 'Análisis de Riesgo y SLA'}</p>
+                                    <p className="text-sm text-[#CFDBD5]">{state.serviceType === 'Sustain' ? 'Garantías de Uptime y Respuesta' : 'Calculadora de mÃ¡rgenes operativos'}</p>
                                 </div>
                             </div>
                             <Switch checked={state.criticitness.enabled} onCheckedChange={v => updateCriticitness('enabled', v)} className="data-[state=checked]:bg-[#F5CB5C]" />
@@ -1285,7 +1285,7 @@ graph TD
                                 <div>
                                     <h4 className="text-orange-300 font-bold text-sm">Nivel de Criticidad Elevado</h4>
                                     <p className="text-xs text-orange-200/70 mt-1">
-                                        La combinaciÃ³n de complejidad <strong>Alta</strong> y frecuencia <strong>{state.updateFrequency}</strong> sugiere un esquema de soporte <strong>24/7</strong>.
+                                        La combinación de complejidad <strong>Alta</strong> y frecuencia <strong>{state.updateFrequency}</strong> sugiere un esquema de soporte <strong>24/7</strong>.
                                     </p>
                                     <Button
                                         variant="link"
@@ -1347,13 +1347,13 @@ graph TD
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <Label className="text-[#CFDBD5] mb-2 block">ExposiciÃ³n de Datos</Label>
+                                        <Label className="text-[#CFDBD5] mb-2 block">Exposición de Datos</Label>
                                         <Select value={state.criticitness.dataExposure} onValueChange={(v: any) => updateCriticitness('dataExposure', v)}>
                                             <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
                                             <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
                                                 <SelectItem value="internal">Interna</SelectItem>
                                                 <SelectItem value="partners">Partners / Clientes</SelectItem>
-                                                <SelectItem value="public">PÃºblica / Regulatoria</SelectItem>
+                                                <SelectItem value="public">Pública / Regulatoria</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -1370,7 +1370,7 @@ graph TD
                                     </div>
                                 </div>
                                 <div className="col-span-1 md:col-span-2">
-                                    <CountInput label="PaÃ­ses Involucrados" value={state.criticitness.countriesCount} onChange={(v: number) => updateCriticitness('countriesCount', v)} min={1} />
+                                    <CountInput label="Países Involucrados" value={state.criticitness.countriesCount} onChange={(v: number) => updateCriticitness('countriesCount', v)} min={1} />
                                 </div>
                             </div>
                         )}
@@ -1409,11 +1409,11 @@ graph TD
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1">LÃ­der de Ãrea</Label>
+                                    <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1">Líder de Área</Label>
                                     <Input
                                         value={state.clientContact.areaLeader || ''}
                                         onChange={e => updateState('clientContact', { ...state.clientContact, areaLeader: e.target.value })}
-                                        placeholder="LÃ­der"
+                                        placeholder="Líder"
                                         className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-[50px] rounded-[1rem] focus:border-[#F5CB5C] transition-all hover:border-[#F5CB5C]/50"
                                     />
                                 </div>
@@ -1423,7 +1423,7 @@ graph TD
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                                 {/* Selector (Col 1) */}
                                 <div className="space-y-2">
-                                    <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1">RetenciÃ³n Fiscal</Label>
+                                    <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1">Retención Fiscal</Label>
                                     <Select
                                         value={state.retention.enabled ? "yes" : "no"}
                                         onValueChange={(v) => updateState('retention', { ...state.retention, enabled: v === 'yes' })}
@@ -1433,7 +1433,7 @@ graph TD
                                         </SelectTrigger>
                                         <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
                                             <SelectItem value="no">No aplica</SelectItem>
-                                            <SelectItem value="yes">SÃ­, aplica retenciÃ³n</SelectItem>
+                                            <SelectItem value="yes">Sí, aplica retenciÃ³n</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -1518,7 +1518,7 @@ graph TD
                     <div>
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="text-[#F5CB5C] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                                <Calculator className="w-4 h-4" /> InversiÃ³n Estimada
+                                <Calculator className="w-4 h-4" /> INVERSIÓN ESTIMADA
                             </h4>
                             <div className="w-[100px]">
                                 <Select value={currency} onValueChange={(val) => setCurrency(val)}>
@@ -1526,7 +1526,7 @@ graph TD
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                        <SelectItem value="USD">USD - DÃ³lar</SelectItem>
+                                        <SelectItem value="USD">USD - Dólar</SelectItem>
                                         <SelectItem value="EUR">EUR - Euro</SelectItem>
                                         <SelectItem value="ARS">ARS - Peso Arg</SelectItem>
                                         <SelectItem value="MXN">MXN - Peso Mex</SelectItem>
@@ -1603,7 +1603,7 @@ graph TD
 
                     {state.retention.enabled && (
                         <div className="flex justify-between items-center text-[#F5CB5C]/70 border-t border-[#4A4D4A]/50 pt-2">
-                            <span>RetenciÃ³n ({state.retention.percentage}%)</span>
+                            <span>Retención ({state.retention.percentage}%)</span>
                             <span className="font-mono">- {formatMoney(finalTotal * (state.retention.percentage / 100))}</span>
                         </div>
                     )}
@@ -1637,7 +1637,7 @@ graph TD
                         className="bg-[#F5CB5C] hover:bg-[#E0B84C] text-[#242423] border-0 rounded-2xl h-14 font-bold w-full transition-all text-base shadow-[0_0_20px_rgba(245,203,92,0.3)] hover:shadow-[0_0_25px_rgba(245,203,92,0.5)] transform hover:scale-[1.02]"
                     >
                         {isSaving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
-                        {isSaving ? 'Guardando...' : 'Guardar CotizaciÃ³n'}
+                        {isSaving ? 'Guardando...' : 'Guardar Cotización'}
                     </Button>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -1668,7 +1668,7 @@ graph TD
                         <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
                             <div className="flex items-center justify-between">
                                 <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                                    <Network className="w-4 h-4 text-[#F5CB5C]" /> Arquitectura DinÃ¡mica
+                                    <Network className="w-4 h-4 text-[#F5CB5C]" /> Arquitectura Dinámica
                                 </h4>
                                 <div className="flex gap-4">
                                     {!isEditingDiagram ? (
@@ -1678,12 +1678,12 @@ graph TD
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => {
-                                                        if (confirm("Â¿Restaurar diagrama automÃ¡tico? Se perderÃ¡n los cambios manuales.")) {
+                                                        if (confirm("¿Restaurar diagrama automático? Se perderán los cambios manuales.")) {
                                                             setManualDiagramCode(null)
                                                         }
                                                     }}
                                                     className="h-7 px-2 text-[#CFDBD5] hover:text-[#F5CB5C] text-[10px]"
-                                                    title="Restaurar AutomÃ¡tico"
+                                                    title="Restaurar Automático"
                                                 >
                                                     <RefreshCw className="w-3 h-3" />
                                                 </Button>
@@ -1743,7 +1743,7 @@ graph TD
                                             <Sparkles className="w-5 h-5 text-[#F5CB5C]" />
                                         </div>
                                         <Input
-                                            placeholder="Describe cambios con IA (ej: 'Agrega validaciÃ³n entre origen e ingesta')"
+                                            placeholder="Describe cambios con IA (ej: 'Agrega validación entre origen e ingesta')"
                                             value={aiPrompt}
                                             onChange={(e) => setAiPrompt(e.target.value)}
                                             className="bg-transparent border-none text-[#E8EDDF] placeholder:text-[#CFDBD5]/50 focus-visible:ring-0"
@@ -1761,7 +1761,7 @@ graph TD
 
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center">
-                                            <label className="text-[10px] font-bold text-[#CFDBD5] uppercase tracking-wider">CÃ³digo Mermaid</label>
+                                            <label className="text-[10px] font-bold text-[#CFDBD5] uppercase tracking-wider">Código Mermaid</label>
                                             {diagramHistory.length > 0 && (
                                                 <Button
                                                     variant="ghost"
@@ -1781,7 +1781,7 @@ graph TD
                                         />
                                         <p className="text-[10px] text-[#CFDBD5]/50 flex items-center gap-1">
                                             <ShieldAlert className="w-3 h-3" />
-                                            La ediciÃ³n manual desactiva las actualizaciones automÃ¡ticas.
+                                            La edición manual desactiva las actualizaciones automáticas.
                                         </p>
                                     </div>
                                     <div className="space-y-2">
@@ -1808,7 +1808,7 @@ graph TD
                 {/* Tech Summary */}
                 <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
                     <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                        <Cpu className="w-4 h-4 text-[#F5CB5C]" /> Resumen TÃ©cnico
+                        <Cpu className="w-4 h-4 text-[#F5CB5C]" /> Resumen Técnico
                     </h4>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="bg-[#333533] p-5 rounded-2xl border border-[#4A4D4A] text-center">
