@@ -164,7 +164,7 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
                                         onClick={() => {
                                             onClientSelect(client, false)
                                             setOpen(false)
-                                            setHtmlQuery("")
+                                            setSearchQuery("")
                                         }}
                                         className={cn(
                                             "flex flex-col cursor-pointer select-none rounded-lg px-3 py-2 text-sm outline-none transition-colors hover:bg-[#333533] hover:text-[#E8EDDF]",
