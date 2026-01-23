@@ -1867,7 +1867,7 @@ graph TD
                                         </SelectTrigger>
                                         <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
                                             <SelectItem value="no">No aplica</SelectItem>
-                                            <SelectItem value="yes">Sí, aplica retenciÃ³n</SelectItem>
+                                            <SelectItem value="yes">Sí, aplica retención</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -1897,12 +1897,18 @@ graph TD
                                                     </Button>
 
                                                     {/* Center Group: Input + % */}
-                                                    <div className="flex-1 flex flex-col items-center justify-center h-full pointer-events-none">
-                                                        <div className="flex items-baseline gap-0.5">
-                                                            <span className="text-[#E8EDDF] text-base font-bold tracking-tight">
-                                                                {state.retention.percentage}
-                                                            </span>
-                                                            <span className="text-[#F5CB5C] text-xs font-bold mb-0.5">%</span>
+                                                    <div className="flex-1 flex flex-col items-center justify-center h-full relative">
+                                                        <div className="flex items-center justify-center gap-0.5 w-full px-10">
+                                                            <input
+                                                                type="number"
+                                                                value={state.retention.percentage}
+                                                                onChange={(e) => {
+                                                                    const val = parseFloat(e.target.value)
+                                                                    updateState('retention', { ...state.retention, percentage: isNaN(val) ? 0 : val })
+                                                                }}
+                                                                className="bg-transparent text-[#E8EDDF] text-base font-bold tracking-tight text-center w-full focus:outline-none appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            />
+                                                            <span className="text-[#F5CB5C] text-xs font-bold mb-0.5 select-none">%</span>
                                                         </div>
                                                     </div>
 

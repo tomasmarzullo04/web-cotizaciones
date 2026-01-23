@@ -70,7 +70,7 @@ export function ClientsManager({ initialClients }: { initialClients: any[] }) {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 {/* SEARCH */}
                 <div className="relative max-w-md group w-full md:w-auto flex-1">
-                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-[#CFDBD5] group-focus-within:text-[#F5CB5C] transition-colors">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#CFDBD5] group-focus-within:text-[#F5CB5C] transition-colors">
                         <Search className="w-5 h-5" />
                     </div>
                     <form onSubmit={handleSearch}>
@@ -78,7 +78,7 @@ export function ClientsManager({ initialClients }: { initialClients: any[] }) {
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder="Buscar empresa, contacto o email..."
-                            className="bg-[#333533] border-transparent focus:border-[#F5CB5C] pl-[56px] text-[#E8EDDF] h-14 w-full rounded-2xl text-base shadow-sm transition-all focus:shadow-[0_0_15px_rgba(245,203,92,0.1)] placeholder:text-[#CFDBD5]/50"
+                            className="bg-[#333533] border-transparent focus:border-[#F5CB5C] pl-12 text-[#E8EDDF] h-14 w-full rounded-2xl text-base shadow-sm transition-all focus:shadow-[0_0_15px_rgba(245,203,92,0.1)] placeholder:text-[#CFDBD5]/50"
                         />
                     </form>
                 </div>
