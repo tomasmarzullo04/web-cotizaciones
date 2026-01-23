@@ -67,12 +67,20 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
     // Search Effect
     React.useEffect(() => {
         async function fetchClients() {
-            if (debouncedQuery.length < 2) {
-                setClients([])
+            // Allow empty query if open (Initial Load) or > 2 chars
+            if (debouncedQuery.length < 2 && debouncedQuery.length > 0) {
+                // Determine if we should clear or wait. 
+                // If length is 1, maybe wait. 
+                // But if length is 0 (empty), we might want initial load IF popup is open.
                 return
             }
+
+            // Only fetch if open or valid query
+            if (!open && !debouncedQuery) return
+
             setLoading(true)
             try {
+                // Pass empty string for initial load
                 const results = await searchClients(debouncedQuery)
                 setClients(results as ClientData[])
             } catch (error) {
@@ -82,8 +90,10 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
             }
         }
 
-        fetchClients()
-    }, [debouncedQuery])
+        if (open) {
+            fetchClients()
+        }
+    }, [debouncedQuery, open])
 
     // Handle Create New
     const handleCreateClient = async () => {
@@ -153,7 +163,7 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
                         )}
                         {!loading && clients.length === 0 && searchQuery.length < 2 && (
                             <div className="py-6 text-center text-sm text-[#CFDBD5]/50">
-                                Escriba al menos 2 caracteres para buscar.
+                                {clients.length === 0 ? "No tienes clientes recientes." : "Escribe para buscar..."}
                             </div>
                         )}
                         {!loading && clients.length > 0 && (
@@ -180,7 +190,7 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
                                 ))}
                             </div>
                         )}
-                        {!loading && searchQuery.length >= 2 && (
+                        {!loading && (searchQuery.length > 0) && (
                             <div className="p-1 mt-2 border-t border-[#4A4D4A]/50">
                                 <Button
                                     variant="ghost"

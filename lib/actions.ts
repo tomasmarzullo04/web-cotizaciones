@@ -308,15 +308,28 @@ export async function sendQuoteToN8N(quoteData: any, pdfBase64: string, filename
 // --- CLIENT / CRM ACTIONS ---
 
 export async function searchClients(query: string) {
-    if (!query || query.length < 2) return []
+    // [Autocomplete] Allow empty query for "Recent Clients" initial load
+    // if (!query || query.length < 2) return [] 
+
+    // 1. Get User ID
+    const cookieStore = await cookies()
+    const userId = cookieStore.get('session_user_id')?.value
+    if (!userId) return []
+
     try {
         const clients = await prisma.client.findMany({
             where: {
-                companyName: {
-                    contains: query,
-                    mode: 'insensitive'
-                }
+                // Filter by User Ownership
+                userId: userId,
+                // Partial match if query exists
+                ...(query ? {
+                    companyName: {
+                        contains: query,
+                        mode: 'insensitive'
+                    }
+                } : {})
             },
+            orderBy: { createdAt: 'desc' }, // Show most recent first
             take: 10,
             select: { id: true, companyName: true, contactName: true, email: true, status: true }
         })
@@ -328,13 +341,21 @@ export async function searchClients(query: string) {
 }
 
 export async function createClient(data: { companyName: string, contactName: string, email: string }) {
+    const cookieStore = await cookies()
+    const userId = cookieStore.get('session_user_id')?.value
+
+    if (!userId) {
+        return { success: false, error: "Sesión expirada. Recarga la página." }
+    }
+
     try {
         const newClient = await prisma.client.create({
             data: {
                 companyName: data.companyName,
                 contactName: data.contactName,
                 email: data.email,
-                status: 'PROSPECTO'
+                status: 'PROSPECTO',
+                userId: userId // Link to Owner
             }
         })
         return { success: true, client: newClient }
