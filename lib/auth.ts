@@ -101,8 +101,8 @@ export async function loginAction(formData: FormData) {
                     cookieStore.set('session_user_id', legacyUser.id, cookieOptions)
 
                     console.log(`[AUTH] Login Exitoso (Post-Migración): ${email}`)
-                    if (legacyUser.role === 'ADMIN') redirect('/admin')
-                    else redirect('/quote/new')
+                    // Return URL for client-side navigation
+                    return { success: true, redirectUrl: legacyUser.role === 'ADMIN' ? '/admin' : '/quote/new' }
                 }
             }
         } catch (e) {
@@ -143,10 +143,10 @@ export async function loginAction(formData: FormData) {
 
     console.log(`[AUTH] Login Exitoso: ${email}`)
 
-    if (user.role === 'ADMIN') {
-        redirect('/admin')
-    } else {
-        redirect('/quote/new')
+    // Return URL instead of Redirecting (Avoids NEXT_REDIRECT error in try/catch blocks)
+    return {
+        success: true,
+        redirectUrl: user.role === 'ADMIN' ? '/admin' : '/quote/new'
     }
 }
 
