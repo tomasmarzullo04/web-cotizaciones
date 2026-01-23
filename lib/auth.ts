@@ -165,46 +165,33 @@ export async function registerAction(formData: FormData) {
         return { error: "Cuenta existente. Por favor, inicia sesión." }
     }
 
-    // 2. Supabase Sign Up
-    const cookieStore = await cookies()
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    // 2. Supabase Admin Creation (Bypass Email Verification)
+    try {
+        const adminClient = createAdminClient()
+        // Create user directly as confirmed
+        const { data, error } = await adminClient.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true, // AUTO-CONFIRM
+            user_metadata: { full_name: email.split('@')[0] }
+        })
 
-    const supabase = createServerClient(supabaseUrl, supabaseKey, {
-        cookies: {
-            get(name: string) { return cookieStore.get(name)?.value },
-            set(name: string, value: string, options: CookieOptions) { cookieStore.set({ name, value, ...options }) },
-            remove(name: string, options: CookieOptions) { cookieStore.delete({ name, ...options }) },
-        },
-    })
-
-    const callbackUrl = process.env.NODE_ENV === 'production'
-        ? 'https://web-cotizaciones.vercel.app/auth/v1/callback'
-        : 'http://localhost:3000/auth/v1/callback'
-
-    const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-            emailRedirectTo: callbackUrl
+        if (error) {
+            console.error("[Register] Admin Create Error:", error)
+            return { error: error.message }
         }
-    })
 
-    if (error) {
-        console.error("[Register] Supabase Error:", error)
-        return { error: error.message }
+        if (data.user) {
+            // 3. Auto-Login immediately after creation
+            return await loginAction(formData)
+        }
+
+        return { error: "Error desconocido al crear usuario." }
+
+    } catch (e: any) {
+        console.error("Registration Critical Failure", e)
+        return { error: e.message || "Error crítico de registro" }
     }
-
-    // 3. Success -> Verification Required
-    // We do NOT create the user in Prisma yet. 
-    // The user will be created by the Callback Route when they click the email link.
-    if (data.user && !data.session) {
-        return { success: true, message: "Registro iniciado. Revisa tu correo para verificar tu cuenta." }
-    }
-
-    // Edge case: If email auto-confirmed (dev settings), log them in? 
-    // For now, let's treat it as success message flow usually.
-    return { success: true, message: "Registro exitoso. Iniciando..." }
 }
 
 export async function logoutAction() {
