@@ -1977,7 +1977,7 @@ graph TD
                             </div>
                         )}
                     </div>
-                    <div className="text-4xl md:text-5xl lg:text-6xl font-mono font-bold tracking-tighter text-[#E8EDDF] drop-shadow-[0_0_15px_rgba(245,203,92,0.1)] truncate">
+                    <div className="text-3xl md:text-3xl lg:text-4xl font-mono font-bold tracking-tighter text-[#E8EDDF] drop-shadow-[0_0_15px_rgba(245,203,92,0.1)] truncate">
                         {formatMoney(finalTotalProjectCost)}
                     </div>
                     <p className="text-[#CFDBD5] mt-2 font-medium flex items-center gap-2">
