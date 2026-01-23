@@ -841,12 +841,20 @@ export async function deleteClient(clientId: string) {
         return { success: false, error: "Error al eliminar cliente" }
     }
 }
+
 export async function getConsultants() {
     try {
         const consultants = await prisma.user.findMany({
-            where: { role: 'CONSULTOR' },
+            where: {
+                OR: [
+                    { role: 'CONSULTOR' },
+                    { role: 'USER' }
+                ]
+            },
+            orderBy: { name: 'asc' },
             select: { name: true, email: true }
         })
+        console.log(`Fetched ${consultants.length} consultants (USER/CONSULTOR)`)
         return consultants
     } catch (e) {
         console.error("Failed to fetch consultants", e)
