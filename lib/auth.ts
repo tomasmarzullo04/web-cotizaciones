@@ -229,4 +229,49 @@ export async function getSessionUserId() {
     return (await cookies()).get('session_user_id')?.value || null
 }
 
+export async function syncSessionAction() {
+    const cookieStore = await cookies()
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
+        cookies: {
+            get(name: string) { return cookieStore.get(name)?.value },
+            set(name: string, value: string, options: CookieOptions) { cookieStore.set({ name, value, ...options }) },
+            remove(name: string, options: CookieOptions) { cookieStore.delete({ name, ...options }) },
+        },
+    })
+
+    const { data: { user }, error } = await supabase.auth.getUser()
+
+    if (error || !user) {
+        return { error: "No active session to sync." }
+    }
+
+    try {
+        const fullName = user.user_metadata.full_name || user.email?.split('@')[0]
+        const dbUser = await prisma.user.upsert({
+            where: { email: user.email },
+            update: {},
+            create: {
+                id: user.id,
+                name: fullName,
+                email: user.email!,
+                password: '',
+                role: 'USER',
+            }
+        })
+
+        const cookieOptions = { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const }
+        cookieStore.set('session_role', dbUser.role, cookieOptions)
+        cookieStore.set('session_user', dbUser.name, cookieOptions)
+        cookieStore.set('session_user_id', dbUser.id, cookieOptions)
+
+        return { success: true }
+    } catch (e) {
+        console.error("Sync Error:", e)
+        return { error: "DB Sync Failed" }
+    }
+}
+
 
