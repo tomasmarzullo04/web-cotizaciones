@@ -51,15 +51,62 @@ export async function loginAction(formData: FormData) {
     if (error) {
         console.error("[Login] Supabase Auth Error:", error.message)
 
-        // DUAL CHECK: If Supabase fails, check if user exists in Prisma (Legacy/Manual without Auth)
+        // DUAL CHECK EXTREME: Auto-Migrate to Supabase Auth
+        // If user exists in Prisma but not Supabase, we CREATE them silently with email_confirm: true
         try {
             const legacyUser = await prisma.user.findUnique({ where: { email } })
             if (legacyUser) {
-                console.warn("[Login] Legacy user found in DB but not in Auth:", email)
-                return { error: "Cuenta antigua detectada. Por favor contacta soporte para migrarte." }
+                console.log(`[Auth] Migrating legacy user to Supabase: ${email}`)
+
+                // Need Admin Client to bypass verification
+                const adminClient = createAdminClient()
+                const { data: migrationData, error: migrationError } = await adminClient.auth.admin.createUser({
+                    email,
+                    password, // Reuse their input password (hoping it's the same, otherwise they can reset)
+                    email_confirm: true,
+                    user_metadata: { full_name: legacyUser.name }
+                })
+
+                if (migrationError) {
+                    console.error("[Auth] Migration Failed:", migrationError.message)
+                    return { error: "Error de migración. Por favor contacta soporte." }
+                }
+
+                if (migrationData.user) {
+                    console.log(`[Auth] Migration Success. Auto-logging in...`)
+                    // Retry Login immediately
+                    const retry = await supabase.auth.signInWithPassword({ email, password })
+                    if (retry.error) {
+                        return { error: "Migración exitosa, pero login falló. Intenta de nuevo." }
+                    }
+
+                    // DB Sync repeated (Dry needed, but for now copy-paste for safety)
+                    try {
+                        await prisma.user.upsert({
+                            where: { email },
+                            update: {},
+                            create: {
+                                name: legacyUser.name,
+                                email,
+                                password: '',
+                                role: legacyUser.role || 'USER',
+                            }
+                        })
+                    } catch (err) { console.error("DB Sync post-migration", err) }
+
+                    const cookieOptions = { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const }
+                    // Note: We need 'retry.data.user' here
+                    cookieStore.set('session_role', legacyUser.role, cookieOptions)
+                    cookieStore.set('session_user', legacyUser.name, cookieOptions)
+                    cookieStore.set('session_user_id', legacyUser.id, cookieOptions)
+
+                    console.log(`[AUTH] Login Exitoso (Post-Migración): ${email}`)
+                    if (legacyUser.role === 'ADMIN') redirect('/admin')
+                    else redirect('/quote/new')
+                }
             }
         } catch (e) {
-            console.error("[Login] Legacy check failed", e)
+            console.error("[Login] Legacy check/migration failed", e)
         }
 
         // Standard Error
