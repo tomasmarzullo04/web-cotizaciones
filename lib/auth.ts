@@ -213,19 +213,25 @@ export async function registerAction(formData: FormData) {
         return { error: "Credenciales incompletas" }
     }
 
-    // 1. Check if user already exists
+    // 1. Check if user already exists (Safety Check)
+    // We keep this to prevent overwriting existing accounts with new passwords maliciously
     const existingUser = await prisma.user.findUnique({ where: { email } })
     if (existingUser) {
         return { error: "El usuario ya existe. Intenta iniciar sesión." }
     }
 
     try {
-        // 2. Create User in Prisma
+        // 2. Create User in Prisma using Upsert (Unified Logic)
+        // Even though we checked findUnique, upsert handles race conditions
+        console.log(`[AUTH] Nuevo usuario detectado: ${email}. Intentando persistencia en DB...`)
+
         const hashedPassword = await bcrypt.hash(password, 10)
         const name = email.split('@')[0] // Default name from email part
 
-        const newUser = await prisma.user.create({
-            data: {
+        const newUser = await prisma.user.upsert({
+            where: { email },
+            update: {}, // Safety: Do not overwrite if race condition hit
+            create: {
                 name,
                 email,
                 password: hashedPassword,
@@ -233,9 +239,18 @@ export async function registerAction(formData: FormData) {
             }
         })
 
+        if (!newUser) throw new Error("Upsert returned null")
+
+        console.log(`[DB] Éxito: Usuario guardado (${newUser.id}).`)
+
         // 3. Auto-Login (Set Session)
         const cookieStore = await cookies()
-        const cookieOptions = { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' }
+        const cookieOptions = {
+            path: '/',
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax' as const
+        }
 
         cookieStore.set('session_role', newUser.role, cookieOptions)
         cookieStore.set('session_user', newUser.name, cookieOptions)
@@ -243,7 +258,8 @@ export async function registerAction(formData: FormData) {
 
     } catch (e) {
         console.error("Registration Failed:", e)
-        return { error: "Error al crear el usuario. Intenta nuevamente." }
+        // Atomic Error Handling
+        return { error: "Error crítico: No se pudo crear el perfil de usuario. Intenta de nuevo" }
     }
 
     // 4. Redirect after success
