@@ -795,3 +795,49 @@ export async function updateQuoteStatus(quoteId: string, status: string) {
         return { success: false, error: "Failed to update" }
     }
 }
+
+export async function updateClient(clientId: string, data: { companyName: string, contactName: string, email: string }) {
+    const cookieStore = await cookies()
+    const userId = cookieStore.get('session_user_id')?.value
+
+    if (!userId) {
+        return { success: false, error: "Sesión expirada" }
+    }
+
+    try {
+        const updatedClient = await prisma.client.update({
+            where: { id: clientId, userId: userId }, // Ensure ownership
+            data: {
+                companyName: data.companyName,
+                contactName: data.contactName,
+                email: data.email
+            }
+        })
+        return { success: true, client: updatedClient }
+    } catch (e: any) {
+        if (e.code === 'P2002') {
+            return { success: false, error: "Ya existe otra empresa con ese nombre." }
+        }
+        console.error("Update Client Failed", e)
+        return { success: false, error: "Error al actualizar cliente" }
+    }
+}
+
+export async function deleteClient(clientId: string) {
+    const cookieStore = await cookies()
+    const userId = cookieStore.get('session_user_id')?.value
+
+    if (!userId) {
+        return { success: false, error: "Sesión expirada" }
+    }
+
+    try {
+        await prisma.client.delete({
+            where: { id: clientId, userId: userId } // Ensure ownership
+        })
+        return { success: true }
+    } catch (e) {
+        console.error("Delete Client Failed", e)
+        return { success: false, error: "Error al eliminar cliente" }
+    }
+}

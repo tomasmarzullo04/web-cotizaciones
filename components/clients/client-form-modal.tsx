@@ -1,27 +1,64 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { createClient } from '@/lib/actions'
+import { createClient, updateClient } from '@/lib/actions'
 import { toast } from 'sonner'
-import { Plus, Loader2 } from 'lucide-react'
+import { Plus, Loader2, Edit2 } from 'lucide-react'
 
-interface ClientFormModalProps {
-    onClientCreated?: () => void
+export interface ClientData {
+    id?: string
+    companyName: string
+    contactName: string
+    email: string
 }
 
-export function ClientFormModal({ onClientCreated }: ClientFormModalProps) {
-    const [open, setOpen] = useState(false)
+interface ClientFormModalProps {
+    initialData?: ClientData | null
+    isOpen?: boolean
+    onOpenChange?: (open: boolean) => void
+    onClientSaved?: () => void
+    trigger?: React.ReactNode // Custom trigger button
+}
+
+export function ClientFormModal({ initialData, isOpen, onOpenChange, onClientSaved, trigger }: ClientFormModalProps) {
+    // Internal state for uncontrolled usage
+    const [internalOpen, setInternalOpen] = useState(false)
     const [loading, setLoading] = useState(false)
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<ClientData>({
         companyName: '',
         contactName: '',
         email: ''
     })
+
+    // Sync open state
+    const isControlled = isOpen !== undefined
+    const open = isControlled ? isOpen : internalOpen
+    const setOpen = (val: boolean) => {
+        if (!isControlled) setInternalOpen(val)
+        if (onOpenChange) onOpenChange(val)
+    }
+
+    // Effect to populate form on Edit Mode
+    useEffect(() => {
+        if (open) {
+            if (initialData) {
+                setFormData({
+                    id: initialData.id,
+                    companyName: initialData.companyName,
+                    contactName: initialData.contactName || '',
+                    email: initialData.email || ''
+                })
+            } else {
+                // Reset for Create Mode
+                setFormData({ companyName: '', contactName: '', email: '' })
+            }
+        }
+    }, [open, initialData])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -32,14 +69,21 @@ export function ClientFormModal({ onClientCreated }: ClientFormModalProps) {
 
         setLoading(true)
         try {
-            const result = await createClient(formData)
-            if (result.success) {
-                toast.success("Cliente creado exitosamente")
-                setOpen(false)
-                setFormData({ companyName: '', contactName: '', email: '' })
-                if (onClientCreated) onClientCreated()
+            let result;
+            if (initialData?.id) {
+                // UPDATE
+                result = await updateClient(initialData.id, formData)
             } else {
-                toast.error(result.error || "Error al crear cliente")
+                // CREATE
+                result = await createClient(formData)
+            }
+
+            if (result.success) {
+                toast.success(initialData ? "Cliente actualizado" : "Cliente creado exitosamente")
+                setOpen(false)
+                if (onClientSaved) onClientSaved()
+            } else {
+                toast.error(result.error || "Error al guardar")
             }
         } catch (error) {
             toast.error("Error de conexión")
@@ -50,22 +94,31 @@ export function ClientFormModal({ onClientCreated }: ClientFormModalProps) {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Nuevo Cliente
-                </Button>
-            </DialogTrigger>
+            {/* Custom Trigger or Default Plus Button */}
+            {trigger ? (
+                <DialogTrigger asChild>{trigger}</DialogTrigger>
+            ) : (
+                !isControlled && (
+                    <DialogTrigger asChild>
+                        <Button className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold">
+                            <Plus className="w-4 h-4 mr-2" />
+                            Nuevo Cliente
+                        </Button>
+                    </DialogTrigger>
+                )
+            )}
+
             <DialogContent className="bg-[#242423] border-[#333533] text-[#E8EDDF] sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-bold text-[#F5CB5C]">Registrar Nuevo Cliente</DialogTitle>
+                    <DialogTitle className="text-xl font-bold text-[#F5CB5C]">
+                        {initialData ? "Editar Cliente" : "Registrar Nuevo Cliente"}
+                    </DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 mt-2">
                     <div className="space-y-2">
                         <Label htmlFor="companyName" className="text-[#CFDBD5]">Empresa / Razón Social</Label>
                         <Input
                             id="companyName"
-                            placeholder="Ej. Acme Corp"
                             className="bg-[#333533] border-transparent focus:border-[#F5CB5C] text-[#E8EDDF]"
                             value={formData.companyName}
                             onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
@@ -75,7 +128,6 @@ export function ClientFormModal({ onClientCreated }: ClientFormModalProps) {
                         <Label htmlFor="contactName" className="text-[#CFDBD5]">Nombre de Contacto</Label>
                         <Input
                             id="contactName"
-                            placeholder="Ej. Juan Pérez"
                             className="bg-[#333533] border-transparent focus:border-[#F5CB5C] text-[#E8EDDF]"
                             value={formData.contactName}
                             onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
@@ -86,7 +138,6 @@ export function ClientFormModal({ onClientCreated }: ClientFormModalProps) {
                         <Input
                             id="email"
                             type="email"
-                            placeholder="juan@acme.com"
                             className="bg-[#333533] border-transparent focus:border-[#F5CB5C] text-[#E8EDDF]"
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -97,7 +148,7 @@ export function ClientFormModal({ onClientCreated }: ClientFormModalProps) {
                             Cancelar
                         </Button>
                         <Button type="submit" disabled={loading} className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold">
-                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar Cliente"}
+                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (initialData ? "Actualizar" : "Guardar")}
                         </Button>
                     </div>
                 </form>
