@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -29,13 +29,20 @@ export default function LoginPage() {
     const [error, setError] = useState<string | null>(searchParams.get('error'))
 
     // Real-Time Auth Listener
+    const isRedirecting = useRef(false) // Prevent infinite loops
+
     useEffect(() => {
         const supabase = getSupabaseClient()
         if (!supabase) return
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && session) {
+            if (event === 'SIGNED_IN' && session && !isRedirecting.current) {
+                // Double check if we are NOT already on the target page (rare but safe)
+                if (window.location.pathname === '/quote/new') return
+
+                isRedirecting.current = true
                 setSuccessMessage("¡Cuenta verificada! Redirigiendo...")
+
                 setTimeout(() => {
                     window.location.href = '/quote/new'
                 }, 1500)
