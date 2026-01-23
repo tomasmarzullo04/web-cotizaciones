@@ -30,6 +30,7 @@ type Quote = {
 
 interface AdminHistoryProps {
     quotes: Quote[]
+    consultants?: { name: string | null, email: string | null }[]
 }
 
 const getStatusStyles = (status: string) => {
@@ -49,7 +50,7 @@ const getTypeBadgeStyles = (type: string) => {
     }
 }
 
-export function AdminHistory({ quotes: serverQuotes }: AdminHistoryProps) {
+export function AdminHistory({ quotes: serverQuotes, consultants: serverConsultants = [] }: AdminHistoryProps) {
     const [mergedQuotes, setMergedQuotes] = useState<any[]>(serverQuotes || [])
     const [isClient, setIsClient] = useState(false)
     const [activeTab, setActiveTab] = useState('All')
@@ -67,15 +68,24 @@ export function AdminHistory({ quotes: serverQuotes }: AdminHistoryProps) {
         setMergedQuotes(validQuotes)
     }, [serverQuotes])
 
-    // Derive Unique Consultants
-    const consultants = useMemo(() => {
+    // Derive Unique Consultants (Backend + Existing in Quotes)
+    const uniqueConsultants = useMemo(() => {
         const unique = new Set<string>()
-        mergedQuotes.forEach(q => {
-            const name = q.user?.name || q.user?.email || "Sistema"
-            unique.add(name)
+
+        // 1. From Backend List
+        serverConsultants.forEach(c => {
+            if (c.name) unique.add(c.name)
+            else if (c.email) unique.add(c.email)
         })
+
+        // 2. From Current Quotes (in case of deleted users or history)
+        mergedQuotes.forEach(q => {
+            const name = q.user?.name || q.user?.email
+            if (name) unique.add(name)
+        })
+
         return Array.from(unique).sort()
-    }, [mergedQuotes])
+    }, [mergedQuotes, serverConsultants])
 
     // Filter Logic
     const filteredQuotes = useMemo(() => {
@@ -190,12 +200,12 @@ export function AdminHistory({ quotes: serverQuotes }: AdminHistoryProps) {
                     {/* Consultant Filter */}
                     <div>
                         <Select value={consultantFilter} onValueChange={setConsultantFilter}>
-                            <SelectTrigger className="bg-[#171717] border-[#4A4D4A] text-[#E8EDDF] h-10 rounded-xl">
+                            <SelectTrigger className="bg-[#171717] border-[#4A4D4A] text-[#E8EDDF] h-10 rounded-xl focus:border-[#F5CB5C]">
                                 <SelectValue placeholder="Filtrar por Consultor" />
                             </SelectTrigger>
                             <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
                                 <SelectItem value="ALL">Todos los Consultores</SelectItem>
-                                {consultants.map(c => (
+                                {uniqueConsultants.map(c => (
                                     <SelectItem key={c} value={c}>{c}</SelectItem>
                                 ))}
                             </SelectContent>
@@ -204,13 +214,15 @@ export function AdminHistory({ quotes: serverQuotes }: AdminHistoryProps) {
 
                     {/* Client Search */}
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#CFDBD5]" />
                         <Input
-                            placeholder="Buscar Cliente..."
+                            placeholder="Buscar por empresa..."
                             value={clientQuery}
                             onChange={(e) => setClientQuery(e.target.value)}
-                            className="pl-9 bg-[#171717] border-[#4A4D4A] text-[#E8EDDF] h-10 rounded-xl"
+                            className="bg-[#171717] border-[#4A4D4A] text-[#E8EDDF] h-10 rounded-xl pr-10 focus:border-[#F5CB5C] placeholder:text-[#CFDBD5]/50"
                         />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#CFDBD5] pointer-events-none">
+                            <Search className="w-4 h-4" />
+                        </div>
                     </div>
 
                     {/* Amount Range */}
@@ -220,7 +232,7 @@ export function AdminHistory({ quotes: serverQuotes }: AdminHistoryProps) {
                             type="number"
                             value={minAmount}
                             onChange={(e) => setMinAmount(e.target.value)}
-                            className="bg-[#171717] border-[#4A4D4A] text-[#E8EDDF] h-10 rounded-xl"
+                            className="bg-[#171717] border-[#4A4D4A] text-[#E8EDDF] h-10 rounded-xl focus:border-[#F5CB5C] placeholder:text-[#CFDBD5]/50"
                         />
                         <span className="text-[#CFDBD5]">-</span>
                         <Input
@@ -228,7 +240,7 @@ export function AdminHistory({ quotes: serverQuotes }: AdminHistoryProps) {
                             type="number"
                             value={maxAmount}
                             onChange={(e) => setMaxAmount(e.target.value)}
-                            className="bg-[#171717] border-[#4A4D4A] text-[#E8EDDF] h-10 rounded-xl"
+                            className="bg-[#171717] border-[#4A4D4A] text-[#E8EDDF] h-10 rounded-xl focus:border-[#F5CB5C] placeholder:text-[#CFDBD5]/50"
                         />
                     </div>
 
@@ -242,7 +254,7 @@ export function AdminHistory({ quotes: serverQuotes }: AdminHistoryProps) {
                             setMaxAmount("")
                             setActiveTab("All")
                         }}
-                        className="text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 h-10 rounded-xl"
+                        className="text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 h-10 rounded-xl border border-transparent hover:border-[#F5CB5C]/30"
                     >
                         <FilterX className="w-4 h-4 mr-2" />
                         Limpiar Filtros

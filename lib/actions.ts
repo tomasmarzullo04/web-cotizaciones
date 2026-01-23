@@ -841,3 +841,15 @@ export async function deleteClient(clientId: string) {
         return { success: false, error: "Error al eliminar cliente" }
     }
 }
+export async function getConsultants() {
+    try {
+        const consultants = await prisma.user.findMany({
+            where: { role: 'CONSULTOR' },
+            select: { name: true, email: true }
+        })
+        return consultants
+    } catch (e) {
+        console.error("Failed to fetch consultants", e)
+        return []
+    }
+}

@@ -3,13 +3,14 @@ import { AdminOverview } from "@/components/admin-overview"
 import { AdminRatesEditor } from "@/components/admin-rates-editor"
 import { AdminHistory } from "@/components/admin-history"
 import { ShieldCheck, Settings, Users, History } from "lucide-react"
-import { getAdminStats, getAllQuotes } from "@/lib/actions"
+import { getAdminStats, getAllQuotes, getConsultants } from "@/lib/actions"
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminPage() {
     const stats = await getAdminStats()
     const quotes = await getAllQuotes()
+    const consultants = await getConsultants()
 
     return (
         <main className="min-h-screen bg-[#171717] relative overflow-hidden font-sans">
@@ -49,7 +50,7 @@ export default async function AdminPage() {
                     </TabsContent>
 
                     <TabsContent value="history" className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
-                        <AdminHistory quotes={quotes} />
+                        <AdminHistory quotes={quotes} consultants={consultants} />
                     </TabsContent>
                 </Tabs>
             </div>
