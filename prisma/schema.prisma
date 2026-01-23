@@ -63,8 +63,8 @@ model Client {
   createdAt   DateTime @default(now())
   quotes      Quote[]
   
-  userId      String?   // Optional for migration compatibility, should be required for new
-  user        User?     @relation(fields: [userId], references: [id])
+  userId      String    // Required for strict ownership
+  user        User      @relation(fields: [userId], references: [id])
 }
 
 // Update Quote to link to Client

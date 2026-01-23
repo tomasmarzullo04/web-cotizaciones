@@ -67,46 +67,45 @@ export async function GET(request: Request) {
     try {
         console.log(`[DB-CHECK] Escribiendo en proyecto: gcajouecfyhcpbazxjhy`)
 
-        // 3. User Sync (Upsert Strategy) - RESTORED
-        console.log(`[AUTH] Nuevo usuario detectado: ${email}. Intentando persistencia en DB...`)
+        // 3. User Sync (Upsert Strategy) - STRICT SYNC
+        // We use the Supabase User ID as the Prisma Primary Key
+        try {
+            console.log(`[AUTH] Sincronizando usuario verificado: ${email}`)
 
-        user = await prisma.user.upsert({
-            where: { email: email },
-            update: {
-                // Determine if we need to update anything. 
-                // For now, keeping it safe (no overrides).
-            },
-            create: {
-                name: fullName,
-                email: email,
-                password: '',
-                role: 'USER', // Default role 'USER' (mapped to Consultor)
-            }
-        })
+            user = await prisma.user.upsert({
+                where: { email: email },
+                update: {}, // No updates, just ensure existence
+                create: {
+                    id: data.session.user.id, // CRITICAL: Use Supabase ID
+                    name: fullName,
+                    email: email,
+                    password: '', // Managed by Supabase
+                    role: 'USER',
+                }
+            })
 
-        console.log(`[DB] Éxito: Usuario asegurado ID=${user.id}`)
+            console.log(`[DB] Éxito: Usuario persistido ID=${user.id}`)
 
-    } catch (dbError: any) {
-        console.error("[Auth] Database Sync Error:", dbError)
-        return NextResponse.redirect(`${origin}/login?error=Error BD: ${encodeURIComponent(dbError.message)}`)
-    }
-
-    // Set App-Specific Session Cookies
-    // Detailed multitenancy logic relies on these
-    if (user) {
-        const cookieOptions = {
-            path: '/',
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax' as const
+        } catch (dbError: any) {
+            console.error("[Auth] Database Sync Error:", dbError)
+            return NextResponse.redirect(`${origin}/login?error=Error BD: ${encodeURIComponent(dbError.message)}`)
         }
 
-        cookieStore.set('session_role', user.role, cookieOptions)
-        cookieStore.set('session_user', user.name || user.email, cookieOptions)
-        cookieStore.set('session_user_id', user.id, cookieOptions)
+        // Set App-Specific Session Cookies
+        if (user) {
+            const cookieOptions = {
+                path: '/',
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax' as const
+            }
 
-        return NextResponse.redirect(`${origin}/quote/new`)
+            cookieStore.set('session_role', user.role, cookieOptions)
+            cookieStore.set('session_user', user.name || user.email, cookieOptions)
+            cookieStore.set('session_user_id', user.id, cookieOptions)
+
+            return NextResponse.redirect(`${origin}/quote/new`)
+        }
+
+        return NextResponse.redirect(`${origin}/login?error=Unknown Auth State`)
     }
-
-    return NextResponse.redirect(`${origin}/login?error=Unknown Auth State`)
-}
