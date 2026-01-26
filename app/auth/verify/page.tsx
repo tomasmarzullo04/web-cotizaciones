@@ -36,11 +36,10 @@ function VerifyContent() {
             try {
                 const { data: { user } } = await supabase.auth.getUser()
                 if (user) {
-                    console.log("Verified! Redirecting...")
+                    console.log("Verified! Redirecting to Portal...")
                     setIsChecking(true)
-                    // Refresh to pick up server-side middleware/cookies
-                    router.refresh()
-                    router.replace('/quote/new')
+                    // Hard Redirect is safer to clear any stale client state
+                    window.location.href = '/quote/new'
                     clearInterval(intervalId)
                 }
             } catch (e) {
@@ -55,7 +54,7 @@ function VerifyContent() {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_IN' || session) {
                 setIsChecking(true)
-                router.replace('/quote/new')
+                window.location.href = '/quote/new'
             }
         })
 

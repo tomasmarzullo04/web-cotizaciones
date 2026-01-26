@@ -187,7 +187,8 @@ export async function registerAction(formData: FormData) {
             email,
             password,
             options: {
-                data: { full_name: email.split('@')[0] }
+                data: { full_name: email.split('@')[0] },
+                emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://web-cotizaciones.vercel.app'}/auth/v1/callback`
             }
         })
 
