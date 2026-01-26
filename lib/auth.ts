@@ -286,7 +286,7 @@ export async function syncSessionAction() {
                 name: fullName,
                 email: user.email!,
                 password: '',
-                role: 'USER',
+                role: 'CONSULTOR',
             }
         })
 
