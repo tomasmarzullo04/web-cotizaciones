@@ -19,7 +19,7 @@ export default function Navbar({ userRole, userName }: { userRole?: string | nul
                 <div className="hidden md:flex items-center gap-8">
                     {/* Guest sees nothing here, just login button on right */}
 
-                    {userRole === 'USER' && (
+                    {(userRole === 'USER' || userRole === 'CONSULTOR') && (
                         <>
                             <Link href="/dashboard" className="text-sm font-medium text-[#CFDBD5] hover:text-[#F5CB5C] transition-colors">Mis Cotizaciones</Link>
                             <Link href="/clients" className="text-sm font-medium text-[#CFDBD5] hover:text-[#F5CB5C] transition-colors">Mis Clientes</Link>
@@ -40,7 +40,7 @@ export default function Navbar({ userRole, userName }: { userRole?: string | nul
                         <>
                             <div className="hidden md:flex flex-col items-end mr-2">
                                 <span className="text-xs font-bold text-[#E8EDDF]">{userName || 'Usuario'}</span>
-                                <span className="text-[10px] text-[#CFDBD5] uppercase tracking-wider">{userRole === 'ADMIN' ? 'Admin Board' : 'Consultor'}</span>
+                                <span className="text-[10px] text-[#CFDBD5] uppercase tracking-wider">{userRole === 'ADMIN' ? 'Admin Board' : (userRole === 'CONSULTOR' ? 'Consultor' : 'Usuario')}</span>
                             </div>
                             <LogoutButton />
                         </>
