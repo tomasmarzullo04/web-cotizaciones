@@ -106,7 +106,8 @@ interface QuoteState {
     serviceType: 'Proyecto' | 'Staffing' | 'Sustain'
 
     // Duration & Support
-    durationMonths: number
+    durationValue: number
+    durationUnit: 'days' | 'weeks' | 'months'
     supportHours: 'business' | '24/7'
 
     // Wizard Data
@@ -211,7 +212,8 @@ const INITIAL_STATE: QuoteState = {
         dataExposure: 'internal',
         countriesCount: 1
     },
-    durationMonths: 6,
+    durationValue: 6,
+    durationUnit: 'months',
     supportHours: 'business',
 
     staffingDetails: {
@@ -434,6 +436,13 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
             }
         })
     }
+
+    const getDurationInMonths = useCallback(() => {
+        const { durationValue, durationUnit } = state
+        if (durationUnit === 'weeks') return durationValue / 4.33
+        if (durationUnit === 'days') return durationValue / 30
+        return durationValue
+    }, [state.durationValue, state.durationUnit])
 
     const updateCriticitness = <K extends keyof QuoteState['criticitness']>(key: K, val: QuoteState['criticitness'][K]) => {
         setState(prev => ({
@@ -669,8 +678,9 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
         }
     }, [netTotal, state.retention.enabled])
 
-    const totalProjectCost = totalWithRisk * state.durationMonths
-    const finalTotalProjectCost = finalTotal * state.durationMonths
+    const durationInMonths = getDurationInMonths()
+    const totalProjectCost = totalWithRisk * durationInMonths
+    const finalTotalProjectCost = finalTotal * durationInMonths
 
     // --- Save Quote ---
     const handleSaveQuote = async () => {
@@ -769,7 +779,8 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
                     discountAmount: discountAmountVal,
                     finalTotal: finalTotalUSD,
                     currency: currency,
-                    exchangeRate: exchangeRate
+                    exchangeRate: exchangeRate,
+                    durationMonths: getDurationInMonths()
                 })
 
                 if (blob) {
@@ -843,7 +854,8 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
                 countriesCount: 1
             },
             serviceType: 'Proyecto', // Reset to default
-            durationMonths: 6,
+            durationValue: 6,
+            durationUnit: 'months',
             supportHours: 'business',
             staffingDetails: { profiles: [] },
             sustainDetails: {
@@ -906,13 +918,14 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
                     serviceType: state.serviceType,
                     commercialDiscount: state.commercialDiscount,
                     discountAmount,
-                    finalTotal
+                    finalTotal,
+                    durationMonths: getDurationInMonths()
                 })
             } else {
                 await exportToWord({
                     ...state,
                     totalWithRisk: finalTotal, // Use final total for Word too
-                    durationMonths: state.durationMonths,
+                    durationMonths: getDurationInMonths(),
                     diagramImage: diagramDataUrl,
                     finalTotal: finalTotal
                 })
@@ -1095,6 +1108,40 @@ graph TD
                                         }))
                                     }}
                                 />
+                            </div>
+
+                            {/* DURATION SELECTOR */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <Label className="text-[#CFDBD5] text-sm font-bold uppercase tracking-wider mb-2 block">Duración del Proyecto</Label>
+                                    <div className="flex gap-2">
+                                        <Input
+                                            type="number"
+                                            value={state.durationValue}
+                                            onChange={(e) => updateState('durationValue', Number(e.target.value))}
+                                            className="bg-[#242423] border-[#333533] text-[#E8EDDF] focus:ring-[#F5CB5C] focus:border-[#F5CB5C]"
+                                            min={1}
+                                        />
+                                        <Select
+                                            value={state.durationUnit}
+                                            onValueChange={(val: any) => updateState('durationUnit', val)}
+                                        >
+                                            <SelectTrigger className="w-[180px] bg-[#242423] border-[#333533] text-[#E8EDDF]">
+                                                <SelectValue placeholder="Unidad" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-[#242423] border-[#333533] text-[#E8EDDF]">
+                                                <SelectItem value="days">Días</SelectItem>
+                                                <SelectItem value="weeks">Semanas</SelectItem>
+                                                <SelectItem value="months">Meses</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col justify-end pb-2">
+                                    <p className="text-[#CFDBD5] text-sm italic">
+                                        Tiempo efectivo calculado: <span className="text-[#F5CB5C] font-bold">{getDurationInMonths().toFixed(1)} meses</span>
+                                    </p>
+                                </div>
                             </div>
 
                             {/* SUSTAIN SCORECARD */}
@@ -1988,29 +2035,29 @@ graph TD
                     </div>
                     <p className="text-[#CFDBD5] mt-2 font-medium flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-[#F5CB5C] animate-pulse" />
-                        Total proyecto ({state.durationMonths} meses)
+                        Total proyecto ({state.durationValue} {state.durationUnit === 'days' ? 'días' : state.durationUnit === 'weeks' ? 'semanas' : 'meses'})
                     </p>
                 </div>
 
                 <div className="bg-[#333533] rounded-[2rem] p-8 text-sm space-y-5 border border-[#4A4D4A] shadow-xl relative overflow-hidden">
                     <div className="flex justify-between items-center text-[#E8EDDF]">
                         <span className="text-[#CFDBD5]">Servicios (Infra/Data)</span>
-                        <span className="font-mono text-xl">{formatMoney(servicesCost)}</span>
+                        <span className="font-mono text-xl">{formatMoney(servicesCost * durationInMonths)}</span>
                     </div>
                     <div className="flex justify-between items-center text-[#E8EDDF]">
                         <span className="text-[#CFDBD5]">Equipo (Roles)</span>
-                        <span className="font-mono text-xl">{formatMoney(rolesCost)}</span>
+                        <span className="font-mono text-xl">{formatMoney(rolesCost * durationInMonths)}</span>
                     </div>
                     {l2SupportCost > 0 && (
                         <div className="flex justify-between items-center text-[#F5CB5C] bg-[#F5CB5C]/10 p-3 rounded-xl -mx-2 border border-[#F5CB5C]/20">
                             <span className="text-xs font-bold">SOPORTE L2 (10%)</span>
-                            <span className="font-mono text-xl">+ {formatMoney(l2SupportCost)}</span>
+                            <span className="font-mono text-xl">+ {formatMoney(l2SupportCost * durationInMonths)}</span>
                         </div>
                     )}
                     {state.criticitness.enabled && (
                         <div className="flex justify-between items-center text-orange-400 bg-orange-900/10 p-3 rounded-xl -mx-2 border border-orange-500/20">
                             <span className="text-xs font-bold">RIESGO ({criticitnessLevel.label})</span>
-                            <span className="font-mono text-xl">+ {formatMoney(riskCost)}</span>
+                            <span className="font-mono text-xl">+ {formatMoney(riskCost * durationInMonths)}</span>
                         </div>
                     )}
                     <Separator className="bg-[#4A4D4A]" />

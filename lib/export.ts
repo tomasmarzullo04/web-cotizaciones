@@ -38,7 +38,8 @@ interface QuoteState {
         impactFinancial: string
         countriesCount: number
     }
-    durationMonths: number
+    durationValue: number
+    durationUnit: 'days' | 'weeks' | 'months'
     supportHours: 'business' | '24/7'
     serviceType?: string
     commercialDiscount?: number
@@ -119,7 +120,7 @@ export function downloadCSV(data: any[], filename: string) {
 
 // -- PDF Export --
 // -- PDF Export --
-export async function exportToPDF(data: QuoteState & { totalMonthlyCost: number, l2SupportCost: number, riskCost: number, totalWithRisk: number, discountAmount: number, finalTotal: number, criticitnessLevel: any, diagramImage?: string, currency?: string, exchangeRate?: number }) {
+export async function exportToPDF(data: QuoteState & { totalMonthlyCost: number, l2SupportCost: number, riskCost: number, totalWithRisk: number, discountAmount: number, finalTotal: number, criticitnessLevel: any, diagramImage?: string, currency?: string, exchangeRate?: number, durationMonths: number }) {
     const doc = new jsPDF({
         orientation: 'p',
         unit: 'mm',
@@ -413,7 +414,7 @@ export async function exportToPDF(data: QuoteState & { totalMonthlyCost: number,
     doc.save(filename)
 }
 
-export async function generatePDFBlob(data: QuoteState & { totalMonthlyCost: number, l2SupportCost: number, riskCost: number, totalWithRisk: number, discountAmount: number, finalTotal: number, criticitnessLevel: any, diagramImage?: string, currency?: string, exchangeRate?: number }) {
+export async function generatePDFBlob(data: QuoteState & { totalMonthlyCost: number, l2SupportCost: number, riskCost: number, totalWithRisk: number, discountAmount: number, finalTotal: number, criticitnessLevel: any, diagramImage?: string, currency?: string, exchangeRate?: number, durationMonths: number }) {
     const doc = new jsPDF()
     const pageWidth = doc.internal.pageSize.width
     const pageHeight = doc.internal.pageSize.height
@@ -664,7 +665,7 @@ export async function generatePDFBlob(data: QuoteState & { totalMonthlyCost: num
 
     doc.setTextColor(COLOR_GOLD) // Gold Text
     doc.setFontSize(14)
-    doc.text("INVERSIÓN TOTAL (6 MESES):", margin + 5, y + 18)
+    doc.text(`INVERSIÓN TOTAL (${data.durationValue} ${data.durationUnit.toUpperCase()}):`, margin + 5, y + 18)
     doc.text(`$${(data.finalTotal * data.durationMonths).toLocaleString()}`, margin + 140, y + 18)
 
     // Footer P2
