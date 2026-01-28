@@ -924,10 +924,17 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
             } else {
                 await exportToWord({
                     ...state,
-                    totalWithRisk: finalTotal, // Use final total for Word too
-                    durationMonths: getDurationInMonths(),
+                    totalMonthlyCost,
+                    l2SupportCost,
+                    riskCost,
+                    totalWithRisk,
+                    criticitnessLevel,
                     diagramImage: diagramDataUrl,
-                    finalTotal: finalTotal
+                    serviceType: state.serviceType,
+                    commercialDiscount: state.commercialDiscount,
+                    discountAmount,
+                    finalTotal,
+                    durationMonths: getDurationInMonths()
                 })
             }
         } catch (e) {

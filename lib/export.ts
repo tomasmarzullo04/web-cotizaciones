@@ -274,7 +274,7 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         bullets.push(`Modelo de Servicio: Sustain (Mantenimiento Continuo)`)
         bullets.push(`Ventana de Soporte: ${data.sustainDetails.supportWindow === '24x7' ? '24/7 Crítico' : 'Horario Comercial (9x5)'}`)
         bullets.push(`Nivel de Criticidad: ${data.criticitness.enabled ? 'Alta' : 'Estándar'}`)
-        bullets.push(`Objetos bajo Soporte: ${data.metrics?.pipelinesCount || 0} Pipelines, ${data.metrics?.notebooksCount || 0} Notebooks`)
+        bullets.push(`Objetos bajo Soporte: ${data.sustainDetails.metrics?.pipelinesCount || 0} Pipelines, ${data.sustainDetails.metrics?.notebooksCount || 0} Notebooks`)
     } else {
         bullets.push(`Servicio: Staffing de Profesionales`)
         bullets.push(`Total de Perfiles: ${data.staffingDetails.profiles.reduce((a, b) => a + b.count, 0)}`)
