@@ -118,8 +118,8 @@ export function downloadCSV(data: any[], filename: string) {
     saveAs(blob, `${filename}.csv`)
 }
 
-// -- PDF Export (Enterprise Standard) --
-export async function exportToPDF(data: QuoteState & { totalMonthlyCost: number, l2SupportCost: number, riskCost: number, totalWithRisk: number, discountAmount: number, finalTotal: number, criticitnessLevel: any, diagramImage?: string, currency?: string, exchangeRate?: number, durationMonths: number }) {
+// -- Shared PDF Logic --
+function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2SupportCost: number, riskCost: number, totalWithRisk: number, discountAmount: number, finalTotal: number, criticitnessLevel: any, diagramImage?: string, currency?: string, exchangeRate?: number, durationMonths: number }) {
     const doc = new jsPDF({
         orientation: 'p',
         unit: 'mm',
@@ -422,8 +422,20 @@ export async function exportToPDF(data: QuoteState & { totalMonthlyCost: number,
 
     drawFooter(4, 4)
 
+    return doc
+}
+
+// -- PDF Export (Enterprise Standard) --
+export async function exportToPDF(data: any) {
+    const doc = createPDFDocument(data)
     const filename = `cotizacion_${(data.clientName || 'proyecto').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
     doc.save(filename)
+}
+
+// -- Generate PDF Blob (Restored) --
+export async function generatePDFBlob(data: any) {
+    const doc = createPDFDocument(data)
+    return doc.output('blob')
 }
 
 // -- WORD Export (Enterprise Standard) --
