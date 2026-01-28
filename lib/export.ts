@@ -112,7 +112,7 @@ export function downloadCSV(data: any[], filename: string) {
     saveAs(blob, `${filename}.csv`)
 }
 
-// -- Final Optimized PDF --
+// -- Final Page Restructuring PDF --
 function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2SupportCost: number, riskCost: number, totalWithRisk: number, discountAmount: number, finalTotal: number, criticitnessLevel: any, diagramImage?: string, currency?: string, exchangeRate?: number, durationMonths: number }) {
     const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true })
 
@@ -147,16 +147,14 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
     // --- Header & Footer ---
     const drawHeader = () => {
-        // Balanced Logos: SI smaller, Nestlé larger to look equal weight
-        const siLogoH = 9   // Small enough to look sharp
-        const nestleLogoH = 12 // Larger to visually balance
+        const logoH = 9 // 9mm (~34px) for Fixed Height Symmetry
 
         // SI Logo (Left)
         if (LOGO_SI) {
             try {
                 const props = doc.getImageProperties(LOGO_SI)
-                const w = (props.width * siLogoH) / props.height
-                doc.addImage(LOGO_SI, 'PNG', margin, 10, w, siLogoH)
+                const w = (props.width * logoH) / props.height
+                doc.addImage(LOGO_SI, 'PNG', margin, 10, w, logoH)
             } catch (e) {
                 doc.setFontSize(10)
                 doc.text("STORE INTELLIGENCE", margin, 20)
@@ -167,8 +165,8 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         if (LOGO_NESTLE) {
             try {
                 const props = doc.getImageProperties(LOGO_NESTLE)
-                const w = (props.width * nestleLogoH) / props.height
-                doc.addImage(LOGO_NESTLE, 'PNG', pageWidth - margin - w, 10, w, nestleLogoH)
+                const w = (props.width * logoH) / props.height
+                doc.addImage(LOGO_NESTLE, 'PNG', pageWidth - margin - w, 10, w, logoH)
             } catch (e) { }
         }
 
@@ -184,10 +182,10 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         doc.text(`Confidencial - The Store Intelligence | Pág. ${pageNum}`, margin, pageHeight - 10)
     }
 
-    // --- PAGE 1: COVER ---
+    // --- PAGE 1: COVER (NOW INCLUDES SUMMARY) ---
     drawHeader()
 
-    let y = 100
+    let y = 60
     doc.setFont(FONT_BOLD, "bold")
     doc.setFontSize(32)
     doc.setTextColor(COLOR_PRIMARY)
@@ -198,13 +196,13 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     doc.setTextColor(COLOR_CHARCOAL)
     doc.text("ESTIMACIÓN DE ALCANCE E INVERSIÓN", pageWidth / 2, y, { align: "center" })
 
-    y += 50
-    // Box for details
+    y += 30
+    // Metadata Box
     doc.setDrawColor(COLOR_PRIMARY)
     doc.setLineWidth(0.5)
-    doc.rect(margin + 20, y, contentWidth - 40, 45)
+    doc.rect(margin + 20, y, contentWidth - 40, 40) // Smaller box
 
-    let infoY = y + 15
+    let infoY = y + 12
     const drawInfo = (label: string, value: string) => {
         doc.setFontSize(11)
         doc.setFont(FONT_REG, "normal")
@@ -213,54 +211,58 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
         doc.setFont(FONT_BOLD, "bold")
         doc.text(value, pageWidth - margin - 40, infoY, { align: "right" })
-        infoY += 12
+        infoY += 10
     }
 
     drawInfo("Cliente:", data.clientName)
     drawInfo("Fecha:", new Date().toLocaleDateString())
     drawInfo("Referencia:", `COT-${new Date().getTime().toString().substr(-6)}`)
 
+    // MOVED SUMMARY TO PAGE 1
+    y += 55
+    doc.setFont(FONT_BOLD, "bold")
+    doc.setFontSize(14)
+    doc.setTextColor(COLOR_PRIMARY)
+    doc.text("RESUMEN DEL PROYECTO", margin, y)
+    y += 10
+
+    doc.setFont(FONT_REG, "normal")
+    doc.setFontSize(10)
+    doc.setTextColor(COLOR_TEXT)
+    const desc = data.description || "Solución tecnológica para optimización de datos."
+    const splitDesc = doc.splitTextToSize(desc, contentWidth)
+    doc.text(splitDesc, margin, y, { align: "left", lineHeightFactor: 1.5, maxWidth: contentWidth })
+
     drawFooter(1)
 
-    // --- PAGE 2: ARCHITECTURE & STACK (DYNAMIC) ---
+    // --- PAGE 2: DIAGRAM & STACK (NO SUMMARY) ---
     doc.addPage()
     drawHeader()
-    y = 35 // Content Start
+    y = 35
 
     doc.setFont(FONT_BOLD, "bold")
     doc.setFontSize(14)
     doc.setTextColor(COLOR_PRIMARY)
-    doc.text("1. RESUMEN Y ARQUITECTURA", margin, y)
-    y += 8
+    doc.text("1. ARQUITECTURA PROPUESTA", margin, y)
+    y += 10
 
-    // Summary
-    doc.setFont(FONT_REG, "normal")
-    doc.setFontSize(9)
-    doc.setTextColor(COLOR_TEXT)
-    const desc = data.description || "Solución tecnológica para optimización de datos."
-    const splitDesc = doc.splitTextToSize(desc, contentWidth)
-    // Left align fixed river issues
-    doc.text(splitDesc, margin, y, { align: "left", lineHeightFactor: 1.4, maxWidth: contentWidth })
-    y += (splitDesc.length * 5) + 8
-
-    // Diagram - STRICT ASPECT RATIO
+    // Diagram (Top Section)
     if (data.diagramImage) {
         doc.setFont(FONT_BOLD, "bold")
         doc.setTextColor(COLOR_CHARCOAL)
-        doc.text("Diagrama de Solución:", margin, y)
-        y += 8 // Increased padding
+        doc.setFontSize(10)
+        doc.text("Flujo de Solución:", margin, y)
+        y += 8
 
         const imgProps = doc.getImageProperties(data.diagramImage)
 
-        // Target Box
-        const maxW = contentWidth * 0.95
-        const maxH = 90
+        // Max space for diagram (half page approx)
+        const maxW = contentWidth
+        const maxH = 110
 
-        // Calculate scale ratios
+        // Strict scaling
         const scaleW = maxW / imgProps.width
         const scaleH = maxH / imgProps.height
-
-        // Use smallest scale to fit BOTH dimensions without stretching
         const scale = Math.min(scaleW, scaleH)
 
         const finalW = imgProps.width * scale
@@ -268,20 +270,14 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
         try {
             const imgX = margin + (contentWidth - finalW) / 2
-            doc.addImage(data.diagramImage, 'PNG', imgX, y, finalW, finalH) // No stretching
+            doc.addImage(data.diagramImage, 'PNG', imgX, y, finalW, finalH)
         } catch (e) {
             doc.text("[Diagrama]", margin, y + 10)
         }
-        y += finalH + 15 // Increased padding below
+        y += finalH + 15
     }
 
-    // DYNAMIC TECH STACK
-    if (y + 30 > pageHeight - 20) {
-        doc.addPage()
-        drawHeader()
-        y = 35
-    }
-
+    // TECH STACK (Bottom Section)
     doc.setFont(FONT_BOLD, "bold")
     doc.setFontSize(12)
     doc.setTextColor(COLOR_PRIMARY)
@@ -295,16 +291,15 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     const rowH = 10
     const startX = margin
 
-    let colIdx = 0
-    let rowY = y
-
     if (stackItems.length === 0) {
         doc.setFont(FONT_REG, "italic")
         doc.setFontSize(9)
         doc.setTextColor(COLOR_TEXT)
         doc.text("No se han seleccionado tecnologías específicas.", margin, y)
-        y += 10
     } else {
+        let colIdx = 0
+        let rowY = y
+
         stackItems.forEach((item, i) => {
             const x = colIdx === 0 ? startX : startX + colW + 6
 
@@ -314,7 +309,7 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
             doc.setFontSize(9)
             doc.setTextColor(COLOR_PRIMARY)
             doc.setFont(FONT_BOLD, "bold")
-            doc.text("Componente:", x + 3, rowY + 6.5)
+            doc.text("• Tech:", x + 3, rowY + 6.5)
 
             doc.setTextColor(COLOR_TEXT)
             doc.setFont(FONT_REG, "normal")
@@ -327,7 +322,6 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
                 colIdx = 1
             }
         })
-        y = rowY + (colIdx === 1 ? rowH + 2 : 0) + 5
     }
 
     drawFooter(2)
@@ -398,7 +392,7 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     if (data.riskCost > 0) drawRow("Fee de Riesgo", `${((data.criticitnessLevel?.margin || 0) * 100).toFixed(0)}%`, fmt(data.riskCost), fmt(data.riskCost * data.durationMonths))
     if (data.discountAmount > 0) drawRow("Descuento", `${data.commercialDiscount}%`, `-${fmt(data.discountAmount)}`, `-${fmt(data.discountAmount * data.durationMonths)}`)
 
-    // CONSOLIDATED TOTALS (Must stay on Page 3)
+    // CONSOLIDATED TOTALS (Force Page 3)
     y += 10
     if (y + 40 > pageHeight - 20) {
         doc.addPage()
@@ -415,7 +409,6 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     doc.setFontSize(11)
     doc.setTextColor(COLOR_TEXT)
     doc.setFont(FONT_REG, "normal")
-    // Explicit encoding check is handled by file saving as UTF-8, jsPDF default font usually ok.
     doc.text("Inversión Mensual Estimada:", margin + 30, ty)
     doc.setFont(FONT_BOLD, "bold")
     doc.text(fmt(data.finalTotal), pageWidth - margin - 30, ty, { align: "right" })
@@ -449,7 +442,7 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     doc.setFont(FONT_BOLD, "bold")
     doc.setFontSize(14)
     doc.setTextColor(COLOR_PRIMARY)
-    doc.text("3. APROBACIÓN", margin, y) // Aprobación with tilde
+    doc.text("3. APROBACIÓN", margin, y)
     y += 15
 
     doc.setFont(FONT_REG, "normal")
