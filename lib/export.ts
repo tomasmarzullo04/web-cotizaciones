@@ -112,7 +112,7 @@ export function downloadCSV(data: any[], filename: string) {
     saveAs(blob, `${filename}.csv`)
 }
 
-// -- Optimized PDF with Dynamic Stack --
+// -- Final Optimized PDF --
 function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2SupportCost: number, riskCost: number, totalWithRisk: number, discountAmount: number, finalTotal: number, criticitnessLevel: any, diagramImage?: string, currency?: string, exchangeRate?: number, durationMonths: number }) {
     const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true })
 
@@ -147,14 +147,16 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
     // --- Header & Footer ---
     const drawHeader = () => {
-        const logoH = 10 // Reduced height for Symmetry (10mm ~ 38px)
+        // Balanced Logos: SI smaller, Nestlé larger to look equal weight
+        const siLogoH = 9   // Small enough to look sharp
+        const nestleLogoH = 12 // Larger to visually balance
 
         // SI Logo (Left)
         if (LOGO_SI) {
             try {
                 const props = doc.getImageProperties(LOGO_SI)
-                const w = (props.width * logoH) / props.height
-                doc.addImage(LOGO_SI, 'PNG', margin, 10, w, logoH)
+                const w = (props.width * siLogoH) / props.height
+                doc.addImage(LOGO_SI, 'PNG', margin, 10, w, siLogoH)
             } catch (e) {
                 doc.setFontSize(10)
                 doc.text("STORE INTELLIGENCE", margin, 20)
@@ -165,8 +167,8 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         if (LOGO_NESTLE) {
             try {
                 const props = doc.getImageProperties(LOGO_NESTLE)
-                const w = (props.width * logoH) / props.height
-                doc.addImage(LOGO_NESTLE, 'PNG', pageWidth - margin - w, 10, w, logoH)
+                const w = (props.width * nestleLogoH) / props.height
+                doc.addImage(LOGO_NESTLE, 'PNG', pageWidth - margin - w, 10, w, nestleLogoH)
             } catch (e) { }
         }
 
@@ -237,29 +239,40 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     doc.setTextColor(COLOR_TEXT)
     const desc = data.description || "Solución tecnológica para optimización de datos."
     const splitDesc = doc.splitTextToSize(desc, contentWidth)
+    // Left align fixed river issues
     doc.text(splitDesc, margin, y, { align: "left", lineHeightFactor: 1.4, maxWidth: contentWidth })
     y += (splitDesc.length * 5) + 8
 
-    // Diagram
+    // Diagram - STRICT ASPECT RATIO
     if (data.diagramImage) {
         doc.setFont(FONT_BOLD, "bold")
         doc.setTextColor(COLOR_CHARCOAL)
         doc.text("Diagrama de Solución:", margin, y)
-        y += 6
+        y += 8 // Increased padding
 
         const imgProps = doc.getImageProperties(data.diagramImage)
-        const pdfW = contentWidth * 0.9 // 90% width
-        const pdfH = (imgProps.height * pdfW) / imgProps.width
-        const maxH = 95
-        const finalH = Math.min(pdfH, maxH)
+
+        // Target Box
+        const maxW = contentWidth * 0.95
+        const maxH = 90
+
+        // Calculate scale ratios
+        const scaleW = maxW / imgProps.width
+        const scaleH = maxH / imgProps.height
+
+        // Use smallest scale to fit BOTH dimensions without stretching
+        const scale = Math.min(scaleW, scaleH)
+
+        const finalW = imgProps.width * scale
+        const finalH = imgProps.height * scale
 
         try {
-            const imgX = margin + (contentWidth - pdfW) / 2
-            doc.addImage(data.diagramImage, 'PNG', imgX, y, pdfW, finalH)
+            const imgX = margin + (contentWidth - finalW) / 2
+            doc.addImage(data.diagramImage, 'PNG', imgX, y, finalW, finalH) // No stretching
         } catch (e) {
             doc.text("[Diagrama]", margin, y + 10)
         }
-        y += finalH + 10
+        y += finalH + 15 // Increased padding below
     }
 
     // DYNAMIC TECH STACK
@@ -275,8 +288,6 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     doc.text("STACK TECNOLÓGICO SELECCIONADO", margin, y)
     y += 8
 
-    // Process tech stack into categories (Simple heuristic mapping or just list)
-    // Since we don't have categories in techStack string array easily, we list them in a grid.
     const stackItems = data.techStack || []
 
     // Grid (2 Col)
@@ -284,7 +295,6 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     const rowH = 10
     const startX = margin
 
-    // Helper Text
     let colIdx = 0
     let rowY = y
 
@@ -405,6 +415,7 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     doc.setFontSize(11)
     doc.setTextColor(COLOR_TEXT)
     doc.setFont(FONT_REG, "normal")
+    // Explicit encoding check is handled by file saving as UTF-8, jsPDF default font usually ok.
     doc.text("Inversión Mensual Estimada:", margin + 30, ty)
     doc.setFont(FONT_BOLD, "bold")
     doc.text(fmt(data.finalTotal), pageWidth - margin - 30, ty, { align: "right" })
@@ -438,7 +449,7 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     doc.setFont(FONT_BOLD, "bold")
     doc.setFontSize(14)
     doc.setTextColor(COLOR_PRIMARY)
-    doc.text("3. APROBACIÓN", margin, y)
+    doc.text("3. APROBACIÓN", margin, y) // Aprobación with tilde
     y += 15
 
     doc.setFont(FONT_REG, "normal")
