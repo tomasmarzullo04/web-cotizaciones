@@ -112,7 +112,7 @@ export function downloadCSV(data: any[], filename: string) {
     saveAs(blob, `${filename}.csv`)
 }
 
-// -- Final Tweak PDF --
+// -- Technical Restructuring PDF --
 function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2SupportCost: number, riskCost: number, totalWithRisk: number, discountAmount: number, finalTotal: number, criticitnessLevel: any, diagramImage?: string, currency?: string, exchangeRate?: number, durationMonths: number }) {
     const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true })
 
@@ -145,7 +145,6 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         return `${val} ${data.durationUnit.toUpperCase()}`
     }
 
-    // Encoding cleanup helper
     const cleanText = (str: string) => {
         if (!str) return ""
         return str
@@ -160,8 +159,8 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
     // --- Header & Footer ---
     const drawHeader = () => {
-        // EXACT SAME HEIGHT FOR BOTH (As requested)
-        const logoH = 11 // 11mm (~42px)
+        // EXACT HEIGHT 8mm (approx 25px @ 72dpi, 30px @ 96dpi)
+        const logoH = 8
 
         // SI Logo (Left)
         if (LOGO_SI) {
@@ -187,7 +186,7 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         // Blue Divider
         doc.setDrawColor(COLOR_PRIMARY)
         doc.setLineWidth(0.8)
-        doc.line(margin, 25, pageWidth - margin, 25)
+        doc.line(margin, 22, pageWidth - margin, 22)
     }
 
     const drawFooter = (pageNum: number) => {
@@ -196,7 +195,7 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         doc.text(`Confidencial - The Store Intelligence | Pág. ${pageNum}`, margin, pageHeight - 10)
     }
 
-    // --- PAGE 1: COVER (NOW INCLUDES SUMMARY) ---
+    // --- PAGE 1: COVER + SUMMARY ---
     drawHeader()
 
     let y = 60
@@ -214,7 +213,7 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     // Metadata Box
     doc.setDrawColor(COLOR_PRIMARY)
     doc.setLineWidth(0.5)
-    doc.rect(margin + 20, y, contentWidth - 40, 40) // Smaller box
+    doc.rect(margin + 20, y, contentWidth - 40, 40)
 
     let infoY = y + 12
     const drawInfo = (label: string, value: string) => {
@@ -232,12 +231,12 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     drawInfo("Fecha:", new Date().toLocaleDateString())
     drawInfo("Referencia:", `COT-${new Date().getTime().toString().substr(-6)}`)
 
-    // MOVED SUMMARY TO PAGE 1 - CENTRALIZED
+    // SUMMARY - LEFT ALIGN, 1.2 LINE HEIGHT
     y += 55
     doc.setFont(FONT_BOLD, "bold")
     doc.setFontSize(14)
     doc.setTextColor(COLOR_PRIMARY)
-    doc.text("RESUMEN DEL PROYECTO", pageWidth / 2, y, { align: "center" }) // CENTERED
+    doc.text("1. RESUMEN DEL PROYECTO", margin, y) // Back to Margin Left for Header
     y += 10
 
     doc.setFont(FONT_REG, "normal")
@@ -246,15 +245,12 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     const desc = cleanText(data.description || "Solución tecnológica para optimización de datos.")
     const splitDesc = doc.splitTextToSize(desc, contentWidth)
 
-    // Calculate center block via offsets, or just use center align text
-    // "Correctamente centralizado en el medio de la hoja" implies the text block itself is centered or text-aligned center. 
-    // Usually for paragraphs, justified or center looks odd if many lines. "Centralizado en el medio" might mean Vertically or Horizontally.
-    // Assuming Horizontal Center Alignment of text lines.
-    doc.text(splitDesc, pageWidth / 2, y, { align: "center", lineHeightFactor: 1.5, maxWidth: contentWidth })
+    // LEFT align, 1.2 spacing
+    doc.text(splitDesc, margin, y, { align: "left", lineHeightFactor: 1.2, maxWidth: contentWidth })
 
     drawFooter(1)
 
-    // --- PAGE 2: DIAGRAM & STACK (NO SUMMARY) ---
+    // --- PAGE 2: ARCHITECTURE (DIAGRAM + STACK 3-COL) ---
     doc.addPage()
     drawHeader()
     y = 35
@@ -262,10 +258,10 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     doc.setFont(FONT_BOLD, "bold")
     doc.setFontSize(14)
     doc.setTextColor(COLOR_PRIMARY)
-    doc.text("1. ARQUITECTURA PROPUESTA", margin, y)
+    doc.text("2. ARQUITECTURA PROPUESTA", margin, y)
     y += 10
 
-    // Diagram (Top Section)
+    // Diagram (Top)
     if (data.diagramImage) {
         doc.setFont(FONT_BOLD, "bold")
         doc.setTextColor(COLOR_CHARCOAL)
@@ -275,11 +271,10 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
         const imgProps = doc.getImageProperties(data.diagramImage)
 
-        // Max space for diagram (half page approx)
+        // Space management
         const maxW = contentWidth
         const maxH = 110
 
-        // Strict scaling
         const scaleW = maxW / imgProps.width
         const scaleH = maxH / imgProps.height
         const scale = Math.min(scaleW, scaleH)
@@ -289,6 +284,7 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
         try {
             const imgX = margin + (contentWidth - finalW) / 2
+            // High Res (assuming input is high res)
             doc.addImage(data.diagramImage, 'PNG', imgX, y, finalW, finalH)
         } catch (e) {
             doc.text("[Diagrama]", margin, y + 10)
@@ -296,7 +292,7 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         y += finalH + 15
     }
 
-    // TECH STACK (Bottom Section)
+    // TECH STACK (3 COLUMNS)
     doc.setFont(FONT_BOLD, "bold")
     doc.setFontSize(12)
     doc.setTextColor(COLOR_PRIMARY)
@@ -305,8 +301,9 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
     const stackItems = data.techStack || []
 
-    // Grid (2 Col)
-    const colW = (contentWidth / 2) - 3
+    // Grid (3 Col)
+    const colCount = 3
+    const colW = (contentWidth / colCount) - 3
     const rowH = 10
     const startX = margin
 
@@ -320,26 +317,27 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         let rowY = y
 
         stackItems.forEach((item, i) => {
-            const x = colIdx === 0 ? startX : startX + colW + 6
+            const x = startX + (colIdx * (colW + 4.5)) // Spacing
 
             doc.setFillColor(COLOR_ROW_ALT)
             doc.rect(x, rowY, colW, rowH, 'F')
 
-            doc.setFontSize(9)
+            doc.setFontSize(8) // Slightly smaller for 3 cols
             doc.setTextColor(COLOR_PRIMARY)
             doc.setFont(FONT_BOLD, "bold")
-            // CHANGED LABEL TO "Componente:"
-            doc.text("Componente:", x + 3, rowY + 6.5)
+            doc.text("Componente:", x + 2, rowY + 6.5)
 
             doc.setTextColor(COLOR_TEXT)
             doc.setFont(FONT_REG, "normal")
-            doc.text(cleanText(item), x + colW - 3, rowY + 6.5, { align: "right" })
+            // Right align might be tight in 3 cols, try consistent offset or right align if space permits
+            // Let's use Right align but watch length
+            doc.text(cleanText(item), x + colW - 2, rowY + 6.5, { align: "right" })
 
-            if (colIdx === 1) {
+            if (colIdx === colCount - 1) {
                 rowY += rowH + 2
                 colIdx = 0
             } else {
-                colIdx = 1
+                colIdx++
             }
         })
     }
@@ -354,7 +352,7 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     doc.setFont(FONT_BOLD, "bold")
     doc.setFontSize(14)
     doc.setTextColor(COLOR_PRIMARY)
-    doc.text("2. DETALLE DE INVERSIÓN", margin, y)
+    doc.text("3. DETALLE DE INVERSIÓN", margin, y)
     y += 10
 
     // Table Header
@@ -429,7 +427,6 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     doc.setFontSize(11)
     doc.setTextColor(COLOR_TEXT)
     doc.setFont(FONT_REG, "normal")
-    // Clean text just in case
     doc.text(cleanText("Inversión Mensual Estimada:"), margin + 30, ty)
     doc.setFont(FONT_BOLD, "bold")
     doc.text(fmt(data.finalTotal), pageWidth - margin - 30, ty, { align: "right" })
@@ -463,7 +460,7 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     doc.setFont(FONT_BOLD, "bold")
     doc.setFontSize(14)
     doc.setTextColor(COLOR_PRIMARY)
-    doc.text(cleanText("3. APROBACIÓN"), margin, y)
+    doc.text(cleanText("4. APROBACIÓN"), margin, y)
     y += 15
 
     doc.setFont(FONT_REG, "normal")
