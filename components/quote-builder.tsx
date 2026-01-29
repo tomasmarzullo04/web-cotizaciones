@@ -823,7 +823,11 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
             }
 
             toast.success("Cotización guardada exitosamente.")
-            // No reset, no redirect. Valid logic.
+
+            // Redirect to Dashboard (Mis Cotizaciones) after 1s delay
+            setTimeout(() => {
+                router.push('/dashboard')
+            }, 1000)
 
         } catch (e: any) {
             console.error("Failed to save quote (DB Error):", e)
