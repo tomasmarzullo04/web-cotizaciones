@@ -489,13 +489,13 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
     drawFooter(4)
 
-    const filename = `cotizacion_${(data.clientName || 'proyecto').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
-    doc.save(filename)
     return doc
 }
 
 export async function exportToPDF(data: any) {
-    createPDFDocument(data)
+    const doc = createPDFDocument(data)
+    const filename = `cotizacion_${(data.clientName || 'proyecto').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+    doc.save(filename)
 }
 
 export async function generatePDFBlob(data: any) {

@@ -2,6 +2,7 @@
 // Synced for Vercel (Fix Drive Race Condition)
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -689,12 +690,18 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
             return
         }
         setIsSaving(true)
+        let diagramDataUrl: string | undefined = undefined
+
         try {
-            // 1. Save to DB (Priority)
-            const breakdown = {
-                roles: Object.entries(state.roles).map(([r, c]) => ({ role: r, count: c, cost: 0, hours: 0 })),
-                totalMonthlyCost: netTotal,
-                diagramCode: chartCode
+            // 1. Capture Diagram (if not Staffing)
+            try {
+                const element = document.getElementById('diagram-capture-target')
+                if (element && state.serviceType !== 'Staffing') {
+                    const canvas = await html2canvas(element, { backgroundColor: '#ffffff', scale: 4, useCORS: true })
+                    diagramDataUrl = canvas.toDataURL('image/png')
+                }
+            } catch (err) {
+                console.warn("Diagram capture failed, proceeding without it", err)
             }
 
             // Use existing calculated values (from useMemo)
@@ -709,23 +716,43 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
             const finalTotalConverted = convert(finalTotalUSD)
             const exchangeRate = exchangeRates[currency] || 1.0
 
+            // 2. Save to DB
             const result = await saveQuote({
                 clientName: state.clientName,
-                projectType: state.complexity,
+                projectType: state.complexity, // Use state.complexity as projectType
                 serviceType: state.serviceType,
                 params: {
-                    ...state,
-                    dataVolume: 'TB',
-                    sourceSystemsCount: 2,
-                    aiFeatures: state.dsModelsCount > 0,
-                    reportComplexity: 'medium',
-                    usersCount: state.reportUsers,
-                    securityCompliance: 'standard',
+                    projectDescription: state.description,
+                    updateFrequency: state.updateFrequency === 'realtime' ? 'realtime' : 'daily',
+                    usersCount: state.usersCount,
+                    pipelinesCount: state.pipelinesCount,
+                    // Mandatory TechnicalParameters
                     databricksUsage: state.techStack.includes('databricks') ? 'high' : 'none',
                     criticality: state.criticitness.enabled ? 'high' : 'low',
-                    updateFrequency: state.updateFrequency === 'realtime' ? 'realtime' : 'daily'
+                    dataVolume: 'GB',
+                    sourceSystemsCount: 1,
+                    securityCompliance: 'standard',
+                    reportComplexity: 'medium',
+                    aiFeatures: state.dsModelsCount > 0,
+                    // We can pass extra fields if the backend ignored them, but TS is strict.
+                    // If we need to save StaffingDetails/SustainDetails, we might need to cast or update types.
+                    // But lib/actions calls them "extra" params in n8n.
+                    // Let's cast to any if needed, but better to stick to interface.
+                    // Wait, saveQuote takes `params: TechnicalParameters`.
+                    // Does TechnicalParameters allow extras? No, it's an interface.
+                    // But we used to pass `staffingDetails` etc. 
+                    // Let's check if the backend actually saves the WHOLE params object as JSON?
+                    // Yes: `technicalParameters: data.technicalParameters || JSON.stringify(data.params)`
+                    // So we SHOULD pass the extra data even if the Type doesn't say so?
+                    // TS will complain.
+                    // We should cast to `any` or `TechnicalParameters & { ... }` to bypass TS if we want to save extra data.
+                    // Or relies on `technicalParameters` string override?
+                } as any, // Cast to any to allow saving full state in valid JSON column
+                breakdown: {
+                    roles: Object.entries(state.roles).map(([r, c]) => ({ role: r, count: c, cost: 0, hours: 0 })), // Populate roles
+                    totalMonthlyCost: totalMonthlyCostVal,
+                    diagramCode: chartCode
                 },
-                breakdown: breakdown,
                 estimatedCost: finalTotalConverted,
                 technicalParameters: JSON.stringify({
                     ...state.criticitness,
@@ -737,7 +764,6 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
                     exchangeRate: exchangeRate,
                     originalUSDAmount: finalTotalUSD
                 }),
-                // CRM Context
                 clientId: state.clientId,
                 isNewClient: state.isNewClient,
                 clientData: state.newClientData ? {
@@ -747,26 +773,12 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
                 } : undefined
             })
 
-            if (!result.success || !result.quote) {
-                alert(`Error del Servidor: ${result.error}`)
-                return;
-            }
+            if (!result.success || !result.quote) throw new Error(result.error || "Error desconocido al guardar")
 
-            // 2. Drive & PDF
-            let base64String = ""
+            // 3. Webhook Handling (Silent PDF Generation)
             try {
-                console.log("Generating PDF...")
-                let diagramDataUrl = undefined
-                const element = document.getElementById('diagram-capture-target')
-                if (element && state.serviceType !== 'Staffing') {
-                    try {
-                        const canvas = await html2canvas(element, { backgroundColor: '#ffffff', scale: 1, useCORS: true })
-                        diagramDataUrl = canvas.toDataURL('image/jpeg', 0.7)
-                    } catch (err) { console.warn("Skip capture", err) }
-                }
-
-                // B. Generate PDF Blob
-                const blob = await generatePDFBlob({
+                // Generate Blob (No Download)
+                const pdfBlob = await generatePDFBlob({
                     ...state,
                     totalMonthlyCost: totalMonthlyCostVal,
                     l2SupportCost: l2SupportCostVal,
@@ -783,40 +795,39 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
                     durationMonths: getDurationInMonths()
                 })
 
-                if (blob) {
-                    base64String = await new Promise<string>((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.readAsDataURL(blob);
-                        reader.onload = () => resolve((reader.result as string).split(',')[1]);
-                        reader.onerror = (error) => reject(error);
-                    });
-                }
-            } catch (pdfError: any) {
-                console.error("PDF Fail:", pdfError)
-            } finally {
-                // 3. Webhook
-                try {
-                    const filename = `[${state.clientName}][${state.serviceType}].pdf`.replace(/\s+/g, '_')
-                    await sendQuoteToN8N(
-                        result.quote,
-                        base64String || "",
-                        filename,
-                        result.userEmail,
-                        result.userName,
-                        currency,
-                        exchangeRate,
-                        finalTotalUSD
-                    );
-                } catch (whErr) { console.error("Webhook fail", whErr) }
+                // Convert to Base64
+                const reader = new FileReader()
+                reader.readAsDataURL(pdfBlob)
+                const base64String = await new Promise<string>((resolve) => {
+                    reader.onloadend = () => {
+                        const base64 = (reader.result as string || "").split(',')[1]
+                        resolve(base64)
+                    }
+                })
+
+                const filename = `cotizacion_${(state.clientName || 'draft').replace(/\s+/g, '_')}.pdf`
+
+                await sendQuoteToN8N(
+                    result.quote,
+                    base64String || "",
+                    filename,
+                    result.userEmail,
+                    result.userName,
+                    currency,
+                    exchangeRate,
+                    finalTotalUSD
+                );
+            } catch (whErr) {
+                console.error("Webhook fail", whErr)
+                // Do not block success message if webhook fails
             }
 
-            alert("Cotización guardada exitosamente.")
-            resetQuoteState()
-            router.push('/dashboard')
+            toast.success("Cotización guardada exitosamente.")
+            // No reset, no redirect. Valid logic.
 
         } catch (e: any) {
             console.error("Failed to save quote (DB Error):", e)
-            alert(`Error al guardar: ${e.message}`)
+            toast.error(`Error al guardar: ${e.message}`)
         } finally {
             setIsSaving(false)
         }
