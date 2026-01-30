@@ -805,6 +805,12 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
                     }
                 })
 
+                if (!base64String || base64String.length === 0) {
+                    console.error("CRITICAL: PDF Generation resulted in empty string")
+                } else {
+                    console.log(`PDF Generated Successfully. Size: ${(base64String.length / 1024).toFixed(2)} KB`)
+                }
+
                 const filename = `cotizacion_${(state.clientName || 'draft').replace(/\s+/g, '_')}.pdf`
 
                 await sendQuoteToN8N(
