@@ -589,20 +589,17 @@ export async function generatePDFBlob(data: any) {
 
 // -- Word Export --
 export async function exportToWord(data: any) {
-    // Safety Calcs (Project Totals)
-    const monthlyGross = data.grossTotal || data.finalTotal
+    // Safety Calcs (Direct Dashboard Sync)
+    // Use values EXACTLY as they are in the QuoteBuilder state
+    const displayGross = data.grossTotal || data.finalTotal
+    let displayRetention = data.retentionAmount || 0
+    let displayNet = data.finalTotal
 
-    let monthlyRetention = 0
-    if (data.retention?.enabled) {
-        monthlyRetention = monthlyGross * (data.retention.percentage / 100)
+    // Safety: If retention is enabled but amount is 0, calculate it on the fly from the Single Period/Total provided
+    if (data.retention?.enabled && (displayRetention === 0 || !displayRetention)) {
+        displayRetention = displayGross * (data.retention.percentage / 100)
+        displayNet = displayGross - displayRetention
     }
-
-    const monthlyNet = monthlyGross - monthlyRetention
-
-    // Project Totals
-    const projectGross = monthlyGross * data.durationMonths
-    const projectRetention = monthlyRetention * data.durationMonths
-    const projectNet = monthlyNet * data.durationMonths
 
     const doc = new Document({
         sections: [{
@@ -617,21 +614,21 @@ export async function exportToWord(data: any) {
                     new Paragraph({
                         children: [
                             new TextRun({ text: "Subtotal: ", bold: true }),
-                            new TextRun({ text: `$${projectGross.toLocaleString()}` })
+                            new TextRun({ text: `$${displayGross.toLocaleString()}` })
                         ],
                         alignment: AlignmentType.RIGHT
                     }),
                     new Paragraph({
                         children: [
                             new TextRun({ text: `Retención (${data.retention.percentage}%): `, bold: true }),
-                            new TextRun({ text: `-$${projectRetention.toLocaleString()}`, color: "DC3232", bold: true })
+                            new TextRun({ text: `-$${displayRetention.toLocaleString()}`, color: "DC3232", bold: true })
                         ],
                         alignment: AlignmentType.RIGHT
                     }),
                     new Paragraph({
                         children: [
                             new TextRun({ text: "Total Neto: ", bold: true, size: 28, color: "004B8D" }),
-                            new TextRun({ text: `$${projectNet.toLocaleString()}`, bold: true, size: 28, color: "004B8D" })
+                            new TextRun({ text: `$${displayNet.toLocaleString()}`, bold: true, size: 28, color: "004B8D" })
                         ],
                         spacing: { before: 100 },
                         alignment: AlignmentType.RIGHT
