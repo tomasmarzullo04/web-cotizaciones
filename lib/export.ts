@@ -159,9 +159,10 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
     // --- Header & Footer ---
     const drawHeader = () => {
-        const siH = 6.5    // 6.5mm fixed height for symmetry
-        const nestleH = 8.5 // 8.5mm fixed height for visual balance
+        const siH = 6.5    // 6.5mm fixed height
+        const nestleH = 8.5 // 8.5mm fixed height
 
+        // ABSOLUTE POSITIONING TO PREVENT SHIFTS
         // SI Logo (Left)
         if (LOGO_SI) {
             try {
@@ -183,7 +184,7 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
             } catch (e) { }
         }
 
-        // Blue Divider
+        // Blue Divider (Fixed Y)
         doc.setDrawColor(COLOR_PRIMARY)
         doc.setLineWidth(0.8)
         doc.line(margin, 25, pageWidth - margin, 25)
@@ -375,25 +376,26 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     y += 8
 
     // Rows
+    // Rows - COMPACT PADDING
     let isReview = true
     const drawRow = (label: string, meta: string, monthly: string, total: string) => {
         if (isReview) {
             doc.setFillColor(COLOR_ROW_ALT)
-            doc.rect(margin, y, contentWidth, 8, 'F')
+            doc.rect(margin, y, contentWidth, 7, 'F') // Reduced height from 8 to 7
         }
         isReview = !isReview
 
         doc.setTextColor(COLOR_TEXT)
         doc.setFont(FONT_BOLD, "bold")
-        doc.text(cleanText(label), margin + 5, y + 5)
+        doc.text(cleanText(label), margin + 5, y + 4.5) // Vertically centered approx
 
         doc.setFont(FONT_REG, "normal")
-        doc.text(cleanText(meta), pageWidth - margin - 75, y + 5, { align: 'center' })
+        doc.text(cleanText(meta), pageWidth - margin - 75, y + 4.5, { align: 'center' })
 
         doc.setFont(FONT_BOLD, "bold")
-        doc.text(monthly, pageWidth - margin - 40, y + 5, { align: 'right' })
-        doc.text(total, pageWidth - margin - 5, y + 5, { align: 'right' })
-        y += 8
+        doc.text(monthly, pageWidth - margin - 40, y + 4.5, { align: 'right' })
+        doc.text(total, pageWidth - margin - 5, y + 4.5, { align: 'right' })
+        y += 7 // Tighten spacing
     }
 
     if (data.serviceType === 'Staffing' || data.serviceType === 'Sustain') {
@@ -419,7 +421,8 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
     // CONSOLIDATED TOTALS (Force Page 3)
     y += 10
-    if (y + 50 > pageHeight - 20) { // Increased check for extra rows
+    const checkH = data.retention?.enabled ? 65 : 50
+    if (y + checkH > pageHeight - 20) {
         doc.addPage()
         drawHeader()
         y = 35
@@ -576,13 +579,36 @@ export async function exportToWord(data: any) {
 
                 // Financial Summary
                 ...(data.retention?.enabled ? [
-                    new Paragraph({ text: `Subtotal Bruto: $${(data.grossTotal * data.durationMonths).toLocaleString()}` }),
                     new Paragraph({
-                        children: [new TextRun({ text: `Retención (${data.retention.percentage}%): -$${(data.retentionAmount * data.durationMonths).toLocaleString()}`, color: "DC3232" })]
+                        children: [
+                            new TextRun({ text: "Subtotal: ", bold: true }),
+                            new TextRun({ text: `$${(data.grossTotal * data.durationMonths).toLocaleString()}` })
+                        ],
+                        alignment: AlignmentType.RIGHT
                     }),
-                    new Paragraph({ text: `Total Neto: $${(data.finalTotal * data.durationMonths).toLocaleString()}`, spacing: { before: 100 } }),
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: `Retención (${data.retention.percentage}%): `, bold: true }),
+                            new TextRun({ text: `-$${(data.retentionAmount * data.durationMonths).toLocaleString()}`, color: "DC3232", bold: true })
+                        ],
+                        alignment: AlignmentType.RIGHT
+                    }),
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: "Total Neto: ", bold: true, size: 28, color: "004B8D" }),
+                            new TextRun({ text: `$${(data.finalTotal * data.durationMonths).toLocaleString()}`, bold: true, size: 28, color: "004B8D" })
+                        ],
+                        spacing: { before: 100 },
+                        alignment: AlignmentType.RIGHT
+                    }),
                 ] : [
-                    new Paragraph({ text: `Total: $${(data.finalTotal * data.durationMonths).toLocaleString()}` }),
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: "Total: ", bold: true, size: 28, color: "004B8D" }),
+                            new TextRun({ text: `$${(data.finalTotal * data.durationMonths).toLocaleString()}`, bold: true, size: 28, color: "004B8D" })
+                        ],
+                        alignment: AlignmentType.RIGHT
+                    }),
                 ]),
 
                 // Spacing
