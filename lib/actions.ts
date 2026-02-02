@@ -429,6 +429,80 @@ export async function saveQuote(data: {
     }
 }
 
+export async function updateQuote(id: string, data: {
+    clientName: string,
+    projectType: string,
+    serviceType: string,
+    params: TechnicalParameters,
+    breakdown: CostBreakdown,
+    estimatedCost?: number,
+    technicalParameters?: string,
+    clientId?: string,
+    isNewClient?: boolean,
+    clientData?: { name: string, contact: string, email: string }
+}) {
+    const cookieStore = await cookies()
+    const userId = cookieStore.get('session_user_id')?.value
+
+    if (!userId) {
+        return { success: false, error: "No user logged in" }
+    }
+
+    try {
+        // Check ownership
+        const existing = await prisma.quote.findUnique({ where: { id } })
+        if (!existing || existing.userId !== userId) {
+            return { success: false, error: "Unauthorized or Quote not found" }
+        }
+
+        // Fetch user details
+        let userName = "Usuario Desconocido"
+        let userEmail = "unknown@example.com"
+        try {
+            const user = await prisma.user.findUnique({ where: { id: userId } })
+            if (user) {
+                userName = user.name || user.email
+                userEmail = user.email
+            }
+        } catch (e) { }
+
+        const result = await prisma.quote.update({
+            where: { id },
+            data: {
+                clientName: data.clientName,
+                projectType: data.projectType,
+                serviceType: data.serviceType,
+                technicalParameters: data.technicalParameters || JSON.stringify(data.params),
+                estimatedCost: data.estimatedCost !== undefined ? data.estimatedCost : data.breakdown.totalMonthlyCost,
+                staffingRequirements: JSON.stringify(data.breakdown.roles),
+                diagramDefinition: data.breakdown.diagramCode,
+                // Update linked client only if explicitly changed? 
+                // Mostly we just update the quote content.
+                linkedClientId: data.clientId || undefined
+            }
+        })
+
+        // N8N sync is handled client-side via the PDF upload call usually, 
+        // but we return the context just in case the client triggered save wants to trigger sync.
+
+        return {
+            success: true,
+            quote: result,
+            userEmail,
+            userName,
+            crmContext: {
+                clientId: data.clientId,
+                isNewClient: data.isNewClient,
+                clientData: data.clientData
+            }
+        }
+    } catch (e: any) {
+        console.error("Update Quote Failed", e)
+        return { success: false, error: e.message || "Update Failed" }
+    }
+}
+
+
 export async function getUserQuotes() {
     const cookieStore = await cookies()
     const userId = cookieStore.get('session_user_id')?.value

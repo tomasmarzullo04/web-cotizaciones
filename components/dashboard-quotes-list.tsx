@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Card } from "@/components/ui/card"
 import { QuoteDetailsSheet } from '@/components/quote-details-sheet'
 import { DeleteQuoteButton } from '@/components/delete-quote-button'
-import { FileText, Layers, Briefcase, Activity, DollarSign, LayoutGrid } from "lucide-react"
+import { FileText, Layers, Briefcase, Activity, DollarSign, LayoutGrid, Pencil } from "lucide-react"
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -276,6 +276,11 @@ export function DashboardQuotesList({ serverQuotes = [] }: { serverQuotes?: any[
                                                     }}
                                                 />
                                             )}
+                                            <Link href={`/quote/${quote.id}`}>
+                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-lg">
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            </Link>
                                             <DeleteQuoteButton
                                                 quoteId={quote.id}
                                                 quoteName={quote.clientName}

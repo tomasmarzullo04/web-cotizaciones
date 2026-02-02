@@ -19,7 +19,7 @@ import { generateMermaidUpdate } from "@/lib/ai"
 import { exportToPDF, exportToWord, generatePDFBlob } from "@/lib/export"
 import html2canvas from 'html2canvas'
 import { motion, AnimatePresence } from "framer-motion"
-import { sendQuoteToN8N } from "@/lib/actions"
+import { sendQuoteToN8N, updateQuote } from "@/lib/actions"
 import { ClientSelector, ClientData } from "@/components/client-selector"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
@@ -294,8 +294,8 @@ type ServiceRate = {
     multiplier: number
 }
 
-export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[] }) {
-    const [state, setState] = useState<QuoteState>(INITIAL_STATE)
+export default function QuoteBuilder({ dbRates = [], initialData }: { dbRates?: ServiceRate[], initialData?: any }) {
+    const [state, setState] = useState<QuoteState>(JSON.parse(JSON.stringify(INITIAL_STATE)))
     const [chartCode, setChartCode] = useState('')
     const [manualDiagramCode, setManualDiagramCode] = useState<string | null>(null)
     const [isEditingDiagram, setIsEditingDiagram] = useState(false)
@@ -355,10 +355,49 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
     // --- State Reset on Mount ---
     useEffect(() => {
         // Reset to default state on mount to ensure clean sheet
-        setState(JSON.parse(JSON.stringify(INITIAL_STATE)))
-        setChartCode('')
-        setWizardStep(0)
-    }, [])
+        // If initialData is present, priority goes to that
+        if (initialData) {
+            console.log("Preloading Quote Data for Edit:", initialData)
+            let params: any = {}
+            try {
+                params = typeof initialData.technicalParameters === 'string'
+                    ? JSON.parse(initialData.technicalParameters)
+                    : initialData.technicalParameters || {}
+            } catch (e) { console.error(e) }
+
+            // Merge Initial Data
+            setState(prev => ({
+                ...prev,
+                clientName: initialData.clientName || '',
+                serviceType: initialData.serviceType || 'Proyecto',
+                clientId: initialData.linkedClientId || undefined,
+
+                // Spread params (description, counts, costs, etc)
+                ...params,
+
+                // Ensure Arrays / Objects are safe
+                techStack: Array.isArray(params?.techStack) ? params.techStack : [],
+                roles: { ...prev.roles, ...(params?.roles || {}) },
+                staffingDetails: params?.staffingDetails || prev.staffingDetails,
+                sustainDetails: params?.sustainDetails || prev.sustainDetails,
+                criticitness: params?.criticitness || prev.criticitness,
+                clientContact: params?.clientContact || prev.clientContact,
+            }))
+
+            // Set Wizard Step based on type
+            if (initialData.serviceType === 'Sustain') setWizardStep(1)
+            else if (initialData.serviceType === 'Staffing') setWizardStep(1)
+            else setWizardStep(1) // Project forms usually step 1
+
+            // Attempt to restore diagram code if saved
+            if (params?.diagramCode) setChartCode(params.diagramCode)
+
+        } else {
+            setState(JSON.parse(JSON.stringify(INITIAL_STATE)))
+            setChartCode('')
+            setWizardStep(0)
+        }
+    }, [initialData])
 
     const handleStepSelection = (type: 'Proyecto' | 'Staffing' | 'Sustain') => {
         updateState('serviceType', type)
@@ -716,10 +755,11 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
             const finalTotalConverted = convert(finalTotalUSD)
             const exchangeRate = exchangeRates[currency] || 1.0
 
-            // 2. Save to DB
-            const result = await saveQuote({
+            // 2. Save to DB (Create or Update)
+            let result;
+            const payload = {
                 clientName: state.clientName,
-                projectType: state.complexity, // Use state.complexity as projectType
+                projectType: state.complexity,
                 serviceType: state.serviceType,
                 params: {
                     projectDescription: state.description,
@@ -734,32 +774,17 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
                     securityCompliance: 'standard',
                     reportComplexity: 'medium',
                     aiFeatures: state.dsModelsCount > 0,
-                    // We can pass extra fields if the backend ignored them, but TS is strict.
-                    // If we need to save StaffingDetails/SustainDetails, we might need to cast or update types.
-                    // But lib/actions calls them "extra" params in n8n.
-                    // Let's cast to any if needed, but better to stick to interface.
-                    // Wait, saveQuote takes `params: TechnicalParameters`.
-                    // Does TechnicalParameters allow extras? No, it's an interface.
-                    // But we used to pass `staffingDetails` etc. 
-                    // Let's check if the backend actually saves the WHOLE params object as JSON?
-                    // Yes: `technicalParameters: data.technicalParameters || JSON.stringify(data.params)`
-                    // So we SHOULD pass the extra data even if the Type doesn't say so?
-                    // TS will complain.
-                    // We should cast to `any` or `TechnicalParameters & { ... }` to bypass TS if we want to save extra data.
-                    // Or relies on `technicalParameters` string override?
-                } as any, // Cast to any to allow saving full state in valid JSON column
+                } as any,
                 breakdown: {
-                    roles: Object.entries(state.roles).map(([r, c]) => ({ role: r, count: c, cost: 0, hours: 0 })), // Populate roles
+                    roles: Object.entries(state.roles).map(([r, c]) => ({ role: r, count: c, cost: 0, hours: 0 })),
                     totalMonthlyCost: totalMonthlyCostVal,
                     diagramCode: chartCode
                 },
                 estimatedCost: finalTotalConverted,
                 technicalParameters: JSON.stringify({
-                    ...state.criticitness,
-                    description: state.description,
-                    complexity: state.complexity,
-                    pipelinesCount: state.pipelinesCount,
-                    reportUsers: state.reportUsers,
+                    // ... pass entire state for full hydration? simpler to just pass state really
+                    // but we have been selective... let's stick to what we had but add what's missing
+                    ...state, // PASS ALL STATE TO ENSURE FULL RESTORE
                     currency: currency,
                     exchangeRate: exchangeRate,
                     originalUSDAmount: finalTotalUSD
@@ -771,7 +796,17 @@ export default function QuoteBuilder({ dbRates = [] }: { dbRates?: ServiceRate[]
                     contact: state.newClientData.contactName || '',
                     email: state.newClientData.email || ''
                 } : undefined
-            })
+            }
+
+            if (initialData && initialData.id) {
+                // UPDATE
+                result = await updateQuote(initialData.id, payload)
+                toast.success("Cotización actualizada correctamente")
+            } else {
+                // CREATE
+                result = await saveQuote(payload)
+                // toast is handled below? No, saveQuote doesn't toast, we verify success
+            }
 
             if (!result.success || !result.quote) throw new Error(result.error || "Error desconocido al guardar")
 
