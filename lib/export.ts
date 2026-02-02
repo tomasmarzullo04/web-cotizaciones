@@ -428,30 +428,24 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         y = 35
     }
 
-    // --- Calcs for Safety (Project Totals) ---
-    // 1. Determine Monthly Gross (defaults to Final if Gross missing)
-    const monthlyGross = data.grossTotal || data.finalTotal
+    // --- Calcs for Safety (Direct Dashboard Sync) ---
+    // Use values EXACTLY as they are in the QuoteBuilder state
+    const displayGross = data.grossTotal || data.finalTotal
+    let displayRetention = data.retentionAmount || 0
+    let displayNet = data.finalTotal
 
-    // 2. Determine Monthly Retention
-    let monthlyRetention = 0
-    if (data.retention?.enabled) {
-        monthlyRetention = monthlyGross * (data.retention.percentage / 100)
+    // Safety: If retention is enabled but amount is 0, calculate it on the fly
+    if (data.retention?.enabled && (displayRetention === 0 || !displayRetention)) {
+        displayRetention = displayGross * (data.retention.percentage / 100)
+        displayNet = displayGross - displayRetention
     }
-
-    // 3. Determine Monthly Net
-    const monthlyNet = monthlyGross - monthlyRetention
-
-    // 4. Scale to Project Duration
-    const projectGross = monthlyGross * data.durationMonths
-    const projectRetention = monthlyRetention * data.durationMonths
-    const projectNet = monthlyNet * data.durationMonths
     // -----------------------------------------
 
     // Totals Box
     doc.setDrawColor(COLOR_PRIMARY)
     doc.setLineWidth(0.6)
     // Box height dynamic based on retention
-    const boxHeight = data.retention?.enabled ? 55 : 40 // Taller box if retention
+    const boxHeight = data.retention?.enabled ? 55 : 40
 
     doc.rect(margin + 20, y, contentWidth - 40, boxHeight)
 
@@ -460,11 +454,11 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     doc.setTextColor(COLOR_TEXT)
     doc.setFont(FONT_REG, "normal")
 
-    // 1. Subtotal (Net of discounts, before retention) - Shown as "Total Bruto" in this context
+    // 1. Subtotal
     if (data.retention?.enabled) {
         doc.text(cleanText("Subtotal:"), margin + 30, ty)
         doc.setFont(FONT_BOLD, "bold")
-        doc.text(fmt(projectGross), pageWidth - margin - 30, ty, { align: "right" })
+        doc.text(fmt(displayGross), pageWidth - margin - 30, ty, { align: "right" })
 
         // 2. Retention (RED & NEGATIVE)
         ty += 10
@@ -474,20 +468,20 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
         doc.setTextColor(220, 50, 50) // Red
         doc.setFont(FONT_BOLD, "bold")
-        doc.text(`- ${fmt(projectRetention)}`, pageWidth - margin - 30, ty, { align: "right" })
+        doc.text(`- ${fmt(displayRetention)}`, pageWidth - margin - 30, ty, { align: "right" })
 
         // 3. Final Net
         ty += 15 // Gap for final
         doc.setTextColor(COLOR_CHARCOAL)
         doc.setFontSize(14)
-        doc.text(`TOTAL NETO (${durationText()}):`, margin + 30, ty)
+        doc.text(`TOTAL NETO:`, margin + 30, ty)
         doc.setTextColor(COLOR_PRIMARY)
         doc.setFontSize(18)
-        doc.text(fmt(projectNet), pageWidth - margin - 30, ty, { align: "right" })
+        doc.text(fmt(displayNet), pageWidth - margin - 30, ty, { align: "right" })
 
     } else {
         // Standard view (No retention)
-        doc.text(cleanText("Inversión Mensual Estimada:"), margin + 30, ty)
+        doc.text(cleanText("TOTAL ESTIMADO:"), margin + 30, ty)
         doc.setFont(FONT_BOLD, "bold")
         doc.text(fmt(data.finalTotal), pageWidth - margin - 30, ty, { align: "right" })
 
@@ -582,12 +576,6 @@ export async function exportToPDF(data: any) {
     doc.save(filename)
 }
 
-export async function generatePDFBlob(data: any) {
-    const doc = createPDFDocument(data)
-    return doc.output('blob')
-}
-
-// -- Word Export --
 export async function exportToWord(data: any) {
     // Safety Calcs (Direct Dashboard Sync)
     // Use values EXACTLY as they are in the QuoteBuilder state
