@@ -262,7 +262,7 @@ export function DashboardQuotesList({ serverQuotes = [] }: { serverQuotes?: any[
                                             {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(quote.estimatedCost) || 0)}
                                         </span>
 
-                                        <div className="flex gap-1">
+                                        <div className="flex gap-3 items-center">
                                             {quote && (
                                                 <QuoteDetailsSheet
                                                     quote={{
@@ -276,11 +276,21 @@ export function DashboardQuotesList({ serverQuotes = [] }: { serverQuotes?: any[
                                                     }}
                                                 />
                                             )}
-                                            <Link href={`/quote/${quote.id}`}>
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-lg">
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                            </Link>
+
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <Link href={`/quote/${quote.id}`}>
+                                                        <Button size="icon" variant="ghost" className="h-8 w-8 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-lg hover:scale-105 transition-all duration-200">
+                                                            <Pencil className="h-4 w-4" />
+                                                            <span className="sr-only">Editar Cotización</span>
+                                                        </Button>
+                                                    </Link>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-2 text-xs bg-[#1F1F1F] text-[#CFDBD5] border-[#2D2D2D]">
+                                                    Editar Cotización
+                                                </PopoverContent>
+                                            </Popover>
+
                                             <DeleteQuoteButton
                                                 quoteId={quote.id}
                                                 quoteName={quote.clientName}
