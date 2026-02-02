@@ -586,7 +586,7 @@ export default function QuoteBuilder({ dbRates = [], initialData }: { dbRates?: 
     }, [dbRates])
 
 
-    const { totalMonthlyCost, l2SupportCost, riskCost, totalWithRisk, servicesCost, rolesCost, discountAmount, finalTotal } = useMemo(() => {
+    const { totalMonthlyCost, l2SupportCost, riskCost, totalWithRisk, servicesCost, rolesCost, discountAmount, grossTotal, retentionAmount, finalTotal } = useMemo(() => {
         // --- 1. Calculate Roles Cost ---
         let baseRoles = 0
 
@@ -689,9 +689,13 @@ export default function QuoteBuilder({ dbRates = [], initialData }: { dbRates?: 
 
         const preDiscountTotal = subTotal + riskVal
 
-        // --- 4. Commercial Discount ---
+        // --- 4. Commercial Discount (on Subtotal + Risk) ---
         const discountVal = preDiscountTotal * (state.commercialDiscount / 100)
-        const final = preDiscountTotal - discountVal
+        const grossTotal = preDiscountTotal - discountVal // "Total Bruto"
+
+        // --- 5. Retention (deducted from Gross Total) ---
+        const retentionVal = state.retention.enabled ? grossTotal * (state.retention.percentage / 100) : 0
+        const netTotal = grossTotal - retentionVal // "Inversión Neta Final"
 
         return {
             rolesCost: baseRoles,
@@ -700,14 +704,15 @@ export default function QuoteBuilder({ dbRates = [], initialData }: { dbRates?: 
             riskCost: riskVal,
             totalWithRisk: preDiscountTotal,
             discountAmount: discountVal,
-            finalTotal: final,
-            totalMonthlyCost: final
+            grossTotal,
+            retentionAmount: retentionVal,
+            finalTotal: netTotal, // Renaming used variable to match semantic "Final to Pay"
+            totalMonthlyCost: netTotal
         }
-    }, [state, dbRates, criticitnessLevel, findDynamicRate])
+    }, [state, dbRates, criticitnessLevel, findDynamicRate, sustainLevel]) // Added sustainLevel dependency
 
-    // --- Retention & Net Logic (Reactive) ---
-    const retentionAmount = state.retention.enabled ? finalTotal * (state.retention.percentage / 100) : 0
-    const netTotal = finalTotal - retentionAmount
+    const durationInMonths = getDurationInMonths()
+    const totalProjectCost = finalTotal * durationInMonths
 
     // Flash effect when Net Total changes
     useEffect(() => {
@@ -716,11 +721,9 @@ export default function QuoteBuilder({ dbRates = [], initialData }: { dbRates?: 
             const t = setTimeout(() => setIsNetTotalFlashing(false), 500)
             return () => clearTimeout(t)
         }
-    }, [netTotal, state.retention.enabled])
+    }, [finalTotal, state.retention.enabled])
 
-    const durationInMonths = getDurationInMonths()
-    const totalProjectCost = totalWithRisk * durationInMonths
-    const finalTotalProjectCost = finalTotal * durationInMonths
+
 
     // --- Save Quote ---
     const handleSaveQuote = async () => {
@@ -2048,7 +2051,7 @@ graph TD
                                                 )}>
                                                     <span className="text-[#CFDBD5] text-sm uppercase tracking-widest font-bold">Total Neto</span>
                                                     <span className={cn("font-mono font-bold text-xl tracking-tight transition-colors duration-300", isNetTotalFlashing ? "text-[#F5CB5C]" : "text-[#F5CB5C]")}>
-                                                        {formatMoney(netTotal)}
+                                                        {formatMoney(finalTotal)}
                                                     </span>
                                                 </div>
                                             </motion.div>
@@ -2094,7 +2097,7 @@ graph TD
                         )}
                     </div>
                     <div className="text-3xl md:text-3xl lg:text-4xl font-mono font-bold tracking-tighter text-[#E8EDDF] drop-shadow-[0_0_15px_rgba(245,203,92,0.1)] truncate">
-                        {formatMoney(finalTotalProjectCost)}
+                        {formatMoney(totalProjectCost)}
                     </div>
                     <p className="text-[#CFDBD5] mt-2 font-medium flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-[#F5CB5C] animate-pulse" />
@@ -2154,29 +2157,26 @@ graph TD
                     {state.retention.enabled && (
                         <div className="flex justify-between items-center text-[#F5CB5C]/70 border-t border-[#4A4D4A]/50 pt-2">
                             <span>Retención ({state.retention.percentage}%)</span>
-                            <span className="font-mono">- {formatMoney(finalTotal * (state.retention.percentage / 100))}</span>
+                            <span className="font-mono">- {formatMoney(retentionAmount)}</span>
                         </div>
                     )}
 
                     <Separator className="bg-[#4A4D4A]" />
                     <div className="space-y-1">
                         <div className="flex justify-between items-center text-[#E8EDDF] font-medium text-lg">
-                            <span>Bruto</span>
-                            <span className="font-mono">{formatMoney(finalTotal)}</span>
+                            <span>Subtotal</span>
+                            <span className="font-mono">{formatMoney(grossTotal)}</span>
                         </div>
                         {state.retention.enabled && (
-                            <div className="flex justify-between items-center text-[#F5CB5C] font-black text-2xl">
-                                <span>Neto a Cobrar</span>
-                                <span>Neto a Cobrar</span>
-                                <span>{formatMoney(netTotal)}</span>
+                            <div className="flex justify-between items-center text-[#E8EDDF]/70 text-base border-t border-[#4A4D4A]/50 pt-1 mt-1">
+                                <span>Retención (-{state.retention.percentage}%)</span>
+                                <span className="font-mono text-red-400">- {formatMoney(retentionAmount)}</span>
                             </div>
                         )}
-                        {!state.retention.enabled && (
-                            <div className="flex justify-between items-center text-[#E8EDDF] font-black text-2xl">
-                                <span>Total</span>
-                                <span className="text-[#F5CB5C]">{formatMoney(finalTotal)}</span>
-                            </div>
-                        )}
+                        <div className="flex justify-between items-center text-[#F5CB5C] font-black text-2xl pt-2 mt-2 border-t border-[#4A4D4A]">
+                            <span>Inversión Neta Final</span>
+                            <span>{formatMoney(finalTotal)}</span>
+                        </div>
                     </div>
                 </div>
 

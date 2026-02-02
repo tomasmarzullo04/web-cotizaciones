@@ -113,7 +113,7 @@ export function downloadCSV(data: any[], filename: string) {
 }
 
 // -- Final Design PDF --
-function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2SupportCost: number, riskCost: number, totalWithRisk: number, discountAmount: number, finalTotal: number, criticitnessLevel: any, diagramImage?: string, currency?: string, exchangeRate?: number, durationMonths: number }) {
+function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2SupportCost: number, riskCost: number, totalWithRisk: number, discountAmount: number, finalTotal: number, criticitnessLevel: any, diagramImage?: string, currency?: string, exchangeRate?: number, durationMonths: number, grossTotal?: number, retentionAmount?: number }) {
     const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true })
 
     const pageWidth = doc.internal.pageSize.width
@@ -419,7 +419,7 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
     // CONSOLIDATED TOTALS (Force Page 3)
     y += 10
-    if (y + 40 > pageHeight - 20) {
+    if (y + 50 > pageHeight - 20) { // Increased check for extra rows
         doc.addPage()
         drawHeader()
         y = 35
@@ -428,23 +428,54 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     // Totals Box
     doc.setDrawColor(COLOR_PRIMARY)
     doc.setLineWidth(0.6)
-    doc.rect(margin + 20, y, contentWidth - 40, 40)
+    // Box height dynamic based on retention
+    const boxHeight = data.retention?.enabled ? 55 : 40 // Taller box if retention
+
+    doc.rect(margin + 20, y, contentWidth - 40, boxHeight)
 
     let ty = y + 15
     doc.setFontSize(11)
     doc.setTextColor(COLOR_TEXT)
     doc.setFont(FONT_REG, "normal")
-    doc.text(cleanText("Inversión Mensual Estimada:"), margin + 30, ty)
-    doc.setFont(FONT_BOLD, "bold")
-    doc.text(fmt(data.finalTotal), pageWidth - margin - 30, ty, { align: "right" })
 
-    ty += 15
-    doc.setFontSize(14)
-    doc.setTextColor(COLOR_CHARCOAL)
-    doc.text(`TOTAL PROYECTO (${durationText()}):`, margin + 30, ty)
-    doc.setTextColor(COLOR_PRIMARY)
-    doc.setFontSize(18)
-    doc.text(fmt(data.finalTotal * data.durationMonths), pageWidth - margin - 30, ty, { align: "right" })
+    // 1. Subtotal (Net of discounts, before retention) - Shown as "Total Bruto" in this context
+    if (data.retention?.enabled) {
+        doc.text(cleanText("Subtotal:"), margin + 30, ty)
+        doc.setFont(FONT_BOLD, "bold")
+        doc.text(fmt(data.grossTotal || data.finalTotal), pageWidth - margin - 30, ty, { align: "right" })
+
+        // 2. Retention
+        ty += 10
+        doc.setTextColor(COLOR_TEXT) // or Red? User asked for "Retención Aplicada (como un valor negativo)"
+        doc.setFont(FONT_REG, "normal")
+        doc.text(`Retención (${data.retention.percentage}%):`, margin + 30, ty)
+        doc.setTextColor(220, 50, 50) // Red-ish
+        doc.setFont(FONT_BOLD, "bold")
+        doc.text(`- ${fmt(data.retentionAmount || 0)}`, pageWidth - margin - 30, ty, { align: "right" })
+
+        // 3. Final Net
+        ty += 15 // Gap for final
+        doc.setTextColor(COLOR_CHARCOAL)
+        doc.setFontSize(14)
+        doc.text(`TOTAL NETO (${durationText()}):`, margin + 30, ty)
+        doc.setTextColor(COLOR_PRIMARY)
+        doc.setFontSize(18)
+        doc.text(fmt(data.finalTotal), pageWidth - margin - 30, ty, { align: "right" })
+
+    } else {
+        // Standard view (No retention)
+        doc.text(cleanText("Inversión Mensual Estimada:"), margin + 30, ty)
+        doc.setFont(FONT_BOLD, "bold")
+        doc.text(fmt(data.finalTotal), pageWidth - margin - 30, ty, { align: "right" })
+
+        ty += 15
+        doc.setFontSize(14)
+        doc.setTextColor(COLOR_CHARCOAL)
+        doc.text(`TOTAL PROYECTO (${durationText()}):`, margin + 30, ty)
+        doc.setTextColor(COLOR_PRIMARY)
+        doc.setFontSize(18)
+        doc.text(fmt(data.finalTotal * data.durationMonths), pageWidth - margin - 30, ty, { align: "right" })
+    }
 
     // Notes
     y += 50
@@ -542,7 +573,17 @@ export async function exportToWord(data: any) {
                 new Paragraph({ children: [new TextRun({ text: "Propuesta Técnica (Versión Editable)", bold: true, size: 48 })] }),
                 new Paragraph({ text: "Versión simplificada.", spacing: { after: 200 } }),
                 new Paragraph({ text: `Cliente: ${data.clientName}` }),
-                new Paragraph({ text: `Total: $${(data.finalTotal * data.durationMonths).toLocaleString()}` }),
+
+                // Financial Summary
+                ...(data.retention?.enabled ? [
+                    new Paragraph({ text: `Subtotal Bruto: $${(data.grossTotal * data.durationMonths).toLocaleString()}` }),
+                    new Paragraph({
+                        children: [new TextRun({ text: `Retención (${data.retention.percentage}%): -$${(data.retentionAmount * data.durationMonths).toLocaleString()}`, color: "DC3232" })]
+                    }),
+                    new Paragraph({ text: `Total Neto: $${(data.finalTotal * data.durationMonths).toLocaleString()}`, spacing: { before: 100 } }),
+                ] : [
+                    new Paragraph({ text: `Total: $${(data.finalTotal * data.durationMonths).toLocaleString()}` }),
+                ]),
 
                 // Spacing
                 new Paragraph({ text: "", spacing: { after: 400 } }),
