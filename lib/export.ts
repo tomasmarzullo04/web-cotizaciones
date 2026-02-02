@@ -421,12 +421,31 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
     // CONSOLIDATED TOTALS (Force Page 3)
     y += 10
-    const checkH = data.retention?.enabled ? 65 : 50
+    const checkH = data.retention?.enabled ? 80 : 60
     if (y + checkH > pageHeight - 20) {
         doc.addPage()
         drawHeader()
         y = 35
     }
+
+    // --- Calcs for Safety (Project Totals) ---
+    // 1. Determine Monthly Gross (defaults to Final if Gross missing)
+    const monthlyGross = data.grossTotal || data.finalTotal
+
+    // 2. Determine Monthly Retention
+    let monthlyRetention = 0
+    if (data.retention?.enabled) {
+        monthlyRetention = monthlyGross * (data.retention.percentage / 100)
+    }
+
+    // 3. Determine Monthly Net
+    const monthlyNet = monthlyGross - monthlyRetention
+
+    // 4. Scale to Project Duration
+    const projectGross = monthlyGross * data.durationMonths
+    const projectRetention = monthlyRetention * data.durationMonths
+    const projectNet = monthlyNet * data.durationMonths
+    // -----------------------------------------
 
     // Totals Box
     doc.setDrawColor(COLOR_PRIMARY)
@@ -445,16 +464,17 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     if (data.retention?.enabled) {
         doc.text(cleanText("Subtotal:"), margin + 30, ty)
         doc.setFont(FONT_BOLD, "bold")
-        doc.text(fmt(data.grossTotal || data.finalTotal), pageWidth - margin - 30, ty, { align: "right" })
+        doc.text(fmt(projectGross), pageWidth - margin - 30, ty, { align: "right" })
 
-        // 2. Retention
+        // 2. Retention (RED & NEGATIVE)
         ty += 10
-        doc.setTextColor(COLOR_TEXT) // or Red? User asked for "Retención Aplicada (como un valor negativo)"
+        doc.setTextColor(COLOR_TEXT)
         doc.setFont(FONT_REG, "normal")
         doc.text(`Retención (${data.retention.percentage}%):`, margin + 30, ty)
-        doc.setTextColor(220, 50, 50) // Red-ish
+
+        doc.setTextColor(220, 50, 50) // Red
         doc.setFont(FONT_BOLD, "bold")
-        doc.text(`- ${fmt(data.retentionAmount || 0)}`, pageWidth - margin - 30, ty, { align: "right" })
+        doc.text(`- ${fmt(projectRetention)}`, pageWidth - margin - 30, ty, { align: "right" })
 
         // 3. Final Net
         ty += 15 // Gap for final
@@ -463,7 +483,7 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         doc.text(`TOTAL NETO (${durationText()}):`, margin + 30, ty)
         doc.setTextColor(COLOR_PRIMARY)
         doc.setFontSize(18)
-        doc.text(fmt(data.finalTotal), pageWidth - margin - 30, ty, { align: "right" })
+        doc.text(fmt(projectNet), pageWidth - margin - 30, ty, { align: "right" })
 
     } else {
         // Standard view (No retention)

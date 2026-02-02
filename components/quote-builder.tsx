@@ -977,6 +977,8 @@ export default function QuoteBuilder({ dbRates = [], initialData }: { dbRates?: 
                     serviceType: state.serviceType,
                     commercialDiscount: state.commercialDiscount,
                     discountAmount,
+                    grossTotal,
+                    retentionAmount,
                     finalTotal,
                     durationMonths: getDurationInMonths()
                 })
@@ -992,6 +994,8 @@ export default function QuoteBuilder({ dbRates = [], initialData }: { dbRates?: 
                     serviceType: state.serviceType,
                     commercialDiscount: state.commercialDiscount,
                     discountAmount,
+                    grossTotal,
+                    retentionAmount,
                     finalTotal,
                     durationMonths: getDurationInMonths()
                 })
