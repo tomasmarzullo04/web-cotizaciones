@@ -459,15 +459,45 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
     drawFooter(3)
 
-    // --- PAGE 4: APPROVAL ---
+    // --- PAGE 4: TERMS & APPROVAL ---
     doc.addPage()
     drawHeader()
-    y = 50
+    y = 35
 
+    // TÉRMINOS Y CONDICIONES
+    doc.setFont(FONT_BOLD, "bold")
+    doc.setFontSize(11) // Header size
+    doc.setTextColor(COLOR_PRIMARY)
+    doc.text("TÉRMINOS Y CONDICIONES", margin, y)
+    y += 8
+
+    doc.setFont(FONT_REG, "normal")
+    doc.setFontSize(9) // Legal size
+    doc.setTextColor(COLOR_TEXT)
+
+    const terms = [
+        "Propuesta Válida durante 30 días desde su emisión.",
+        "Proyecto a iniciar por parte de SI cuando exista una Orden de Compra.",
+        "El costo de los recursos está tasado al precio acordado con Nestlé regionalmente.",
+        "Sustain no se incluye en espera que los requerimientos no evolucionen posterior al proyecto.",
+        "Desarrollos adicionales serán cotizados en propuestas adicionales.",
+        "Requerimientos: diseño funcional del app y analytics aprobados al inicio del proyecto.",
+        "Códigos y entregables serán propiedad de Nestlé finalizado el proyecto.",
+        "Los Sprints de Pago (en caso de parcialidades) se acordaran al inicio del proyecto."
+    ]
+
+    terms.forEach(term => {
+        doc.text(`• ${cleanText(term)}`, margin + 5, y)
+        y += 5
+    })
+
+    y += 15
+
+    // APPROVAL SECTION
     doc.setFont(FONT_BOLD, "bold")
     doc.setFontSize(14)
     doc.setTextColor(COLOR_PRIMARY)
-    doc.text(cleanText("APROBACIÓN DE PROPUESTA"), margin, y) // More formal title
+    doc.text(cleanText("APROBACIÓN DE PROPUESTA"), margin, y)
     y += 15
 
     doc.setFont(FONT_REG, "normal")
@@ -512,7 +542,29 @@ export async function exportToWord(data: any) {
                 new Paragraph({ children: [new TextRun({ text: "Propuesta Técnica (Versión Editable)", bold: true, size: 48 })] }),
                 new Paragraph({ text: "Versión simplificada.", spacing: { after: 200 } }),
                 new Paragraph({ text: `Cliente: ${data.clientName}` }),
-                new Paragraph({ text: `Total: $${(data.finalTotal * data.durationMonths).toLocaleString()}` })
+                new Paragraph({ text: `Total: $${(data.finalTotal * data.durationMonths).toLocaleString()}` }),
+
+                // Spacing
+                new Paragraph({ text: "", spacing: { after: 400 } }),
+
+                // Terms and Conditions
+                new Paragraph({
+                    children: [new TextRun({ text: "TÉRMINOS Y CONDICIONES", bold: true, color: "004B8D", size: 22 })], // Size 22 is approx 11pt
+                    spacing: { after: 200 }
+                }),
+                ...[
+                    "Propuesta Válida durante 30 días desde su emisión.",
+                    "Proyecto a iniciar por parte de SI cuando exista una Orden de Compra.",
+                    "El costo de los recursos está tasado al precio acordado con Nestlé regionalmente.",
+                    "Sustain no se incluye en espera que los requerimientos no evolucionen posterior al proyecto.",
+                    "Desarrollos adicionales serán cotizados en propuestas adicionales.",
+                    "Requerimientos: diseño funcional del app y analytics aprobados al inicio del proyecto.",
+                    "Códigos y entregables serán propiedad de Nestlé finalizado el proyecto.",
+                    "Los Sprints de Pago (en caso de parcialidades) se acordaran al inicio del proyecto."
+                ].map(term => new Paragraph({
+                    children: [new TextRun({ text: term, size: 18 })], // Size 18 is 9pt
+                    bullet: { level: 0 }
+                }))
             ]
         }]
     })
