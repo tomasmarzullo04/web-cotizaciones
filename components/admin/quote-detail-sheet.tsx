@@ -142,27 +142,31 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                 </div>
                             </div>
 
-                            {/* SUSTAIN ARCHITECTURE (If Applicable) */}
-                            {quote.serviceType === 'Sustain' && (quote.diagramDefinition || details.diagramDefinition) && (
+                            {/* ARCHITECTURE & FLOW (Universal) */}
+                            {(quote.diagramDefinition || details.diagramDefinition) && (
                                 <div className="space-y-4">
                                     <h3 className="text-sm font-bold text-[#F5CB5C] uppercase tracking-widest flex items-center gap-2 border-b border-[#333533] pb-2">
-                                        <Network className="w-4 h-4" /> Arquitectura & Stack
+                                        <Network className="w-4 h-4" /> Arquitectura & Flow
                                     </h3>
                                     <Card className="bg-[#242423] border-[#333533] overflow-hidden p-4">
                                         <div className="bg-white/5 rounded-lg p-2 mb-4">
                                             <MermaidDiagram chart={quote.diagramDefinition || details.diagramDefinition} />
                                         </div>
 
-                                        {/* Tech Stack List */}
-                                        {details.sustainDetails?.techStack && details.sustainDetails.techStack.length > 0 && (
-                                            <div className="flex flex-wrap gap-2">
-                                                {details.sustainDetails.techStack.map((tech: string) => (
-                                                    <Badge key={tech} variant="secondary" className="bg-[#333533] text-[#CFDBD5] border border-[#4A4D4A] capitalize">
-                                                        {tech.replace('_', ' ')}
-                                                    </Badge>
-                                                ))}
-                                            </div>
-                                        )}
+                                        {/* Tech Stack List (Supports all types) */}
+                                        {(() => {
+                                            const stack = details.techStack || details.sustainDetails?.techStack || []
+                                            if (stack.length === 0) return null
+                                            return (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {stack.map((tech: string) => (
+                                                        <Badge key={tech} variant="secondary" className="bg-[#333533] text-[#CFDBD5] border border-[#4A4D4A] capitalize">
+                                                            {tech.replace('_', ' ')}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            )
+                                        })()}
                                     </Card>
                                 </div>
                             )}
