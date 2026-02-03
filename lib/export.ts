@@ -161,10 +161,22 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
     // --- Header & Footer ---
     const drawHeader = (isCover = false) => {
-        const siH = 8.0    // Slightly larger SI logo
-        const nestleH = 8.0
+        const siH = 9.0
+        const nestleH = 9.0
 
-        // logo SI (Left)
+        // 1. Blue Background Block for Title (TOP RIGHT)
+        doc.setFillColor(COLOR_PRIMARY)
+        const blockW = pageWidth * 0.65 // Large block for "INVOICE:" style
+        const blockH = 32
+        doc.rect(pageWidth - blockW, 0, blockW, blockH, 'F')
+
+        // 2. "COTIZACIÓN" Text in white
+        doc.setFont(FONT_BOLD, "bold")
+        doc.setFontSize(32)
+        doc.setTextColor(255)
+        doc.text("COTIZACIÓN:", pageWidth - margin, 20, { align: "right" })
+
+        // 3. logo SI (Left - Vertical Aligned with title)
         if (LOGO_SI) {
             try {
                 const props = doc.getImageProperties(LOGO_SI)
@@ -177,33 +189,10 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
             }
         }
 
-        // Title Block (Right)
-        if (!isCover) {
-            doc.setFillColor(COLOR_PRIMARY)
-            const titleW = 45
-            const titleH = 10
-            doc.rect(pageWidth - margin - titleW, 10, titleW, titleH, 'F')
-
-            doc.setFont(FONT_BOLD, "bold")
-            doc.setFontSize(10)
-            doc.setTextColor(255)
-            doc.text("COTIZACIÓN", pageWidth - margin - (titleW / 2), 16.5, { align: "center" })
-        } else {
-            // Nestlé on cover only or all pages? User said "Header: Logo left, title COTIZACIÓN modernized right"
-            // Usually logos go in corners. I'll keep Nestlé on the right if not the title block.
-            if (LOGO_NESTLE) {
-                try {
-                    const props = doc.getImageProperties(LOGO_NESTLE)
-                    const w = (props.width * nestleH) / props.height
-                    doc.addImage(LOGO_NESTLE, 'PNG', pageWidth - margin - w, 12, w, nestleH)
-                } catch (e) { }
-            }
-        }
-
-        // Decorative Line
+        // Space/Divider below header
         doc.setDrawColor(COLOR_PRIMARY)
         doc.setLineWidth(0.5)
-        doc.line(margin, 25, pageWidth - margin, 25)
+        doc.line(margin, 35, pageWidth - margin, 35)
     }
 
     const drawFooter = (pageNum: number) => {
@@ -212,197 +201,89 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         doc.text(`Confidencial - The Store Intelligence | Pág. ${pageNum}`, margin, pageHeight - 10)
     }
 
-    // --- PAGE 1: COVER + CLEAN INFO BLOCKS ---
+    // --- PAGE 1: INFORMATION + OBJECTIVE + DIAGRAM ---
     drawHeader(true)
 
-    let y = 65
-    doc.setFont(FONT_BOLD, "bold")
-    doc.setFontSize(40)
-    doc.setTextColor(COLOR_PRIMARY)
-    doc.text("COTIZACIÓN", margin, y)
+    let y = 50
 
-    y += 12
+    // INFO BLOCKS IN A SINGLE ROW
+    doc.setFont(FONT_BOLD, "bold")
+    doc.setFontSize(9)
+    doc.setTextColor(COLOR_PRIMARY)
+    doc.text("COTIZADO A:", margin, y)
+    doc.text("DETALLES DE COTIZACIÓN:", pageWidth / 2 + 5, y)
+
+    y += 6
     doc.setFontSize(12)
     doc.setTextColor(COLOR_CHARCOAL)
+    doc.text(cleanText(data.clientName), margin, y)
+
+    // Details col
+    const rightX = pageWidth / 2 + 5
+    doc.setFontSize(9)
     doc.setFont(FONT_REG, "normal")
-    doc.text("Estimación de Alcance e Inversión", margin, y)
-
-    y += 35
-
-    // Left Column: Cotizado a
-    let leftY = y
-    doc.setFont(FONT_BOLD, "bold")
-    doc.setFontSize(10)
-    doc.setTextColor(COLOR_PRIMARY)
-    doc.text("COTIZADO A:", margin, leftY)
-
-    leftY += 8
-    doc.setFontSize(14)
-    doc.setTextColor(COLOR_CHARCOAL)
-    doc.text(cleanText(data.clientName), margin, leftY)
-
-    if (data.clientContact?.name) {
-        leftY += 6
-        doc.setFontSize(10)
-        doc.setFont(FONT_REG, "normal")
-        doc.setTextColor(COLOR_TEXT)
-        doc.text(cleanText(data.clientContact.name), margin, leftY)
-    }
-
-    if (data.clientContact?.email) {
-        leftY += 5
-        doc.setFontSize(9)
-        doc.text(data.clientContact.email, margin, leftY)
-    }
-
-    // Right Column: Detalles de Cotización
-    let rightY = y
-    const rightColX = pageWidth / 2 + 10
-
-    doc.setFont(FONT_BOLD, "bold")
-    doc.setFontSize(10)
-    doc.setTextColor(COLOR_PRIMARY)
-    doc.text("DETALLES:", rightColX, rightY)
-
-    const drawDetail = (label: string, val: string, currentY: number) => {
-        doc.setFont(FONT_REG, "normal")
-        doc.setFontSize(9)
-        doc.setTextColor(COLOR_TEXT)
-        doc.text(label, rightColX, currentY + 7)
-        doc.setFont(FONT_BOLD, "bold")
-        doc.text(val, pageWidth - margin, currentY + 7, { align: "right" })
-        return currentY + 7
-    }
-
-    rightY = drawDetail("Fecha de Emisión:", new Date().toLocaleDateString('es-ES'), rightY)
-    rightY = drawDetail("ID Cotización:", `SI-${new Date().getTime().toString().substr(-6)}`, rightY)
-    rightY = drawDetail("Consultor:", cleanText(data.clientContact?.areaLeader || "Equipo Comercial"), rightY)
-    rightY = drawDetail("Validez:", "30 Días", rightY)
-
-    // CENTERED SUMMARY
-    y += 55
-
-    // Project Name Block
-    doc.setFont(FONT_BOLD, "bold")
-    doc.setFontSize(12)
-    doc.setTextColor(COLOR_PRIMARY) // Blue Title
-    doc.text("PROYECTO", pageWidth / 2, y, { align: "center" })
-    y += 8
-    doc.setFont(FONT_REG, "normal")
-    doc.setFontSize(10)
     doc.setTextColor(COLOR_TEXT)
-    doc.text(cleanText(data.clientName), pageWidth / 2, y, { align: "center" })
+    doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, rightX, y)
+    doc.text(`ID: SI-${new Date().getTime().toString().substr(-6)}`, pageWidth - margin, y, { align: 'right' })
+
+    y += 5
+    if (data.clientContact?.name) {
+        doc.text(cleanText(data.clientContact.name), margin, y)
+    }
+    doc.text(`Validez: 30 Días`, rightX, y)
+    doc.text(`Consultor: ${cleanText(data.clientContact?.areaLeader || "Equipo Comercial")}`, pageWidth - margin, y, { align: 'right' })
 
     y += 15
-
-    // Objective Block
+    // STRATEGIC OBJECTIVE
     doc.setFont(FONT_BOLD, "bold")
-    doc.setFontSize(12)
-    doc.setTextColor(COLOR_PRIMARY) // Blue Title
-    doc.text("OBJETIVO ESTRATÉGICO", pageWidth / 2, y, { align: "center" })
-    y += 8
-    doc.setFont(FONT_REG, "normal")
-    doc.setFontSize(10)
-    doc.setTextColor(COLOR_TEXT)
-    const desc = cleanText(data.description || "Solución tecnológica para optimización de datos.")
-    const splitDesc = doc.splitTextToSize(desc, contentWidth * 0.8) // Use 80% width for nice centering
-    doc.text(splitDesc, pageWidth / 2, y, { align: "center", lineHeightFactor: 1.2 }) // Center, 1.2 spacing
-
-    drawFooter(1)
-
-    // --- PAGE 2: ARCHITECTURE (DIAGRAM + STACK) ---
-    doc.addPage()
-    drawHeader()
-    y = 35
-
-    doc.setFont(FONT_BOLD, "bold")
-    doc.setFontSize(14)
     doc.setTextColor(COLOR_PRIMARY)
-    doc.text("ARQUITECTURA PROPUESTA", margin, y)
-    y += 10
+    doc.text("OBJETIVO ESTRATÉGICO", margin, y)
 
-    // Diagram (Top)
+    y += 6
+    doc.setFont(FONT_REG, "normal")
+    doc.setFontSize(9.5)
+    doc.setTextColor(COLOR_TEXT)
+    const objText = data.serviceType === 'Project'
+        ? "Diseño e implementación de una solución tecnológica punta a punta, garantizando escalabilidad y alineación con los estándares regionales de Nestlé."
+        : data.serviceType === 'Sustain'
+            ? "Continuidad operativa y evolución tecnológica de activos digitales existentes, asegurando performance y cumplimiento de KPIs de negocio."
+            : "Fortalecimiento de capacidades técnicas a través de talento especializado integrado en células de trabajo bajo demanda."
+
+    const objLines = doc.splitTextToSize(objText, contentWidth)
+    doc.text(objLines, margin, y)
+    y += (objLines.length * 5) + 8
+
+    // DYNAMIC DIAGRAM (Now on Page 1)
     if (data.diagramImage) {
         doc.setFont(FONT_BOLD, "bold")
-        doc.setTextColor(COLOR_CHARCOAL)
         doc.setFontSize(10)
-        doc.text("Flujo de Solución:", margin, y)
-        y += 8
-
-        const imgProps = doc.getImageProperties(data.diagramImage)
-
-        const maxW = contentWidth
-        const maxH = 120 // More height if needed since summary is gone
-
-        const scaleW = maxW / imgProps.width
-        const scaleH = maxH / imgProps.height
-        const scale = Math.min(scaleW, scaleH)
-
-        const finalW = imgProps.width * scale
-        const finalH = imgProps.height * scale
+        doc.setTextColor(COLOR_PRIMARY)
+        doc.text("ARQUITECTURA DE LA SOLUCIÓN", margin, y)
+        y += 5
 
         try {
-            const imgX = margin + (contentWidth - finalW) / 2
-            doc.addImage(data.diagramImage, 'PNG', imgX, y, finalW, finalH)
-        } catch (e) {
-            doc.text("[Diagrama]", margin, y + 10)
-        }
-        y += finalH + 15
-    }
+            const imgProps = doc.getImageProperties(data.diagramImage)
+            const imgW = contentWidth
+            const imgH = (imgProps.height * imgW) / imgProps.width
 
-    // TECH STACK (3 Cols)
-    doc.setFont(FONT_BOLD, "bold")
-    doc.setFontSize(12)
-    doc.setTextColor(COLOR_PRIMARY)
-    doc.text("STACK TECNOLÓGICO SELECCIONADO", margin, y)
-    y += 8
-
-    const stackItems = data.techStack || []
-
-    const colCount = 3
-    const colW = (contentWidth / colCount) - 3
-    const rowH = 10
-    const startX = margin
-
-    if (stackItems.length === 0) {
-        doc.setFont(FONT_REG, "italic")
-        doc.setFontSize(9)
-        doc.setTextColor(COLOR_TEXT)
-        doc.text("No se han seleccionado tecnologías específicas.", margin, y)
-    } else {
-        let colIdx = 0
-        let rowY = y
-
-        stackItems.forEach((item, i) => {
-            const x = startX + (colIdx * (colW + 4.5))
-
-            doc.setFillColor(COLOR_ROW_ALT)
-            doc.rect(x, rowY, colW, rowH, 'F')
-
-            doc.setFontSize(8)
-            doc.setTextColor(COLOR_PRIMARY)
-            doc.setFont(FONT_BOLD, "bold")
-            doc.text("Componente:", x + 2, rowY + 6.5)
-
-            doc.setTextColor(COLOR_TEXT)
-            doc.setFont(FONT_REG, "normal")
-            doc.text(cleanText(item), x + colW - 2, rowY + 6.5, { align: "right" })
-
-            if (colIdx === colCount - 1) {
-                rowY += rowH + 2
-                colIdx = 0
+            // Check if diagram fits, if not, move to next page or scale down
+            if (y + imgH > pageHeight - 20) {
+                const scaledH = pageHeight - y - 15
+                const scaledW = (imgProps.width * scaledH) / imgProps.height
+                doc.addImage(data.diagramImage, 'PNG', margin + (contentWidth - scaledW) / 2, y, scaledW, scaledH)
             } else {
-                colIdx++
+                doc.addImage(data.diagramImage, 'PNG', margin, y, imgW, imgH)
             }
-        })
+        } catch (e) {
+            doc.setFont(FONT_REG, "italic")
+            doc.text("[Diagrama no disponible]", margin, y + 5)
+        }
     }
 
-    drawFooter(2)
-
-    // --- PAGE 3: INVESTMENT & SUMMARY (CONSOLIDATED) ---
+    // --- PAGE 2: INVESTMENT + TERMS ---
     doc.addPage()
-    drawHeader()
-    y = 35
+    drawHeader(false)
+    y = 50
 
     doc.setFont(FONT_BOLD, "bold")
     doc.setFontSize(14)
@@ -413,28 +294,26 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     // Table Header
     doc.setFillColor(COLOR_PRIMARY)
     doc.rect(margin, y, contentWidth, 8, 'F')
+    doc.setFontSize(9)
     doc.setTextColor(255)
-    doc.setFontSize(8)
-    doc.setFont(FONT_BOLD, "bold")
-    doc.text("CONCEPTO", margin + 5, y + 5)
-    doc.text("DURACIÓN", pageWidth - margin - 75, y + 5, { align: 'center' })
-    doc.text("MENSUAL", pageWidth - margin - 40, y + 5, { align: 'right' })
-    doc.text("SUBTOTAL", pageWidth - margin - 5, y + 5, { align: 'right' })
+    doc.text("PERFIL / CONCEPTO", margin + 5, y + 5.5)
+    doc.text("CANT.", pageWidth - margin - 75, y + 5.5, { align: 'center' })
+    doc.text("MENSUAL", pageWidth - margin - 40, y + 5.5, { align: 'right' })
+    doc.text("TOTAL", pageWidth - margin - 5, y + 5.5, { align: 'right' })
     y += 8
 
     // Rows
-    // Rows - COMPACT PADDING
     let isReview = true
     const drawRow = (label: string, meta: string, monthly: string, total: string) => {
         if (isReview) {
             doc.setFillColor(COLOR_ROW_ALT)
-            doc.rect(margin, y, contentWidth, 7, 'F') // Reduced height from 8 to 7
+            doc.rect(margin, y, contentWidth, 7, 'F')
         }
         isReview = !isReview
 
         doc.setTextColor(COLOR_TEXT)
         doc.setFont(FONT_BOLD, "bold")
-        doc.text(cleanText(label), margin + 5, y + 4.5) // Vertically centered approx
+        doc.text(cleanText(label), margin + 5, y + 4.5)
 
         doc.setFont(FONT_REG, "normal")
         doc.text(cleanText(meta), pageWidth - margin - 75, y + 4.5, { align: 'center' })
@@ -442,12 +321,12 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         doc.setFont(FONT_BOLD, "bold")
         doc.text(monthly, pageWidth - margin - 40, y + 4.5, { align: 'right' })
         doc.text(total, pageWidth - margin - 5, y + 4.5, { align: 'right' })
-        y += 7 // Tighten spacing
+        y += 7
     }
 
     if (data.serviceType === 'Staffing' || data.serviceType === 'Sustain') {
         data.staffingDetails.profiles.forEach(p => {
-            if ((p.count || 0) <= 0) return // Skip $0 rows
+            if ((p.count || 0) <= 0) return
 
             const rate = p.price || (RATES[Object.keys(RATES).find(k => p.role.toLowerCase().includes(k.replace('_', ' '))) || 'react_dev'] || 4000)
             const alloc = (p.allocationPercentage || 100) / 100
@@ -472,22 +351,13 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     if (data.riskCost > 0) drawRow("Fee de Gestión y Riesgo", `${((data.criticitnessLevel?.margin || 0) * 100).toFixed(0)}%`, fmt(data.riskCost), fmt(data.riskCost * data.durationMonths))
     if (data.discountAmount > 0) drawRow("Descuento Comercial", `${data.commercialDiscount}%`, `-${fmt(data.discountAmount)}`, `-${fmt(data.discountAmount * data.durationMonths)}`)
 
-    // CONSOLIDATED TOTALS (Force Page 3)
     y += 10
-    const checkH = data.retention?.enabled ? 80 : 60
-    if (y + checkH > pageHeight - 20) {
-        doc.addPage()
-        drawHeader()
-        y = 35
-    }
 
     // --- Calcs for Safety (Direct Dashboard Sync) ---
-    // Use values EXACTLY as they are in the QuoteBuilder state
     const displayGross = data.grossTotal || data.finalTotal
     let displayRetention = data.retentionAmount || 0
     let displayNet = data.finalTotal
 
-    // Safety: If retention is enabled but amount is 0, calculate it on the fly
     if (data.retention?.enabled && (displayRetention === 0 || !displayRetention)) {
         displayRetention = displayGross * (data.retention.percentage / 100)
         displayNet = displayGross - displayRetention
@@ -497,7 +367,6 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     // Totals Box
     doc.setDrawColor(COLOR_PRIMARY)
     doc.setLineWidth(0.6)
-    // Box height dynamic based on retention
     const boxHeight = data.retention?.enabled ? 55 : 40
 
     doc.rect(margin + 20, y, contentWidth - 40, boxHeight)
@@ -507,24 +376,21 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     doc.setTextColor(COLOR_TEXT)
     doc.setFont(FONT_REG, "normal")
 
-    // 1. Subtotal
     if (data.retention?.enabled) {
         doc.text(cleanText("Subtotal:"), margin + 30, ty)
         doc.setFont(FONT_BOLD, "bold")
         doc.text(fmt(displayGross), pageWidth - margin - 30, ty, { align: "right" })
 
-        // 2. Retention (RED & NEGATIVE)
         ty += 10
         doc.setTextColor(COLOR_TEXT)
         doc.setFont(FONT_REG, "normal")
         doc.text(`Retención (${data.retention.percentage}%):`, margin + 30, ty)
 
-        doc.setTextColor(220, 50, 50) // Red
+        doc.setTextColor(220, 50, 50)
         doc.setFont(FONT_BOLD, "bold")
         doc.text(`- ${fmt(displayRetention)}`, pageWidth - margin - 30, ty, { align: "right" })
 
-        // 3. Final Net
-        ty += 15 // Gap for final
+        ty += 15
         doc.setTextColor(COLOR_CHARCOAL)
         doc.setFontSize(14)
         doc.text(`TOTAL NETO:`, margin + 30, ty)
@@ -533,7 +399,6 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         doc.text(fmt(displayNet), pageWidth - margin - 30, ty, { align: "right" })
 
     } else {
-        // Standard view (No retention)
         doc.text(cleanText("TOTAL ESTIMADO:"), margin + 30, ty)
         doc.setFont(FONT_BOLD, "bold")
         doc.text(fmt(data.finalTotal), pageWidth - margin - 30, ty, { align: "right" })

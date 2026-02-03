@@ -812,12 +812,12 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         let diagramDataUrl: string | undefined = undefined
 
         try {
-            // 1. Capture Diagram (if not Staffing)
+            // 1. Capture Diagram (Mandatory Goal: All service types)
             try {
                 const element = document.getElementById('diagram-capture-target')
-                if (element && state.serviceType !== 'Staffing') {
-                    // Wait for Mermaid to render (Technical Note)
-                    await new Promise(resolve => setTimeout(resolve, 800))
+                if (element) {
+                    // Wait for Mermaid to render nodes fully
+                    await new Promise(resolve => setTimeout(resolve, 1200))
 
                     const canvas = await html2canvas(element, {
                         backgroundColor: '#ffffff',
@@ -1050,21 +1050,19 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         setExportType(type)
         try {
             let diagramDataUrl = undefined
-            // Capture diagram if relevant (Staffing usually has no diagram)
-            if (state.serviceType !== 'Staffing') {
-                const element = document.getElementById('diagram-capture-target')
-                if (element) {
-                    // Critical Wait for Mermaid Render
-                    await new Promise(resolve => setTimeout(resolve, 1000))
+            // Capture diagram (Mandatory: All services)
+            const element = document.getElementById('diagram-capture-target')
+            if (element) {
+                // Critical Wait for Mermaid Render (Ensuring all nodes are present)
+                await new Promise(resolve => setTimeout(resolve, 1500))
 
-                    const canvas = await html2canvas(element, {
-                        backgroundColor: '#ffffff',
-                        scale: 3,
-                        useCORS: true,
-                        logging: false
-                    })
-                    diagramDataUrl = canvas.toDataURL('image/png')
-                }
+                const canvas = await html2canvas(element, {
+                    backgroundColor: '#ffffff',
+                    scale: 3,
+                    useCORS: true,
+                    logging: false
+                })
+                diagramDataUrl = canvas.toDataURL('image/png')
             }
 
             if (type === 'pdf') {

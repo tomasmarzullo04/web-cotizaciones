@@ -181,12 +181,34 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                 </div>
                             )}
 
-                            {/* TEAM BREAKDOWN */}
-                            <div className="space-y-4">
-                                <h3 className="text-sm font-bold text-[#F5CB5C] uppercase tracking-widest flex items-center gap-2 border-b border-[#333533] pb-2">
-                                    <span className="w-1 h-4 bg-[#F5CB5C] rounded-full" /> Desglose de Equipo
+                            {/* Strategic Objective & Diagram (Page 1 Mirror) */}
+                            <div className="grid grid-cols-1 gap-6">
+                                <div className="p-4 bg-white/5 rounded-xl border border-[#333533]">
+                                    <div className="text-[10px] font-bold text-[#004B8D] uppercase tracking-widest mb-2">Objetivo Estratégico</div>
+                                    <p className="text-sm text-[#CFDBD5] leading-relaxed">
+                                        {quote.serviceType === 'Project'
+                                            ? "Diseño e implementación de una solución tecnológica punta a punta, garantizando escalabilidad y alineación con los estándares regionales de Nestlé."
+                                            : quote.serviceType === 'Sustain'
+                                                ? "Continuidad operativa y evolución tecnológica de activos digitales existentes, asegurando performance y cumplimiento de KPIs de negocio."
+                                                : "Fortalecimiento de capacidades técnicas a través de talento especializado integrado en células de trabajo bajo demanda."}
+                                    </p>
+                                </div>
+                                <div className="p-4 bg-white/5 rounded-xl border border-[#333533]">
+                                    <div className="text-[10px] font-bold text-[#004B8D] uppercase tracking-widest mb-4">Arquitectura de la Solución (Mandatorio)</div>
+                                    <div className="bg-[#171717] rounded-lg p-4 border border-[#333533] min-h-[200px] flex items-center justify-center">
+                                        <div className="w-full h-full">
+                                            <MermaidDiagram chart={details.chartCode} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Team Breakdown (Page 2 Mirror) */}
+                            <div className="space-y-4 pt-4">
+                                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                    <span className="w-1 h-4 bg-[#004B8D] rounded-full" /> Desglose de Inversión
                                 </h3>
-                                <Card className="bg-[#242423] border-[#333533] overflow-hidden">
+                                <Card className="bg-[#1D1D1C] border-[#333533] overflow-hidden">
                                     <div className="grid grid-cols-12 gap-2 p-3 bg-[#f0f5fa] text-[10px] font-bold text-[#004B8D] uppercase tracking-wider border-b border-[#333533]">
                                         <div className="col-span-4 pl-2">Perfil / Seniority</div>
                                         <div className="col-span-2 text-center">Seniority</div>
@@ -200,7 +222,7 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                                 const cost = p.price || p.cost || 0
                                                 const total = cost * (p.count || 1)
                                                 return (
-                                                    <div key={idx} className="grid grid-cols-12 gap-2 p-3 text-sm hover:bg-[#333533]/30 transition-colors items-center">
+                                                    <div key={idx} className="grid grid-cols-12 gap-2 p-3 text-sm hover:bg-[#333533]/30 transition-colors items-center border-b border-[#333533] last:border-0">
                                                         <div className="col-span-4 font-medium text-white pl-2">
                                                             {p.role}
                                                             {p.skills && <div className="text-[10px] text-[#CFDBD5] mt-0.5 truncate max-w-[150px] opacity-70">{p.skills}</div>}
@@ -224,7 +246,7 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                                 )
                                             })
                                         ) : (
-                                            <div className="p-6 text-center text-[#CFDBD5] opacity-50 text-xs italic">
+                                            <div className="p-8 text-center text-[#CFDBD5] opacity-50 text-xs italic">
                                                 Sin detalles de perfiles activos
                                             </div>
                                         )}
@@ -232,53 +254,54 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                 </Card>
                             </div>
 
-                            {/* FINANCIAL SUMMARY */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="p-4 rounded-xl bg-[#242423]/50 border border-[#333533]">
-                                    <div className="flex items-center gap-2 mb-3 text-[#CFDBD5]">
-                                        <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                                        <span className="text-xs font-bold uppercase">Notas</span>
+                            {/* Totals Summary */}
+                            <div className="flex justify-end pt-4">
+                                <div className="w-full md:w-80 space-y-3 bg-[#1D1D1C] p-6 rounded-xl border border-[#333533] shadow-xl">
+                                    <div className="flex justify-between items-center text-sm text-[#CFDBD5]">
+                                        <span>Subtotal Estimado:</span>
+                                        <span className="font-mono">${totals.gross.toLocaleString('en-US')}</span>
                                     </div>
-                                    <p className="text-xs text-[#CFDBD5]/60 leading-relaxed">
-                                        Valores calculados según snapshot al momento de creación. Incluye impuestos si aplica.
-                                    </p>
+                                    {totals.discount > 0 && (
+                                        <div className="flex justify-between items-center text-sm text-emerald-400">
+                                            <span>Descuento Aplicado:</span>
+                                            <span className="font-mono">-${totals.discount.toLocaleString('en-US')}</span>
+                                        </div>
+                                    )}
+                                    <Separator className="bg-[#333533]" />
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm font-bold text-[#004B8D] uppercase tracking-widest">Total Neto:</span>
+                                        <span className="text-xl font-black text-[#F5CB5C] font-mono">${totals.net.toLocaleString('en-US')}</span>
+                                    </div>
                                 </div>
-
-                                <Card className="bg-[#1D1D1C] border-[#333533] shadow-lg">
-                                    <CardContent className="p-4 space-y-3">
-                                        <div className="flex justify-between items-center text-xs text-[#CFDBD5]">
-                                            <div className="flex items-center gap-2">
-                                                <DollarSign className="w-3 h-3 opacity-50" />
-                                                <span>Subtotal</span>
-                                            </div>
-                                            <span className="font-mono">{details.currency || 'USD'} ${totals.gross.toLocaleString('en-US')}</span>
-                                        </div>
-                                        {totals.discount > 0 && (
-                                            <div className="flex justify-between items-center text-xs text-green-400">
-                                                <div className="flex items-center gap-2">
-                                                    <Tag className="w-3 h-3 opacity-50" />
-                                                    <span>Descuento</span>
-                                                </div>
-                                                <span className="font-mono">-{details.currency || 'USD'} ${totals.discount.toLocaleString('en-US')}</span>
-                                            </div>
-                                        )}
-                                        <Separator className="bg-[#333533] my-2" />
-                                        <div className="flex justify-between items-end">
-                                            <div className="flex flex-col gap-1">
-                                                <div className="flex items-center gap-2 text-[#F5CB5C]">
-                                                    <Wallet className="w-3 h-3" />
-                                                    <span className="font-bold text-[10px] uppercase">Inversión Final</span>
-                                                </div>
-                                                <span className="text-[10px] text-[#CFDBD5]/50">Total Mensual Neto</span>
-                                            </div>
-                                            <span className="text-xl font-bold text-[#F5CB5C] font-mono">
-                                                {details.currency || 'USD'} ${totals.net.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                            </span>
-                                        </div>
-                                    </CardContent>
-                                </Card>
                             </div>
 
+                            {/* Terms & Conditions Mirror */}
+                            <div className="mt-8 pt-8 border-t border-[#333533]">
+                                <div className="text-[10px] font-bold text-[#004B8D] uppercase tracking-widest mb-4">Términos y Condiciones (Vista Previa)</div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-[10px] text-[#CFDBD5] opacity-70">
+                                    <div className="flex items-start gap-2">
+                                        <span className="text-[#004B8D]">•</span>
+                                        <span>Propuesta Válida durante 30 días desde su emisión.</span>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                        <span className="text-[#004B8D]">•</span>
+                                        <span>Proyecto a iniciar con Orden de Compra.</span>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                        <span className="text-[#004B8D]">•</span>
+                                        <span>Costos tasados según acuerdo regional.</span>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                        <span className="text-[#004B8D]">•</span>
+                                        <span>Entregables propiedad de Nestlé finalizado el proyecto.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer (Mirror PDF Page 2) */}
+                        <div className="p-4 bg-[#f0f5fa] border-t border-[#333533] text-center">
+                            <span className="text-[10px] font-bold text-[#004B8D]">THE STORE INTELLIGENCE | DOCUMENTO DE AUDITORÍA INTERNA</span>
                         </div>
                     </div>
                 )}
