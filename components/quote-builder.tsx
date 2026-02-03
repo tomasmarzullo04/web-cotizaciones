@@ -816,7 +816,15 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             try {
                 const element = document.getElementById('diagram-capture-target')
                 if (element && state.serviceType !== 'Staffing') {
-                    const canvas = await html2canvas(element, { backgroundColor: '#ffffff', scale: 4, useCORS: true })
+                    // Wait for Mermaid to render (Technical Note)
+                    await new Promise(resolve => setTimeout(resolve, 800))
+
+                    const canvas = await html2canvas(element, {
+                        backgroundColor: '#ffffff',
+                        scale: 3,
+                        useCORS: true,
+                        logging: false
+                    })
                     diagramDataUrl = canvas.toDataURL('image/png')
                 }
             } catch (err) {
@@ -1042,11 +1050,19 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         setExportType(type)
         try {
             let diagramDataUrl = undefined
-            // Capture diagram if relevant
+            // Capture diagram if relevant (Staffing usually has no diagram)
             if (state.serviceType !== 'Staffing') {
                 const element = document.getElementById('diagram-capture-target')
                 if (element) {
-                    const canvas = await html2canvas(element, { backgroundColor: '#ffffff', scale: 4, useCORS: true })
+                    // Critical Wait for Mermaid Render
+                    await new Promise(resolve => setTimeout(resolve, 1000))
+
+                    const canvas = await html2canvas(element, {
+                        backgroundColor: '#ffffff',
+                        scale: 3,
+                        useCORS: true,
+                        logging: false
+                    })
                     diagramDataUrl = canvas.toDataURL('image/png')
                 }
             }

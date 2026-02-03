@@ -85,22 +85,27 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                 ) : (
                     <div className="flex flex-col min-h-full">
                         {/* Header Image/Gradient */}
-                        <div className="relative h-32 bg-gradient-to-r from-[#242423] to-[#1D1D1C] flex items-center px-8 border-b border-[#333533]">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-[#F5CB5C]/5 blur-[60px] rounded-full pointer-events-none" />
-                            <div className="relative z-10 w-full flex justify-between items-center mt-4">
-                                <div>
-                                    <Badge variant="outline" className="mb-2 bg-[#F5CB5C]/10 text-[#F5CB5C] border-[#F5CB5C]/20 uppercase tracking-widest text-[10px]">
-                                        Vista Ejecutiva
-                                    </Badge>
-                                    <h2 className="text-xl font-bold text-white tracking-tight">{quote.projectType || 'Sin Título'}</h2>
+                        <div className="relative h-24 bg-[#004B8D] flex items-center px-8 border-b border-[#333533]">
+                            <div className="absolute top-0 right-0 w-64 h-full bg-white/5 pointer-events-none" />
+                            <div className="relative z-10 w-full flex justify-between items-center">
+                                <div className="flex items-center gap-4">
+                                    <div className="bg-white p-2 rounded-lg">
+                                        <div className="w-8 h-8 bg-[#004B8D] rounded flex items-center justify-center text-white font-black text-xs">SI</div>
+                                    </div>
+                                    <div>
+                                        <Badge variant="outline" className="mb-0.5 bg-white/10 text-white border-white/20 uppercase tracking-widest text-[8px]">
+                                            Audit View
+                                        </Badge>
+                                        <h2 className="text-xl font-bold text-white tracking-tight">COTIZACIÓN</h2>
+                                    </div>
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-xs text-[#CFDBD5] opacity-50 font-mono mb-1">REF: {quote.id.substring(0, 8)}</div>
+                                    <div className="text-xs text-white/70 font-mono mb-1">ID: SI-{quote.id.substring(0, 6).toUpperCase()}</div>
                                     <Badge
-                                        className={`px-3 py-0.5 text-xs font-bold border rounded-full capitalize ${quote.status === 'APROBADA' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
-                                            quote.status === 'RECHAZADA' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
-                                                quote.status === 'ENVIADA' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
-                                                    'bg-zinc-500/20 text-zinc-400 border-zinc-500/30'
+                                        className={`px-3 py-0.5 text-xs font-bold border rounded-full capitalize ${quote.status === 'APROBADA' ? 'bg-emerald-500 text-white border-emerald-400' :
+                                            quote.status === 'RECHAZADA' ? 'bg-red-500 text-white border-red-400' :
+                                                quote.status === 'ENVIADA' ? 'bg-blue-400 text-[#004B8D] border-blue-300' :
+                                                    'bg-zinc-500 text-white border-zinc-400'
                                             }`}
                                     >
                                         {quote.status.toLowerCase()}
@@ -111,33 +116,38 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
 
                         <div className="p-6 md:p-8 space-y-8 flex-1">
                             {/* Meta Info */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-[#CFDBD5] p-4 bg-[#242423]/50 rounded-xl border border-[#333533]">
-                                <div className="flex items-center gap-3">
-                                    <Building2 className="w-4 h-4 text-[#F5CB5C]" />
-                                    <div>
-                                        <div className="text-[10px] opacity-50 uppercase">Cliente</div>
-                                        <div className="font-medium">{quote.clientName || 'Cliente Confidencial'}</div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-4">
+                                    <div className="text-[10px] font-bold text-[#004B8D] uppercase tracking-widest border-b border-[#333533] pb-1">Cotizado a:</div>
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-3 bg-[#f0f5fa] rounded-xl text-[#004B8D]">
+                                            <Building2 className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <div className="text-lg font-bold text-white leading-tight">{quote.clientName || 'Cliente Confidencial'}</div>
+                                            <div className="text-sm text-[#CFDBD5]">{details.clientContact?.name || 'Representante'}</div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <User className="w-4 h-4 text-[#F5CB5C]" />
-                                    <div>
-                                        <div className="text-[10px] opacity-50 uppercase">Consultor</div>
-                                        <div className="font-medium">{quote.user?.name || 'Sistema'}</div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <Calendar className="w-4 h-4 text-[#F5CB5C]" />
-                                    <div>
-                                        <div className="text-[10px] opacity-50 uppercase">Fecha</div>
-                                        <div>{format(new Date(quote.createdAt), "d MMM, yyyy", { locale: es })}</div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <Activity className="w-4 h-4 text-[#F5CB5C]" />
-                                    <div>
-                                        <div className="text-[10px] opacity-50 uppercase">Duración</div>
-                                        <div>{details.durationValue} {details.durationUnit === 'months' ? 'Meses' : details.durationUnit === 'weeks' ? 'Semanas' : 'Días'}</div>
+                                <div className="space-y-4">
+                                    <div className="text-[10px] font-bold text-[#004B8D] uppercase tracking-widest border-b border-[#333533] pb-1">Detalles de Cotización:</div>
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <span className="text-[10px] text-[#CFDBD5] uppercase block opacity-50">Fecha</span>
+                                            <span className="font-medium text-white">{format(new Date(quote.createdAt), "d MMM, yyyy", { locale: es })}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-[10px] text-[#CFDBD5] uppercase block opacity-50">Duración</span>
+                                            <span className="font-medium text-white">{details.durationValue} {details.durationUnit === 'months' ? 'Meses' : details.durationUnit === 'weeks' ? 'Semanas' : 'Días'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-[10px] text-[#CFDBD5] uppercase block opacity-50">Consultor</span>
+                                            <span className="font-medium text-white">{quote.user?.name || 'Equipo Comercial'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-[10px] text-[#CFDBD5] uppercase block opacity-50">Tipo</span>
+                                            <span className="font-medium text-white">{quote.serviceType}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -177,12 +187,12 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                     <span className="w-1 h-4 bg-[#F5CB5C] rounded-full" /> Desglose de Equipo
                                 </h3>
                                 <Card className="bg-[#242423] border-[#333533] overflow-hidden">
-                                    <div className="grid grid-cols-12 gap-2 p-3 bg-[#333533]/50 text-[10px] font-bold text-[#CFDBD5] uppercase tracking-wider border-b border-[#333533]">
-                                        <div className="col-span-4 pl-2">Perfil</div>
-                                        <div className="col-span-2 text-center">Lvl</div>
+                                    <div className="grid grid-cols-12 gap-2 p-3 bg-[#f0f5fa] text-[10px] font-bold text-[#004B8D] uppercase tracking-wider border-b border-[#333533]">
+                                        <div className="col-span-4 pl-2">Perfil / Seniority</div>
+                                        <div className="col-span-2 text-center">Seniority</div>
                                         <div className="col-span-1 text-center">Cant</div>
-                                        <div className="col-span-2 text-right">Tarifa</div>
-                                        <div className="col-span-3 text-right pr-2">Total</div>
+                                        <div className="col-span-2 text-right">Tarifa Mensual</div>
+                                        <div className="col-span-3 text-right pr-2">Subtotal</div>
                                     </div>
                                     <div className="divide-y divide-[#333533]">
                                         {profiles.filter((p: any) => (p.count || 0) > 0).length > 0 ? (
