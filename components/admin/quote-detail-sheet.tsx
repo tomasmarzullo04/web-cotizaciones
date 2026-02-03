@@ -50,7 +50,12 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
             det = JSON.parse(q.technicalParameters || '{}')
             if (q.staffingRequirements) {
                 const extra = JSON.parse(q.staffingRequirements)
-                det = { ...det, staffingDetails: extra }
+                // Handle both new array format and old object format
+                if (Array.isArray(extra)) {
+                    det.profiles = extra
+                } else if (extra.profiles) {
+                    det.profiles = extra.profiles
+                }
             }
         } catch (e) {
             console.error(e)
@@ -59,7 +64,7 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
     }
 
     const details = quote ? parseDetails(quote) : {}
-    const profiles = details.staffingDetails?.profiles || []
+    const profiles = details.profiles || []
 
     // Totals logic
     const totals = {
@@ -229,19 +234,19 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                     <CardContent className="p-4 space-y-2">
                                         <div className="flex justify-between text-xs text-[#CFDBD5]">
                                             <span>Subtotal</span>
-                                            <span className="font-mono">${totals.gross.toLocaleString('en-US')}</span>
+                                            <span className="font-mono">{details.currency || 'USD'} ${totals.gross.toLocaleString('en-US')}</span>
                                         </div>
                                         {totals.discount > 0 && (
                                             <div className="flex justify-between text-xs text-green-400">
                                                 <span>Descuento</span>
-                                                <span className="font-mono">-${totals.discount.toLocaleString('en-US')}</span>
+                                                <span className="font-mono">-{details.currency || 'USD'} ${totals.discount.toLocaleString('en-US')}</span>
                                             </div>
                                         )}
                                         <Separator className="bg-[#333533] my-2" />
                                         <div className="flex justify-between items-end">
                                             <span className="text-[#F5CB5C] font-bold text-xs uppercase">Total Mensual</span>
                                             <span className="text-xl font-bold text-[#F5CB5C] font-mono">
-                                                ${totals.net.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                                {details.currency || 'USD'} ${totals.net.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                             </span>
                                         </div>
                                     </CardContent>

@@ -891,15 +891,22 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     aiFeatures: state.dsModelsCount > 0,
                 } as any,
                 breakdown: {
-                    roles: Object.entries(state.roles).map(([r, c]) => ({ role: r, count: c, cost: 0, hours: 0 })),
+                    roles: (state.serviceType === 'Staffing'
+                        ? state.staffingDetails.profiles.map(p => ({ role: p.role, count: p.count, cost: p.price || 0, seniority: p.seniority, skills: p.skills, hours: 0 }))
+                        : Object.entries(state.roles).map(([r, c]) => ({ role: r, count: c, cost: 0, hours: 0 }))) as any[],
                     totalMonthlyCost: totalMonthlyCostVal,
-                    diagramCode: chartCode
+                    diagramCode: chartCode,
+                    // Store detailed amounts to avoid discrepancies
+                    grossTotal: totalMonthlyCostVal,
+                    discountAmount: discountAmountVal,
+                    finalTotal: finalTotalUSD
                 },
                 estimatedCost: finalTotalConverted,
                 technicalParameters: JSON.stringify({
-                    // ... pass entire state for full hydration? simpler to just pass state really
-                    // but we have been selective... let's stick to what we had but add what's missing
-                    ...state, // PASS ALL STATE TO ENSURE FULL RESTORE
+                    ...state,
+                    grossTotal: totalMonthlyCostVal,
+                    discountAmount: discountAmountVal,
+                    finalTotal: finalTotalUSD,
                     currency: currency,
                     exchangeRate: exchangeRate,
                     originalUSDAmount: finalTotalUSD
@@ -2433,8 +2440,8 @@ graph TD
 
 function generateSustainDiagram(stack: string[]): string {
     const hasSource = stack.includes('sql') || stack.includes('snowflake') || stack.includes('other')
-    const hasIngest = stack.includes('azure_df') || stack.includes('python')
-    const hasProcess = stack.includes('databricks') || stack.includes('datascience') || stack.includes('dotnet')
+    const hasIngest = stack.includes('azure_df') || stack.includes('python') || stack.includes('databricks')
+    const hasProcess = stack.includes('datascience') || stack.includes('dotnet')
     const hasViz = stack.includes('powerbi') || stack.includes('streamlit') || stack.includes('react')
 
     let code = `graph LR
@@ -2446,7 +2453,7 @@ function generateSustainDiagram(stack: string[]): string {
 
     // SOURCES
     if (hasSource) {
-        code += `    subgraph Sources [Fuentes]\n`
+        code += `    subgraph Sources [FUENTES]\n`
         code += `      direction TB\n`
         if (stack.includes('sql')) code += `      src1[SQL Server]:::dark\n`
         if (stack.includes('snowflake')) code += `      src2[Snowflake]:::dark\n`
@@ -2454,25 +2461,25 @@ function generateSustainDiagram(stack: string[]): string {
         code += `    end\n`
     }
 
-    // PLATFORM
+    // INGESTION / PROCESSING
     if (hasIngest || hasProcess) {
-        code += `    subgraph Platform [Plataforma de Datos]\n`
+        code += `    subgraph Platform [INGESTA & PROCESO]\n`
         code += `      direction TB\n`
         if (stack.includes('azure_df')) code += `      ing1[Azure Data Factory]:::dark\n`
         if (stack.includes('python')) code += `      ing2[Python Scripts]:::dark\n`
+        if (stack.includes('databricks')) code += `      ing3[Databricks]:::dark\n`
 
-        if (stack.includes('databricks')) code += `      proc1[Databricks]:::dark\n`
         if (stack.includes('datascience')) code += `      proc2[Modelos ML]:::dark\n`
         if (stack.includes('dotnet')) code += `      proc3[.NET Core]:::dark\n`
 
         // Internal Links
-        if (stack.includes('azure_df') && stack.includes('databricks')) code += `      ing1 --> proc1\n`
+        if (stack.includes('azure_df') && stack.includes('databricks')) code += `      ing1 --> ing3\n`
         code += `    end\n`
     }
 
     // CONSUMPTION
     if (hasViz) {
-        code += `    subgraph Usage [Visualización & Consumo]\n`
+        code += `    subgraph Usage [CONSUMO]\n`
         code += `      direction TB\n`
         if (stack.includes('powerbi')) code += `      viz1[Power BI]:::dark\n`
         if (stack.includes('streamlit')) code += `      viz2[Streamlit]:::dark\n`

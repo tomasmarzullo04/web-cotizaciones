@@ -403,7 +403,7 @@ export async function saveQuote(data: {
                 status: 'BORRADOR',
                 linkedClientId: data.clientId || undefined, // Link to DB Client
                 pdfSnapshot: data.pdfBase64 || null // Store Snapshot
-            }
+            } as any
         })
 
         // Trigger Monday Sync (Fire and forget, but return status)
@@ -482,8 +482,8 @@ export async function updateQuote(id: string, data: {
                 // Update linked client only if explicitly changed? 
                 // Mostly we just update the quote content.
                 linkedClientId: data.clientId || undefined,
-                pdfSnapshot: data.pdfBase64 || undefined // Update snapshot if provided
-            }
+                pdfSnapshot: data.pdfBase64 || undefined // NEW: Snapshot
+            } as any
         })
 
         // N8N sync is handled client-side via the PDF upload call usually, 
@@ -716,27 +716,24 @@ export async function convertProspectToClient(email: string) {
     }
 }
 
-
-
 export async function deleteQuote(quoteId: string) {
     const cookieStore = await cookies()
     const userId = cookieStore.get('session_user_id')?.value
+    const role = cookieStore.get('session_role')?.value
 
     if (!userId) return { success: false, error: "Unauthorized" }
 
     try {
-        // Ensure user owns the quote
         const quote = await prisma.quote.findUnique({ where: { id: quoteId } })
         if (!quote) return { success: false, error: "Quote not found" }
 
-        // Admin can delete any? Or strict ownership? Sticking to strict ownership for multitenancy unless admin role check.
-        const role = cookieStore.get('session_role')?.value
-        if (quote.userId !== userId && role !== 'ADMIN') {
+        if (quote.userId !== userId && role?.toLowerCase() !== 'admin') {
             return { success: false, error: "Forbidden: You do not own this quote" }
         }
 
         await prisma.quote.delete({ where: { id: quoteId } })
         revalidatePath('/dashboard')
+        revalidatePath('/admin')
         return { success: true }
     } catch (e) {
         console.error("Delete failed", e)
@@ -942,9 +939,9 @@ export async function reviewQuote(quoteId: string, status: 'APROBADA' | 'RECHAZA
             data: {
                 status: status,
                 adminComment: comment
-            },
+            } as any,
             include: { user: true }
-        })
+        }) as any
 
         // Webhook Notification (Explicit Requirement)
         const webhookUrl = "https://n8n.myinfo.la/webhook/web-cotizaciones-notif"
@@ -1009,5 +1006,6 @@ export async function getQuoteById(id: string) {
             client: true // Fetch Client details if linked
         }
     })
-    return quote
+    return quote as any
 }
+

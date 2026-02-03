@@ -8,11 +8,13 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Download, FileSpreadsheet, LayoutGrid, DollarSign, Search, FilterX, Activity } from 'lucide-react'
+import { Download, FileSpreadsheet, LayoutGrid, DollarSign, Search, FilterX, Activity, Trash2, Loader2 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AdminReviewModal } from "@/components/admin-review-modal"
+import { deleteQuote } from '@/lib/actions'
+import { toast } from 'sonner'
 
 type Quote = {
     id: string
@@ -74,6 +76,26 @@ export function AdminHistory({ quotes: serverQuotes, consultants: serverConsulta
     // Modal State
     const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null)
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
+    const [deletingId, setDeletingId] = useState<string | null>(null)
+
+    const handleDelete = async (id: string, clientName: string) => {
+        if (!window.confirm(`¿Estás seguro de eliminar la cotización de "${clientName}"? Esta acción no se puede deshacer.`)) return
+
+        setDeletingId(id)
+        try {
+            const res = await deleteQuote(id)
+            if (res.success) {
+                toast.success("Cotización eliminada correctamente")
+                setMergedQuotes(prev => prev.filter(q => q.id !== id))
+            } else {
+                toast.error(res.error || "Error al eliminar")
+            }
+        } catch (err) {
+            toast.error("Error de conexión")
+        } finally {
+            setDeletingId(null)
+        }
+    }
 
     const handleApplyFilters = () => {
         setIsFiltering(true)
@@ -422,19 +444,38 @@ export function AdminHistory({ quotes: serverQuotes, consultants: serverConsulta
                                         </TableCell>
                                         {/* Actions */}
                                         <TableCell className="text-center py-5">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="bg-[#F5CB5C]/10 text-[#F5CB5C] hover:bg-[#F5CB5C] hover:text-[#171717] border border-[#F5CB5C]/20 transition-all font-bold group-hover:scale-105"
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    setSelectedQuote(quote)
-                                                    setIsReviewModalOpen(true)
-                                                }}
-                                            >
-                                                <Search className="w-4 h-4 mr-2" />
-                                                Revisar
-                                            </Button>
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="bg-[#F5CB5C]/10 text-[#F5CB5C] hover:bg-[#F5CB5C] hover:text-[#171717] border border-[#F5CB5C]/20 transition-all font-bold group-hover:scale-105"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        setSelectedQuote(quote)
+                                                        setIsReviewModalOpen(true)
+                                                    }}
+                                                >
+                                                    <Search className="w-4 h-4 mr-2" />
+                                                    Revisar
+                                                </Button>
+
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    disabled={deletingId === quote.id}
+                                                    className="h-8 w-8 text-red-400 hover:text-white hover:bg-red-500/20 border border-transparent hover:border-red-500/30 transition-all"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        handleDelete(quote.id, quote.clientName)
+                                                    }}
+                                                >
+                                                    {deletingId === quote.id ? (
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="w-4 h-4" />
+                                                    )}
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 )
