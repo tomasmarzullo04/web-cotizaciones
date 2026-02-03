@@ -688,9 +688,9 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             const dyn = findDynamicRate(dbRoleName, level)
             if (dyn !== null) return dyn
 
-            // 2. Try Fallback Hardcoded
-            const key = Object.keys(FALLBACK_RATES).find(k => role.toLowerCase().includes(k.replace('_', ' '))) as RoleKey | undefined
-            const base = key ? FALLBACK_RATES[key] : 4000
+            // 2. Try Fallback Hardcoded (Using ROLE_CONFIG)
+            const configEntry = Object.values(ROLE_CONFIG).find(c => role.toLowerCase().includes(c.label.toLowerCase()))
+            const base = configEntry ? configEntry.defaultPrice : 4000
 
             // Apply Manual Logic Multipliers if using Fallback
             let mod = 1.0
