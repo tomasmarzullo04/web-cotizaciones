@@ -937,23 +937,32 @@ export async function reviewQuote(quoteId: string, status: 'APROBADA' | 'RECHAZA
             include: { user: true }
         })
 
-        // Webhook Notification (Fire and Forget)
-        const webhookUrl = process.env.N8N_MONDAY_WEBHOOK || process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL
-        if (webhookUrl && quote.user?.email) {
-            // We don't await this to speed up UI, or we await if we want to guarantee sending
+        // Webhook Notification (Explicit Requirement)
+        const webhookUrl = "https://n8n.myinfo.la/webhook/web-cotizaciones-notif"
+
+        if (quote.user?.email) {
+            console.log("Triggering Webhook for Quote:", quote.id)
+
+            // Format Status: "Aprobada" or "Rechazada" (Capitalize first letter only for cleaner email?)
+            // User requested "Aprobada" or "Rechazada". DB is UPPERCASE.
+            const formattedStatus = status === 'APROBADA' ? 'Aprobada' : 'Rechazada'
+
             fetch(webhookUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action: "review_decision",
-                    id: quote.id,
-                    status: status,
+                    emailConsultor: quote.user.email,
+                    quoteNumber: quote.id,
                     adminComment: comment,
-                    consultantEmail: quote.user.email,
-                    clientName: quote.clientName,
-                    date: new Date().toISOString()
+                    statusUpdate: formattedStatus,
+                    projectName: quote.projectType || quote.clientName // Fallback if projectType is empty
                 })
-            }).catch(err => console.error("Webhook trigger failed", err))
+            })
+                .then(res => {
+                    if (res.ok) console.log("Webhook sent successfully for", quote.id)
+                    else console.error("Webhook failed with status:", res.status)
+                })
+                .catch(err => console.error("Webhook connection error:", err))
         }
 
         revalidatePath('/admin')
