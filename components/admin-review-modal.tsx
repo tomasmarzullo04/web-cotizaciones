@@ -118,7 +118,7 @@ export function AdminReviewModal({ quote, isOpen, onClose, onStatusChange }: Adm
                                 </div>
                             </div>
 
-                            <DialogFooter className="gap-2 sm:gap-0">
+                            <DialogFooter className="gap-3">
                                 <Button
                                     variant="outline"
                                     onClick={onClose}
@@ -127,7 +127,7 @@ export function AdminReviewModal({ quote, isOpen, onClose, onStatusChange }: Adm
                                 >
                                     Cancelar
                                 </Button>
-                                <div className="flex gap-2 w-full sm:w-auto">
+                                <div className="flex gap-3 w-full sm:w-auto">
                                     <Button
                                         className="flex-1 sm:flex-none bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/30"
                                         onClick={() => handleAction('RECHAZADA')}
