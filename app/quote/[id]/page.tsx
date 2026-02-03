@@ -21,7 +21,9 @@ export default async function EditQuotePage({ params }: { params: Promise<{ id: 
             where: { id }
         })
 
-        if (!quote || quote.userId !== userId) {
+        const role = cookieStore.get('session_role')?.value
+
+        if (!quote || (quote.userId !== userId && role !== 'ADMIN')) {
             console.error(`Quote not found or unauthorized: ${id}`)
             return (
                 <div className="flex flex-col items-center justify-center min-h-screen p-10 bg-gray-50 text-gray-900">

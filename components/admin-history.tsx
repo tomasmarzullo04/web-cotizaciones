@@ -337,6 +337,7 @@ export function AdminHistory({ quotes: serverQuotes, consultants: serverConsulta
                                 <TableHead className="text-[#CFDBD5] font-bold uppercase tracking-wider h-12">Consultor</TableHead>
                                 <TableHead className="text-[#CFDBD5] font-bold uppercase tracking-wider h-12">Estado</TableHead>
                                 <TableHead className="text-[#CFDBD5] font-bold uppercase tracking-wider h-12 text-right pr-8">Valor Estimado</TableHead>
+                                <TableHead className="text-[#CFDBD5] font-bold uppercase tracking-wider h-12 text-center">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -419,12 +420,28 @@ export function AdminHistory({ quotes: serverQuotes, consultants: serverConsulta
                                                 {quote.createdAt ? format(new Date(quote.createdAt), "d MMM", { locale: es }) : '-'}
                                             </span>
                                         </TableCell>
+                                        {/* Actions */}
+                                        <TableCell className="text-center py-5">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="bg-[#F5CB5C]/10 text-[#F5CB5C] hover:bg-[#F5CB5C] hover:text-[#171717] border border-[#F5CB5C]/20 transition-all font-bold group-hover:scale-105"
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    setSelectedQuote(quote)
+                                                    setIsReviewModalOpen(true)
+                                                }}
+                                            >
+                                                <Search className="w-4 h-4 mr-2" />
+                                                Revisar
+                                            </Button>
+                                        </TableCell>
                                     </TableRow>
                                 )
                             })}
                             {mergedQuotes.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="h-32 text-center text-[#CFDBD5]">
+                                    <TableCell colSpan={7} className="h-32 text-center text-[#CFDBD5]">
                                         No hay cotizaciones registradas aún.
                                     </TableCell>
                                 </TableRow>

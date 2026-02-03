@@ -109,7 +109,7 @@ export function AdminReviewModal({ quote, isOpen, onClose, onStatusChange }: Adm
                                     id="comment"
                                     value={comment}
                                     onChange={(e) => setComment(e.target.value)}
-                                    placeholder="Escribe aquí las observaciones para el consultor..."
+                                    placeholder="Ej: Ajustar tarifa de Azure Developer según nuevo acuerdo."
                                     className="bg-[#242423] border-[#2D2D2D] text-[#E8EDDF] focus:border-[#F5CB5C] min-h-[100px]"
                                 />
                             </div>
