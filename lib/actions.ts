@@ -943,16 +943,27 @@ export async function reviewQuote(quoteId: string, status: 'APROBADA' | 'RECHAZA
         if (quote.user?.email) {
             console.log("Triggering Webhook for Quote:", quote.id)
 
-            // Format Status: "Aprobada" or "Rechazada" (Capitalize first letter only for cleaner email?)
-            // User requested "Aprobada" or "Rechazada". DB is UPPERCASE.
             const formattedStatus = status === 'APROBADA' ? 'Aprobada' : 'Rechazada'
+
+            // Parse params to try getting specific names (e.g. Sustain Solution Name)
+            let realProjectName = quote.clientName
+            try {
+                const params = JSON.parse(quote.technicalParameters)
+                if (quote.serviceType === 'Sustain' && params.sustainDetails?.solutionName) {
+                    realProjectName = `${quote.clientName} - ${params.sustainDetails.solutionName}`
+                }
+            } catch (e) {
+                // Keep clientName as fallback
+            }
 
             fetch(webhookUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     quoteNumber: quote.id,
-                    projectName: quote.projectType || quote.clientName, // Priority to Project Type
+                    projectName: realProjectName, // Fixed: Uses Client Name or Solution Name
+                    complexityLevel: quote.projectType, // Mapped current DB value ('medium') to proper field
+                    serviceType: quote.serviceType,
                     emailConsultor: quote.user.email,
                     statusUpdate: formattedStatus,
                     adminComment: comment
