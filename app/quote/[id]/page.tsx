@@ -45,8 +45,10 @@ export default async function EditQuotePage({ params }: { params: Promise<{ id: 
 
         const rates = await prisma.serviceRate.findMany()
 
+        const isReadOnly = role === 'ADMIN'
+
         return (
-            <QuoteBuilder initialData={serializedQuote} dbRates={rates} />
+            <QuoteBuilder initialData={serializedQuote} dbRates={rates} readOnly={isReadOnly} />
         )
     } catch (error) {
         console.error("Error loading edit page:", error)

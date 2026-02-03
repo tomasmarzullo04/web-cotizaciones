@@ -309,8 +309,53 @@ type ServiceRate = {
     multiplier: number
 }
 
-export default function QuoteBuilder({ dbRates = [], initialData }: { dbRates?: ServiceRate[], initialData?: any }) {
+export default function QuoteBuilder({ dbRates = [], initialData, readOnly = false }: { dbRates?: ServiceRate[], initialData?: any, readOnly?: boolean }) {
     const [state, setState] = useState<QuoteState>(JSON.parse(JSON.stringify(INITIAL_STATE)))
+
+    // ... (rest of state) ... 
+
+    // FROZEN RATES LOGIC (Data Freezing)
+    // We extract the unit costs from the saved snapshot to prevent recalculation with new DB rates.
+    const frozenRates = useMemo(() => {
+        if (!initialData || !readOnly) return null
+
+        const ratesMap = new Map<string, number>()
+
+        try {
+            // 1. Staffing Frozen Rates
+            if (initialData.staffingRequirements) {
+                const staffing = typeof initialData.staffingRequirements === 'string'
+                    ? JSON.parse(initialData.staffingRequirements)
+                    : initialData.staffingRequirements
+
+                if (Array.isArray(staffing)) {
+                    staffing.forEach((roleItem: any) => {
+                        // Snapshot 'cost' is usually Total Monthly Cost for that line
+                        // We need Unit Rate = Cost / (Count * Allocation)
+                        const count = Number(roleItem.count) || 1
+                        const allocation = (Number(roleItem.allocationPercentage) || 100) / 100
+                        const totalLineCost = Number(roleItem.cost) || 0
+
+                        if (count > 0 && totalLineCost > 0) {
+                            const unitRate = totalLineCost / (count * allocation)
+                            // Key: Role + Seniority (e.g. "Data Engineer_Sr")
+                            // Note: 'roleItem' might lack seniority explicit field if not saved properly?
+                            // staffingDetails.profiles saves it.
+                            // Let's rely on the construction of the key.
+                            const key = `${roleItem.role}_${roleItem.seniority || 'Ssr'}`
+                            ratesMap.set(key, unitRate)
+                        }
+                    })
+                }
+            }
+        } catch (e) {
+            console.error("Failed to parse frozen rates", e)
+        }
+
+        return ratesMap
+    }, [initialData, readOnly])
+
+    // ... existing state ... : 
     const [chartCode, setChartCode] = useState('')
     const [manualDiagramCode, setManualDiagramCode] = useState<string | null>(null)
     const [isEditingDiagram, setIsEditingDiagram] = useState(false)
@@ -326,7 +371,6 @@ export default function QuoteBuilder({ dbRates = [], initialData }: { dbRates?: 
     const [wizardStep, setWizardStep] = useState(0) // 0: Selection, 1: Form
     const router = useRouter()
 
-    // --- Currency State (Global API) ---
     // --- Currency State (Global API) ---
     const FALLBACK_EXCHANGE_RATES: Record<string, number> = {
         'USD': 1.0,
@@ -394,6 +438,8 @@ export default function QuoteBuilder({ dbRates = [], initialData }: { dbRates?: 
                 techStack: Array.isArray(params?.techStack) ? params.techStack : [],
                 roles: { ...prev.roles, ...(params?.roles || {}) },
                 staffingDetails: params?.staffingDetails || prev.staffingDetails,
+                // Ensure Explicit Profile Array from snapshot if needed? 
+                // Using params.staffingDetails should be enough as it comes from JSON.
                 sustainDetails: params?.sustainDetails || prev.sustainDetails,
                 criticitness: params?.criticitness || prev.criticitness,
                 clientContact: params?.clientContact || prev.clientContact,
@@ -476,10 +522,12 @@ export default function QuoteBuilder({ dbRates = [], initialData }: { dbRates?: 
 
     // --- Helpers ---
     const updateState = <K extends keyof QuoteState>(key: K, val: QuoteState[K]) => {
+        if (readOnly) return // BLOCK EDITING
         setState(prev => ({ ...prev, [key]: val }))
     }
 
     const updateRole = (role: RoleKey, delta: number) => {
+        if (readOnly) return // BLOCK EDITING
         setState(prev => {
             const current = prev.roles[role] || 0
             return {
@@ -500,6 +548,7 @@ export default function QuoteBuilder({ dbRates = [], initialData }: { dbRates?: 
     }, [state.durationValue, state.durationUnit])
 
     const updateCriticitness = <K extends keyof QuoteState['criticitness']>(key: K, val: QuoteState['criticitness'][K]) => {
+        if (readOnly) return // BLOCK EDITING
         setState(prev => ({
             ...prev,
             criticitness: { ...prev.criticitness, [key]: val }
@@ -507,6 +556,7 @@ export default function QuoteBuilder({ dbRates = [], initialData }: { dbRates?: 
     }
 
     const toggleTech = (id: string) => {
+        if (readOnly) return // BLOCK EDITING
         setState(prev => {
             const exists = prev.techStack.includes(id)
             return {
@@ -557,7 +607,7 @@ export default function QuoteBuilder({ dbRates = [], initialData }: { dbRates?: 
     }, [sustainScore])
 
     const handleAiPolish = async () => {
-        if (!state.description) return
+        if (!state.description || readOnly) return
         setPolishLoading(true)
         // Simulate AI delay
         await new Promise(r => setTimeout(r, 1500))
@@ -607,6 +657,15 @@ export default function QuoteBuilder({ dbRates = [], initialData }: { dbRates?: 
 
         // Helper: Get best available rate
         const getRate = (role: string, level: string = 'Ssr') => {
+            // FROZEN CHECK
+            if (readOnly && frozenRates) {
+                const key = `${role}_${level}`
+                if (frozenRates.has(key)) return frozenRates.get(key)!
+
+                // Fallback: Check without level (maybe level mismatch in legacy)
+                // Only for simple roles
+            }
+
             // Mapping internal keys to DB Service Names
             // Mapping internal keys to DB Service Names
             const roleMap: Record<string, string> = {
@@ -732,7 +791,7 @@ export default function QuoteBuilder({ dbRates = [], initialData }: { dbRates?: 
             finalTotal: netTotal, // Renaming used variable to match semantic "Final to Pay"
             totalMonthlyCost: netTotal
         }
-    }, [state, dbRates, criticitnessLevel, findDynamicRate, sustainLevel]) // Added sustainLevel dependency
+    }, [state, dbRates, criticitnessLevel, findDynamicRate, sustainLevel, readOnly, frozenRates]) // ADDED DEPENDENCIES
 
     const durationInMonths = getDurationInMonths()
     const totalProjectCost = finalTotal * durationInMonths
@@ -1154,8 +1213,15 @@ graph TD
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="flex flex-col lg:flex-row h-screen overflow-hidden bg-[#333533] font-sans pt-24 md:pt-32"
+            className="flex flex-col lg:flex-row h-screen overflow-hidden bg-[#333533] font-sans pt-24 md:pt-32 relative"
         >
+            {/* ADMIN READ-ONLY BANNER */}
+            {readOnly && (
+                <div className="absolute top-0 left-0 w-full bg-amber-500/20 border-b border-amber-500/50 p-2 text-amber-400 text-center font-bold text-xs uppercase tracking-widest z-50 backdrop-blur-md flex items-center justify-center gap-2">
+                    <ShieldAlert className="w-4 h-4" />
+                    VISTA DE ADMINISTRADOR (SOLO LECTURA) - PRECIOS CONGELADOS
+                </div>
+            )}
 
             {/* ================= LEFT COLUMN: FORM SCROLL ================= */}
             <div className="w-full lg:w-2/3 h-full overflow-y-auto scrollbar-custom p-4 md:p-8 lg:p-12">
