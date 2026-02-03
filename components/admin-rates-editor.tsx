@@ -50,7 +50,7 @@ export function AdminRatesEditor() {
             Jr: 0,
             Ssr: 0,
             Sr: 0,
-            Lead: 0
+            Expert: 0 // Renamed/Added Expert. Keeping Lead as equiv if needed, but user wants Expert.
         }
     })
     const [isSaving, setIsSaving] = useState(false)
@@ -87,7 +87,7 @@ export function AdminRatesEditor() {
     const staffingGroups = useMemo(() => {
         const groups: Record<string, StaffingGroup> = {}
         const staffingRates = rates.filter(r =>
-            ['Jr', 'Ssr', 'Sr', 'Lead'].includes(r.complexity) ||
+            ['Jr', 'Ssr', 'Sr', 'Expert'].includes(r.complexity) ||
             (r.frequency === 'Mensual' && activeTab === 'staffing')
         )
 
@@ -103,7 +103,7 @@ export function AdminRatesEditor() {
 
     const otherRates = useMemo(() => {
         return rates.filter(r =>
-            !['Jr', 'Ssr', 'Sr', 'Lead'].includes(r.complexity) &&
+            !['Jr', 'Ssr', 'Sr', 'Expert'].includes(r.complexity) &&
             r.frequency !== 'Mensual'
         )
     }, [rates])
@@ -116,7 +116,7 @@ export function AdminRatesEditor() {
                 Jr: group.rates['Jr']?.basePrice || 0,
                 Ssr: group.rates['Ssr']?.basePrice || 0,
                 Sr: group.rates['Sr']?.basePrice || 0,
-                Lead: group.rates['Lead']?.basePrice || 0
+                Expert: group.rates['Expert']?.basePrice || 0
             }
         })
         setIsDialogOpen(true)
@@ -126,7 +126,7 @@ export function AdminRatesEditor() {
         setEditingService(null) // New
         setMatrixForm({
             service: '',
-            prices: { Jr: 0, Ssr: 0, Sr: 0, Lead: 0 }
+            prices: { Jr: 0, Ssr: 0, Sr: 0, Expert: 0 }
         })
         setIsDialogOpen(true)
     }
@@ -138,9 +138,8 @@ export function AdminRatesEditor() {
         }
         setIsSaving(true)
         try {
-            // We need to upsert 4 rows (Jr, Ssr, Sr, Lead)
-            const levels = ['Jr', 'Ssr', 'Sr'] // User requested Jr, Medium(Ssr), Senior(Sr) clearly
-            // Mapping UI "Medium" to DB "Ssr" if needed, but keeping Ssr for consistency with codebase
+            // We need to upsert 4 rows (Jr, Ssr, Sr, Expert)
+            const levels = ['Jr', 'Ssr', 'Sr', 'Expert']
 
             // Find existing IDs if editing
             const currentGroup = staffingGroups.find(g => g.service === (editingService || matrixForm.service))
@@ -216,6 +215,7 @@ export function AdminRatesEditor() {
                                         <TableHead className="text-[#CFDBD5] text-center">Junior (1-2y)</TableHead>
                                         <TableHead className="text-[#CFDBD5] text-center">Medium (3-5y)</TableHead>
                                         <TableHead className="text-[#CFDBD5] text-center">Senior (+5y)</TableHead>
+                                        <TableHead className="text-[#CFDBD5] text-center">Expert (+10y)</TableHead>
                                         <TableHead className="text-[#CFDBD5] text-center pr-8">Acciones</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -256,6 +256,15 @@ export function AdminRatesEditor() {
                                                 ) : <span className="text-xs text-[#CFDBD5]/30">-</span>}
                                             </TableCell>
 
+                                            {/* Expert */}
+                                            <TableCell className="text-center">
+                                                {group.rates['Expert'] ? (
+                                                    <Badge variant="outline" className="bg-amber-500/10 text-amber-400 border-amber-500/20 font-mono">
+                                                        ${group.rates['Expert'].basePrice.toLocaleString()}
+                                                    </Badge>
+                                                ) : <span className="text-xs text-[#CFDBD5]/30">-</span>}
+                                            </TableCell>
+
                                             <TableCell className="text-center pr-8">
                                                 <Button
                                                     size="sm"
@@ -271,7 +280,7 @@ export function AdminRatesEditor() {
                                     ))}
                                     {staffingGroups.length === 0 && (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="text-center py-12 text-[#CFDBD5] opacity-50">
+                                            <TableCell colSpan={6} className="text-center py-12 text-[#CFDBD5] opacity-50">
                                                 No hay perfiles staffing configurados.
                                             </TableCell>
                                         </TableRow>
@@ -335,6 +344,16 @@ export function AdminRatesEditor() {
                                     type="number"
                                     value={matrixForm.prices.Sr}
                                     onChange={(e) => setMatrixForm({ ...matrixForm, prices: { ...matrixForm.prices, Sr: Number(e.target.value) } })}
+                                    className="col-span-2 bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-4 items-center">
+                                <Label className="text-right text-[#CFDBD5]">Expert</Label>
+                                <Input
+                                    type="number"
+                                    value={matrixForm.prices.Expert}
+                                    onChange={(e) => setMatrixForm({ ...matrixForm, prices: { ...matrixForm.prices, Expert: Number(e.target.value) } })}
                                     className="col-span-2 bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"
                                 />
                             </div>

@@ -40,6 +40,7 @@ model Quote {
   client               Client?  @relation(fields: [linkedClientId], references: [id])
 
   adminComment         String?  // Comment from admin upon approval/rejection
+  pdfSnapshot          String?  @db.Text // Base64 Snapshot of the PDF for static viewing
 
   @@index([userId]) // Performance optimization
 }

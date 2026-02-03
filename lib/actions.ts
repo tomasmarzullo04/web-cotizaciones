@@ -363,7 +363,8 @@ export async function saveQuote(data: {
     technicalParameters?: string, // Optional override (JSON string)
     clientId?: string, // NEW: Linked Client ID
     isNewClient?: boolean, // NEW: Flag for n8n
-    clientData?: { name: string, contact: string, email: string } // NEW: For creating in Monday
+    clientData?: { name: string, contact: string, email: string }, // NEW: For creating in Monday
+    pdfBase64?: string // NEW: Snapshot
 }) {
     const cookieStore = await cookies()
     const userId = cookieStore.get('session_user_id')?.value
@@ -400,7 +401,8 @@ export async function saveQuote(data: {
                 diagramDefinition: data.breakdown.diagramCode,
                 userId: userId,
                 status: 'BORRADOR',
-                linkedClientId: data.clientId || undefined // Link to DB Client
+                linkedClientId: data.clientId || undefined, // Link to DB Client
+                pdfSnapshot: data.pdfBase64 || null // Store Snapshot
             }
         })
 
@@ -439,7 +441,8 @@ export async function updateQuote(id: string, data: {
     technicalParameters?: string,
     clientId?: string,
     isNewClient?: boolean,
-    clientData?: { name: string, contact: string, email: string }
+    clientData?: { name: string, contact: string, email: string },
+    pdfBase64?: string // NEW: Snapshot
 }) {
     const cookieStore = await cookies()
     const userId = cookieStore.get('session_user_id')?.value
@@ -478,7 +481,8 @@ export async function updateQuote(id: string, data: {
                 diagramDefinition: data.breakdown.diagramCode,
                 // Update linked client only if explicitly changed? 
                 // Mostly we just update the quote content.
-                linkedClientId: data.clientId || undefined
+                linkedClientId: data.clientId || undefined,
+                pdfSnapshot: data.pdfBase64 || undefined // Update snapshot if provided
             }
         })
 

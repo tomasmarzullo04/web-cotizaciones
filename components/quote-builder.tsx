@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { MermaidDiagram } from "@/components/mermaid-diagram"
-import { Wand2, Download, FileText, Check, ShieldAlert, Network, Cpu, Calculator, Save, Loader2, ClipboardList, Database, Users, Briefcase, Layers, AlertTriangle, Activity, Zap, Edit, X, RefreshCw, ImageDown, Sparkles, Undo2, ArrowRight, Plus, Minus } from "lucide-react"
+import { Wand2, Download, FileText, Check, ShieldAlert, Network, Cpu, Calculator, Save, Loader2, ClipboardList, Database, Users, Briefcase, Layers, AlertTriangle, Activity, Zap, Edit, X, RefreshCw, ImageDown, Sparkles, Undo2, ArrowRight, Plus, Minus, Trash2 } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { saveQuote } from "@/lib/actions"
 import { generateMermaidUpdate } from "@/lib/ai"
@@ -127,6 +128,7 @@ interface QuoteState {
             seniority: string
             skills: string
             count: number
+            price?: number // Added for snapshot pricing
             startDate: string
             endDate: string
             allocationPercentage?: number
@@ -661,31 +663,26 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             if (readOnly && frozenRates) {
                 const key = `${role}_${level}`
                 if (frozenRates.has(key)) return frozenRates.get(key)!
-
-                // Fallback: Check without level (maybe level mismatch in legacy)
-                // Only for simple roles
             }
 
-            // Mapping internal keys to DB Service Names
             // Mapping internal keys to DB Service Names
             const roleMap: Record<string, string> = {
                 'data_engineer': 'Data Engineer',
                 'data_analyst': 'Data Analyst',
-                'data_science': 'Data Science', // Legacy
-                'bi_developer': 'BI Developer', // Legacy
+                'data_science': 'Data Science',
+                'bi_developer': 'BI Developer',
                 'project_manager': 'Project Manager & Product MGR',
                 'qa_automation': 'QA Automation',
                 'arquitecto': 'Data Architect',
                 'power_apps': 'Power Apps / Power Automate',
                 'react_dev': 'React Dev',
                 'power_automate': 'Power Apps / Power Automate',
-                // New Roles
                 'bi_visualization': 'BI Visualization Developer',
                 'azure_developer': 'Azure Developer',
                 'data_architect': 'Data Architect',
                 'bi_data_scientist': 'BI Data Scientist',
                 'operations_analyst': 'Operations Analyst',
-                'bi_visualization_developer': 'BI Visualization Developer' // Safety alias
+                'bi_visualization_developer': 'BI Visualization Developer'
             }
 
             const dbRoleName = roleMap[role.toLowerCase()] || role
@@ -695,7 +692,6 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             if (dyn !== null) return dyn
 
             // 2. Try Fallback Hardcoded
-            // Clean role name for fallback lookup
             const key = Object.keys(FALLBACK_RATES).find(k => role.toLowerCase().includes(k.replace('_', ' '))) as RoleKey | undefined
             const base = key ? FALLBACK_RATES[key] : 4000
 
@@ -703,39 +699,41 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             let mod = 1.0
             if (level === 'Jr') mod = 0.7
             if (level === 'Sr') mod = 1.3
-            if (level === 'Lead') mod = 1.5
+            if (level === 'Expert' || level === 'Lead') mod = 1.5
 
             return base * mod
         }
 
-        if (state.serviceType === 'Staffing' || state.serviceType === 'Sustain') {
-            // Staffing & Sustain: Explicit Profile List
+        // Calculation: Prioritize Explicit Profiles (New Dynamic Logic)
+        if (state.staffingDetails.profiles && state.staffingDetails.profiles.length > 0) {
             state.staffingDetails.profiles.forEach(p => {
-                const cost = getRate(p.role, p.seniority)
+                // Use stored snapshot price if available (Exact Price), else calculate
+                const cost = p.price !== undefined ? p.price : getRate(p.role, p.seniority)
                 const allocation = (p.allocationPercentage ?? 100) / 100
-                baseRoles += cost * p.count * allocation
+                baseRoles += cost * (p.count || 1) * allocation
             })
         } else {
-            // Project (Role Counters)
+            // Fallback: Legacy Counters (e.g. old quotes or if empty)
             Object.entries(state.roles).forEach(([roleKey, count]) => {
                 if (count > 0) {
-                    // Assume Ssr/Standard for bulk counters unless we add granularity there
+                    // Assume Ssr for bulk counters
                     const cost = getRate(roleKey, 'Ssr')
                     baseRoles += cost * count
                 }
             })
+
+            // Apply Global Complexity Mod only for Legacy Counters (Project Type)
+            // (If using profiles, complexity is inherent in Seniority selection)
+            if (state.serviceType === 'Proyecto') {
+                const complexityMod = COMPLEXITY_MODIFIERS[state.complexity] || 1.0
+                baseRoles *= complexityMod
+            }
         }
 
-        // Apply Service Type Specific Role Multipliers
-        // Sustain: Operation Hours (Now Support Window)
+        // Apply Sustain Modifiers (Support Window coverage applies to total team cost)
         if (state.serviceType === 'Sustain') {
             const hoursMod = HOURS_MODIFIERS[state.sustainDetails.supportWindow as keyof typeof HOURS_MODIFIERS] || 1.0
             baseRoles *= hoursMod
-        }
-        // Project: Complexity
-        if (state.serviceType === 'Proyecto') {
-            const complexityMod = COMPLEXITY_MODIFIERS[state.complexity] || 1.0
-            baseRoles *= complexityMod
         }
 
 
@@ -840,7 +838,42 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             const finalTotalConverted = convert(finalTotalUSD)
             const exchangeRate = exchangeRates[currency] || 1.0
 
-            // 2. Save to DB (Create or Update)
+            // 2. Generate PDF Snapshot (For Audit & DB)
+            // We generate this BEFORE saving to persist the static view
+            let pdfBase64 = ""
+            try {
+                const pdfBlob = await generatePDFBlob({
+                    ...state,
+                    totalMonthlyCost: totalMonthlyCostVal,
+                    l2SupportCost: l2SupportCostVal,
+                    riskCost: riskCostVal,
+                    totalWithRisk: totalWithRiskVal,
+                    criticitnessLevel: criticitnessLevel as any,
+                    diagramImage: diagramDataUrl,
+                    serviceType: state.serviceType,
+                    commercialDiscount: state.commercialDiscount,
+                    discountAmount: discountAmountVal,
+                    finalTotal: finalTotalUSD,
+                    currency: currency,
+                    exchangeRate: exchangeRate,
+                    durationMonths: getDurationInMonths()
+                })
+
+                const reader = new FileReader()
+                reader.readAsDataURL(pdfBlob)
+                pdfBase64 = await new Promise<string>((resolve) => {
+                    reader.onloadend = () => {
+                        const res = (reader.result as string || "")
+                        // Handle data:application/pdf;base64, prefix
+                        const clean = res.includes(',') ? res.split(',')[1] : res
+                        resolve(clean)
+                    }
+                })
+            } catch (pdfErr) {
+                console.error("PDF Snapshot generation failed:", pdfErr)
+            }
+
+            // 3. Save to DB (Create or Update)
             let result;
             const payload = {
                 clientName: state.clientName,
@@ -880,7 +913,8 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     name: state.newClientData.companyName,
                     contact: state.newClientData.contactName || '',
                     email: state.newClientData.email || ''
-                } : undefined
+                } : undefined,
+                pdfBase64: pdfBase64 // PASSING THE SNAPSHOT
             }
 
             if (initialData && initialData.id) {
@@ -895,57 +929,23 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
 
             if (!result.success || !result.quote) throw new Error(result.error || "Error desconocido al guardar")
 
-            // 3. Webhook Handling (Silent PDF Generation)
-            try {
-                // Generate Blob (No Download)
-                const pdfBlob = await generatePDFBlob({
-                    ...state,
-                    totalMonthlyCost: totalMonthlyCostVal,
-                    l2SupportCost: l2SupportCostVal,
-                    riskCost: riskCostVal,
-                    totalWithRisk: totalWithRiskVal,
-                    criticitnessLevel: criticitnessLevel as any,
-                    diagramImage: diagramDataUrl,
-                    serviceType: state.serviceType,
-                    commercialDiscount: state.commercialDiscount,
-                    discountAmount: discountAmountVal,
-                    finalTotal: finalTotalUSD,
-                    currency: currency,
-                    exchangeRate: exchangeRate,
-                    durationMonths: getDurationInMonths()
-                })
-
-                // Convert to Base64
-                const reader = new FileReader()
-                reader.readAsDataURL(pdfBlob)
-                const base64String = await new Promise<string>((resolve) => {
-                    reader.onloadend = () => {
-                        const base64 = (reader.result as string || "").split(',')[1]
-                        resolve(base64)
-                    }
-                })
-
-                if (!base64String || base64String.length === 0) {
-                    console.error("CRITICAL: PDF Generation resulted in empty string")
-                } else {
-                    console.log(`PDF Generated Successfully. Size: ${(base64String.length / 1024).toFixed(2)} KB`)
-                }
-
+            // 4. Webhook Handling (Use existing PDF)
+            if (pdfBase64) {
                 const filename = `cotizacion_${(state.clientName || 'draft').replace(/\s+/g, '_')}.pdf`
-
-                await sendQuoteToN8N(
-                    result.quote,
-                    base64String || "",
-                    filename,
-                    result.userEmail,
-                    result.userName,
-                    currency,
-                    exchangeRate,
-                    finalTotalUSD
-                );
-            } catch (whErr) {
-                console.error("Webhook fail", whErr)
-                // Do not block success message if webhook fails
+                try {
+                    await sendQuoteToN8N(
+                        result.quote,
+                        pdfBase64,
+                        filename,
+                        result.userEmail,
+                        result.userName,
+                        currency,
+                        exchangeRate,
+                        finalTotalUSD
+                    );
+                } catch (whErr) {
+                    console.error("Webhook fail", whErr)
+                }
             }
 
             toast.success("Cotización guardada exitosamente.")
@@ -1707,42 +1707,155 @@ graph TD
                         </>
                     )}
 
-                    {/* 4. TEAM (Standardized for ALL Service Types) */}
+                    {/* 4. TEAM (Dynamic Selection) */}
                     <SectionCard number={state.serviceType === 'Staffing' ? "02" : "04"} title={state.serviceType === 'Staffing' ? "Selección de Perfiles" : "Equipo Requerido"} icon={Briefcase}>
-                        <div className="grid grid-cols-1 gap-6">
-                            {Object.entries(state.roles)
-                                .sort((a, b) => b[1] - a[1]) // Sort selected first
-                                .map(([key, count]) => {
-                                    const roleName = key.replace(/_/g, ' ')
-                                    // Use dynamic lookup or fallback
-                                    const dynamicRate = findDynamicRate(roleName)
-                                    const rate = dynamicRate || FALLBACK_RATES[key as RoleKey] || 4500
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* LEFT: Available Roles */}
+                            <div className="space-y-4">
+                                <h4 className="text-sm font-bold uppercase tracking-wider text-[#CFDBD5]">Roles Disponibles</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {Object.keys(FALLBACK_RATES).map((roleKey) => {
+                                        const roleName = roleKey.replace(/_/g, ' ')
+                                        const serviceRates = dbRates.filter(r => r.service.toLowerCase() === roleName.toLowerCase())
+                                        // Filter capabilities: Jr, Ssr, Sr, Expert
+                                        const capabilities = ['Jr', 'Ssr', 'Sr', 'Expert']
 
-                                    return (
-                                        <div key={key} className={cn(
-                                            "flex items-center justify-between p-6 rounded-[1.5rem] border transition-all group",
-                                            count > 0 ? "bg-[#333533] border-[#F5CB5C] shadow-[0_0_15px_rgba(245,203,92,0.1)]" : "bg-[#333533] border-[#4A4D4A] hover:border-[#CFDBD5]"
-                                        )}>
-                                            <div className="flex items-center gap-4">
-                                                <div className={cn(
-                                                    "w-12 h-12 rounded-full flex items-center justify-center border transition-colors",
-                                                    count > 0 ? "bg-[#F5CB5C]/20 border-[#F5CB5C] text-[#F5CB5C]" : "bg-[#242423] border-[#4A4D4A] text-[#7C7F7C]"
-                                                )}>
-                                                    <Users className="w-5 h-5" />
-                                                </div>
-                                                <div>
-                                                    <div className={cn("font-bold capitalize text-lg transition-colors", count > 0 ? "text-[#F5CB5C]" : "text-[#E8EDDF]")}>{roleName}</div>
-                                                    <div className="text-sm text-[#CFDBD5] font-mono">${rate.toLocaleString()}/mes</div>
-                                                </div>
+                                        return (
+                                            <div key={roleKey} className="flex items-center justify-between p-3 bg-[#333533] border border-[#4A4D4A] rounded-xl hover:border-[#F5CB5C] transition-colors group">
+                                                <div className="font-bold capitalize text-[#E8EDDF] text-sm">{roleName}</div>
+
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <Button size="icon" className="h-8 w-8 rounded-full bg-[#242423] text-[#F5CB5C] border border-[#F5CB5C]/30 hover:bg-[#F5CB5C] hover:text-[#242423]">
+                                                            <Plus className="w-4 h-4" />
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-56 bg-[#242423] border-[#F5CB5C] text-[#E8EDDF] p-2" side="right" align="start">
+                                                        <h5 className="text-xs font-bold text-[#F5CB5C] uppercase tracking-wider mb-2 px-2">Seleccionar Seniority</h5>
+                                                        <div className="space-y-1">
+                                                            {capabilities.map(level => {
+                                                                // Find exact rate
+                                                                const rateObj = serviceRates.find(r => r.complexity === level)
+                                                                // Fallback if DB rate missing: Base * Modifier
+                                                                const fallbackBase = FALLBACK_RATES[roleKey as RoleKey] || 4000
+                                                                const modifier = SENIORITY_MODIFIERS[level as keyof typeof SENIORITY_MODIFIERS] || 1.0
+                                                                const price = rateObj ? rateObj.basePrice : Math.round(fallbackBase * modifier)
+
+                                                                return (
+                                                                    <button
+                                                                        key={level}
+                                                                        onClick={() => {
+                                                                            // Add to Profiles List
+                                                                            const newProfile = {
+                                                                                id: crypto.randomUUID(),
+                                                                                role: roleName,
+                                                                                seniority: level,
+                                                                                count: 1,
+                                                                                price: price, // STORE SNAPSHOT PRICE
+                                                                                skills: '',
+                                                                                startDate: new Date().toISOString(),
+                                                                                endDate: new Date().toISOString()
+                                                                            }
+                                                                            // Update State: Add profile AND Increment legacy role counter
+                                                                            const currentCount = state.roles[roleKey as RoleKey] || 0
+                                                                            setState(prev => ({
+                                                                                ...prev,
+                                                                                roles: { ...prev.roles, [roleKey]: currentCount + 1 },
+                                                                                staffingDetails: {
+                                                                                    ...prev.staffingDetails,
+                                                                                    profiles: [...prev.staffingDetails.profiles, newProfile]
+                                                                                }
+                                                                            }))
+                                                                            toast.success(`${roleName} (${level}) agregado`)
+                                                                        }}
+                                                                        className="w-full flex items-center justify-between px-2 py-1.5 hover:bg-[#333533] rounded-md text-sm transition-colors text-left"
+                                                                    >
+                                                                        <span className="font-medium">{level}</span>
+                                                                        <span className="text-[#F5CB5C] font-mono text-xs">${price.toLocaleString()}</span>
+                                                                    </button>
+                                                                )
+                                                            })}
+                                                        </div>
+                                                    </PopoverContent>
+                                                </Popover>
                                             </div>
-                                            <div className="flex items-center gap-4">
-                                                <Button variant="outline" size="icon" className="h-10 w-10 border-[#4A4D4A] text-[#E8EDDF] hover:bg-[#F5CB5C] hover:text-[#242423] rounded-full" onClick={() => updateRole(key as RoleKey, -1)}>-</Button>
-                                                <span className={cn("w-8 text-center text-xl font-bold", count > 0 ? "text-[#F5CB5C]" : "text-[#7C7F7C]")}>{count}</span>
-                                                <Button variant="outline" size="icon" className="h-10 w-10 border-[#4A4D4A] text-[#E8EDDF] hover:bg-[#F5CB5C] hover:text-[#242423] rounded-full" onClick={() => updateRole(key as RoleKey, 1)}>+</Button>
-                                            </div>
-                                        </div>
-                                    )
-                                })}
+                                        )
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* RIGHT: Selected Team */}
+                            <div className="bg-[#1D1D1C] rounded-[1.5rem] border border-[#333533] p-6 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-[#F5CB5C]/5 blur-[60px] rounded-full pointer-events-none" />
+                                <h4 className="text-sm font-bold uppercase tracking-wider text-[#F5CB5C] mb-4 flex items-center gap-2">
+                                    <Users className="w-4 h-4" /> Equipo Seleccionado (Snapshot Precios)
+                                </h4>
+
+                                {(!state.staffingDetails.profiles || state.staffingDetails.profiles.length === 0) ? (
+                                    <div className="text-center py-12 text-[#CFDBD5] opacity-30 italic text-sm border-2 border-dashed border-[#333533] rounded-xl">
+                                        No hay perfiles seleccionados
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                                        {state.staffingDetails.profiles.map((profile, idx) => {
+                                            return (
+                                                <div key={profile.id || idx} className="flex items-center justify-between p-3 bg-[#242423] border border-[#333533] rounded-xl group hover:border-[#4A4D4A] transition-all">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={cn(
+                                                            "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border",
+                                                            profile.seniority === 'Expert' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
+                                                                profile.seniority === 'Sr' ? "bg-purple-500/10 text-purple-500 border-purple-500/20" :
+                                                                    profile.seniority === 'Ssr' ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
+                                                                        "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                                                        )}>
+                                                            {profile.seniority.substring(0, 2)}
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-[#E8EDDF] font-bold text-sm capitalize">{profile.role}</div>
+                                                            <div className="text-xs text-[#CFDBD5] flex items-center gap-2">
+                                                                <span className={cn(
+                                                                    "px-1.5 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wide",
+                                                                    profile.seniority === 'Expert' ? "bg-amber-500/20 text-amber-400" : "bg-[#333533] text-[#CFDBD5]"
+                                                                )}>{profile.seniority}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="text-right">
+                                                            <div className="text-[#F5CB5C] font-mono font-bold text-sm">${(profile.price || 0).toLocaleString()}</div>
+                                                        </div>
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="h-8 w-8 text-red-400 hover:bg-red-500/10 hover:text-red-500 rounded-full"
+                                                            onClick={() => {
+                                                                // Remove logic
+                                                                const newProfiles = [...state.staffingDetails.profiles]
+                                                                newProfiles.splice(idx, 1)
+
+                                                                // Decrement role counter
+                                                                const keyEntry = Object.entries(FALLBACK_RATES).find(([k, v]) => k.replace(/_/g, ' ') === profile.role)
+                                                                const roleKey = keyEntry ? keyEntry[0] : null
+
+                                                                setState(prev => ({
+                                                                    ...prev,
+                                                                    roles: roleKey ? { ...prev.roles, [roleKey]: Math.max(0, (prev.roles[roleKey as RoleKey] || 0) - 1) } : prev.roles,
+                                                                    staffingDetails: {
+                                                                        ...prev.staffingDetails,
+                                                                        profiles: newProfiles
+                                                                    }
+                                                                }))
+                                                            }}
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </SectionCard>
 

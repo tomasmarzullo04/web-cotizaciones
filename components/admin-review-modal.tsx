@@ -83,7 +83,7 @@ export function AdminReviewModal({ quote, isOpen, onClose, onStatusChange }: Adm
                                 <Button
                                     variant="outline"
                                     className="bg-[#242423] text-[#CFDBD5] border-[#2D2D2D] hover:bg-[#2D2D2D] gap-2"
-                                    onClick={() => window.open(`/quote/${quote.id}`, '_blank')}
+                                    onClick={() => window.open(`/quote/view/${quote.id}`, '_blank')}
                                 >
                                     <FileText className="w-4 h-4" />
                                     Ver PDF / Detalle
