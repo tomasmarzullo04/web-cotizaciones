@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
-import { ShieldCheck, Calendar, Building2, Briefcase, Loader2, AlertTriangle, User, Network } from "lucide-react"
+import { ShieldCheck, Calendar, Building2, Briefcase, Loader2, AlertTriangle, User, Network, Activity, DollarSign, Tag, Wallet } from "lucide-react"
 import { MermaidDiagram } from "@/components/mermaid-diagram"
 import { getQuoteById } from "@/lib/actions"
 import { toast } from "sonner"
@@ -134,10 +134,10 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <Briefcase className="w-4 h-4 text-[#F5CB5C]" />
+                                    <Activity className="w-4 h-4 text-[#F5CB5C]" />
                                     <div>
-                                        <div className="text-[10px] opacity-50 uppercase">Servicio</div>
-                                        <div>{quote.serviceType}</div>
+                                        <div className="text-[10px] opacity-50 uppercase">Duración</div>
+                                        <div>{details.durationValue} {details.durationUnit === 'months' ? 'Meses' : details.durationUnit === 'weeks' ? 'Semanas' : 'Días'}</div>
                                     </div>
                                 </div>
                             </div>
@@ -154,11 +154,11 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                         </div>
 
                                         {/* Tech Stack List */}
-                                        {details.sustainDetails?.selectedTech && details.sustainDetails.selectedTech.length > 0 && (
+                                        {details.sustainDetails?.techStack && details.sustainDetails.techStack.length > 0 && (
                                             <div className="flex flex-wrap gap-2">
-                                                {details.sustainDetails.selectedTech.map((tech: string) => (
-                                                    <Badge key={tech} variant="secondary" className="bg-[#333533] text-[#CFDBD5] border border-[#4A4D4A]">
-                                                        {tech}
+                                                {details.sustainDetails.techStack.map((tech: string) => (
+                                                    <Badge key={tech} variant="secondary" className="bg-[#333533] text-[#CFDBD5] border border-[#4A4D4A] capitalize">
+                                                        {tech.replace('_', ' ')}
                                                     </Badge>
                                                 ))}
                                             </div>
@@ -181,9 +181,9 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                         <div className="col-span-3 text-right pr-2">Total</div>
                                     </div>
                                     <div className="divide-y divide-[#333533]">
-                                        {profiles.length > 0 ? (
-                                            profiles.map((p: any, idx: number) => {
-                                                const cost = p.price || 0
+                                        {profiles.filter((p: any) => (p.count || 0) > 0).length > 0 ? (
+                                            profiles.filter((p: any) => (p.count || 0) > 0).map((p: any, idx: number) => {
+                                                const cost = p.price || p.cost || 0
                                                 const total = cost * (p.count || 1)
                                                 return (
                                                     <div key={idx} className="grid grid-cols-12 gap-2 p-3 text-sm hover:bg-[#333533]/30 transition-colors items-center">
@@ -196,7 +196,7 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                                                 p.seniority === 'Sr' ? 'bg-purple-500/10 text-purple-500' :
                                                                     p.seniority === 'Med' ? 'bg-blue-500/10 text-blue-500' : 'bg-emerald-500/10 text-emerald-500'
                                                                 }`}>
-                                                                {p.seniority}
+                                                                {p.seniority || 'N/A'}
                                                             </Badge>
                                                         </div>
                                                         <div className="col-span-1 text-center text-[#CFDBD5] font-mono">{p.count}</div>
@@ -204,14 +204,14 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                                             ${cost.toLocaleString('en-US')}
                                                         </div>
                                                         <div className="col-span-3 text-right pr-2 font-mono text-[#F5CB5C]">
-                                                            ${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                                            ${total.toLocaleString('en-US', { minimumFractionDigits: 0 })}
                                                         </div>
                                                     </div>
                                                 )
                                             })
                                         ) : (
                                             <div className="p-6 text-center text-[#CFDBD5] opacity-50 text-xs italic">
-                                                Sin detalles de perfiles
+                                                Sin detalles de perfiles activos
                                             </div>
                                         )}
                                     </div>
@@ -231,20 +231,32 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                 </div>
 
                                 <Card className="bg-[#1D1D1C] border-[#333533] shadow-lg">
-                                    <CardContent className="p-4 space-y-2">
-                                        <div className="flex justify-between text-xs text-[#CFDBD5]">
-                                            <span>Subtotal</span>
+                                    <CardContent className="p-4 space-y-3">
+                                        <div className="flex justify-between items-center text-xs text-[#CFDBD5]">
+                                            <div className="flex items-center gap-2">
+                                                <DollarSign className="w-3 h-3 opacity-50" />
+                                                <span>Subtotal</span>
+                                            </div>
                                             <span className="font-mono">{details.currency || 'USD'} ${totals.gross.toLocaleString('en-US')}</span>
                                         </div>
                                         {totals.discount > 0 && (
-                                            <div className="flex justify-between text-xs text-green-400">
-                                                <span>Descuento</span>
+                                            <div className="flex justify-between items-center text-xs text-green-400">
+                                                <div className="flex items-center gap-2">
+                                                    <Tag className="w-3 h-3 opacity-50" />
+                                                    <span>Descuento</span>
+                                                </div>
                                                 <span className="font-mono">-{details.currency || 'USD'} ${totals.discount.toLocaleString('en-US')}</span>
                                             </div>
                                         )}
                                         <Separator className="bg-[#333533] my-2" />
                                         <div className="flex justify-between items-end">
-                                            <span className="text-[#F5CB5C] font-bold text-xs uppercase">Total Mensual</span>
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-2 text-[#F5CB5C]">
+                                                    <Wallet className="w-3 h-3" />
+                                                    <span className="font-bold text-[10px] uppercase">Inversión Final</span>
+                                                </div>
+                                                <span className="text-[10px] text-[#CFDBD5]/50">Total Mensual Neto</span>
+                                            </div>
                                             <span className="text-xl font-bold text-[#F5CB5C] font-mono">
                                                 {details.currency || 'USD'} ${totals.net.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                             </span>
