@@ -87,7 +87,9 @@ export function AdminRatesEditor() {
 
     useEffect(() => {
         loadRates()
+    }, [])
 
+    useEffect(() => {
         // POLLING: Check for updates every 60 seconds (Proactive Visual Feedback)
         const interval = setInterval(async () => {
             try {
@@ -217,17 +219,6 @@ export function AdminRatesEditor() {
                         <CardDescription className="text-[#CFDBD5]">
                             Definición de costos por perfil y seniority.
                         </CardDescription>
-                    </div>
-                </div>
-
-                {/* CENTRALIZED CONTROL WARNING */}
-                <div className="flex-1 max-w-lg bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-center gap-4">
-                    <div className="p-2 bg-amber-500/20 rounded-lg">
-                        <Tag className="w-5 h-5 text-amber-500" />
-                    </div>
-                    <div>
-                        <p className="text-amber-500 font-bold text-sm">Control de Precios Centralizado</p>
-                        <p className="text-amber-500/70 text-xs">La edición manual está deshabilitada. Los valores se actualizan desde Google Sheets.</p>
                     </div>
                 </div>
             </CardHeader>
@@ -423,6 +414,6 @@ export function AdminRatesEditor() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </Card>
+        </Card >
     )
 }

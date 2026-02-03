@@ -9,7 +9,7 @@ export default function Navbar({ userRole, userName }: { userRole?: string | nul
 
                 {/* LOGO */}
                 <Link
-                    href={userRole === 'ADMIN' ? '/admin' : (userRole === 'USER' || userRole === 'CONSULTOR') ? '/quote/new' : '/'}
+                    href={userRole === 'ADMIN' ? '/admin/dashboard' : (userRole === 'USER' || userRole === 'CONSULTOR') ? '/quote/new' : '/'}
                     className="flex items-center gap-2 group cursor-pointer"
                 >
                     <div className="w-8 h-8 rounded-lg bg-[#F5CB5C] flex items-center justify-center text-[#242423] font-bold text-lg group-hover:scale-105 transition-transform shadow-[0_0_15px_rgba(245,203,92,0.3)]">
@@ -32,7 +32,7 @@ export default function Navbar({ userRole, userName }: { userRole?: string | nul
 
                     {userRole === 'ADMIN' && (
                         <>
-                            <Link href="/admin" className="text-sm font-medium text-[#CFDBD5] hover:text-[#F5CB5C] transition-colors">Admin Board</Link>
+                            <Link href="/admin/dashboard" className="text-sm font-medium text-[#CFDBD5] hover:text-[#F5CB5C] transition-colors">Admin Board</Link>
                         </>
                     )}
                 </div>
