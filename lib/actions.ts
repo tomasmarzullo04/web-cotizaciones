@@ -951,11 +951,11 @@ export async function reviewQuote(quoteId: string, status: 'APROBADA' | 'RECHAZA
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    emailConsultor: quote.user.email,
                     quoteNumber: quote.id,
-                    adminComment: comment,
+                    projectName: quote.projectType || quote.clientName, // Priority to Project Type
+                    emailConsultor: quote.user.email,
                     statusUpdate: formattedStatus,
-                    projectName: quote.projectType || quote.clientName // Fallback if projectType is empty
+                    adminComment: comment
                 })
             })
                 .then(res => {
