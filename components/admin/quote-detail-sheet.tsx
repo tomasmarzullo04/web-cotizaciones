@@ -181,32 +181,22 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                 </div>
                             )}
 
-                            {/* Strategic Objective & Diagram (Page 1 Mirror) */}
-                            <div className="grid grid-cols-1 gap-6">
-                                <div className="p-4 bg-white/5 rounded-xl border border-[#333533]">
-                                    <div className="text-[10px] font-bold text-[#004B8D] uppercase tracking-widest mb-2">Objetivo Estratégico</div>
-                                    <p className="text-sm text-[#CFDBD5] leading-relaxed">
-                                        {quote.serviceType === 'Project'
-                                            ? "Diseño e implementación de una solución tecnológica punta a punta, garantizando escalabilidad y alineación con los estándares regionales de Nestlé."
-                                            : quote.serviceType === 'Sustain'
-                                                ? "Continuidad operativa y evolución tecnológica de activos digitales existentes, asegurando performance y cumplimiento de KPIs de negocio."
-                                                : "Fortalecimiento de capacidades técnicas a través de talento especializado integrado en células de trabajo bajo demanda."}
-                                    </p>
-                                </div>
-                                <div className="p-4 bg-white/5 rounded-xl border border-[#333533]">
-                                    <div className="text-[10px] font-bold text-[#004B8D] uppercase tracking-widest mb-4">Arquitectura de la Solución (Mandatorio)</div>
-                                    <div className="bg-[#171717] rounded-lg p-4 border border-[#333533] min-h-[200px] flex items-center justify-center">
-                                        <div className="w-full h-full">
-                                            <MermaidDiagram chart={details.chartCode} />
-                                        </div>
-                                    </div>
-                                </div>
+                            {/* 2. Strategic Objective (Moved up) */}
+                            <div className="p-4 bg-white/5 rounded-xl border border-[#333533]">
+                                <div className="text-[10px] font-bold text-[#004B8D] uppercase tracking-widest mb-2">Objetivo Estratégico</div>
+                                <p className="text-sm text-[#CFDBD5] leading-relaxed">
+                                    {quote.serviceType === 'Project'
+                                        ? "Diseño e implementación de una solución tecnológica punta a punta, garantizando escalabilidad y alineación con los estándares regionales de Nestlé."
+                                        : quote.serviceType === 'Sustain'
+                                            ? "Continuidad operativa y evolución tecnológica de activos digitales existentes, asegurando performance y cumplimiento de KPIs de negocio."
+                                            : "Fortalecimiento de capacidades técnicas a través de talento especializado integrado en células de trabajo bajo demanda."}
+                                </p>
                             </div>
 
-                            {/* Team Breakdown (Page 2 Mirror) */}
-                            <div className="space-y-4 pt-4">
+                            {/* 3. Team Breakdown (Now before Diagram) */}
+                            <div className="space-y-4">
                                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                                    <span className="w-1 h-4 bg-[#004B8D] rounded-full" /> Desglose de Inversión
+                                    <span className="w-1 h-4 bg-[#004B8D] rounded-full" /> Detalle de Inversión
                                 </h3>
                                 <Card className="bg-[#1D1D1C] border-[#333533] overflow-hidden">
                                     <div className="grid grid-cols-12 gap-2 p-3 bg-[#f0f5fa] text-[10px] font-bold text-[#004B8D] uppercase tracking-wider border-b border-[#333533]">
@@ -254,23 +244,33 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                 </Card>
                             </div>
 
-                            {/* Totals Summary */}
-                            <div className="flex justify-end pt-4">
+                            {/* Totals Summary (Matching PDF position) */}
+                            <div className="flex justify-end">
                                 <div className="w-full md:w-80 space-y-3 bg-[#1D1D1C] p-6 rounded-xl border border-[#333533] shadow-xl">
                                     <div className="flex justify-between items-center text-sm text-[#CFDBD5]">
-                                        <span>Subtotal Estimado:</span>
-                                        <span className="font-mono">${totals.gross.toLocaleString('en-US')}</span>
+                                        <span>Total Estimado:</span>
+                                        <span className="font-mono text-white">${totals.gross.toLocaleString('en-US')}</span>
                                     </div>
                                     {totals.discount > 0 && (
                                         <div className="flex justify-between items-center text-sm text-emerald-400">
-                                            <span>Descuento Aplicado:</span>
+                                            <span>Descuento:</span>
                                             <span className="font-mono">-${totals.discount.toLocaleString('en-US')}</span>
                                         </div>
                                     )}
                                     <Separator className="bg-[#333533]" />
                                     <div className="flex justify-between items-center">
-                                        <span className="text-sm font-bold text-[#004B8D] uppercase tracking-widest">Total Neto:</span>
+                                        <span className="text-sm font-bold text-[#004B8D] uppercase tracking-widest">Inversión Final:</span>
                                         <span className="text-xl font-black text-[#F5CB5C] font-mono">${totals.net.toLocaleString('en-US')}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 4. Architecture Diagram (Mandatory Goal: End of flow) */}
+                            <div className="p-4 bg-white/5 rounded-xl border border-[#333533]">
+                                <div className="text-[10px] font-bold text-[#004B8D] uppercase tracking-widest mb-4">Arquitectura de la Solución (Mandatorio)</div>
+                                <div className="bg-[#171717] rounded-lg p-4 border border-[#333533] min-h-[300px] flex items-center justify-center">
+                                    <div className="w-full">
+                                        <MermaidDiagram chart={details.chartCode} />
                                     </div>
                                 </div>
                             </div>

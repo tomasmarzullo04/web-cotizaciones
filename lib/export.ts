@@ -160,53 +160,63 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     }
 
     // --- Header & Footer ---
-    const drawHeader = (isCover = false) => {
-        const siH = 9.0
-        const nestleH = 9.0
+    const drawHeader = () => {
+        // FIXED COORDINATES - Immune to text flow
+        const logoSI_Y = 10
+        const logoSI_X = margin
+        const siH = 7.0 // Reduced size for prolijidad
 
-        // 1. Blue Background Block for Title (TOP RIGHT)
+        const block_Y = 0
+        const block_H = 32
+        const block_W = pageWidth * 0.55 // Focused on the right
+
+        // 1. Blue Background Block for Title (Fixed Position)
         doc.setFillColor(COLOR_PRIMARY)
-        const blockW = pageWidth * 0.65 // Large block for "INVOICE:" style
-        const blockH = 32
-        doc.rect(pageWidth - blockW, 0, blockW, blockH, 'F')
+        doc.rect(pageWidth - block_W, block_Y, block_W, block_H, 'F')
 
-        // 2. "COTIZACIÓN" Text in white
+        // 2. "COTIZACIÓN" Text
         doc.setFont(FONT_BOLD, "bold")
-        doc.setFontSize(32)
+        doc.setFontSize(30)
         doc.setTextColor(255)
-        doc.text("COTIZACIÓN:", pageWidth - margin, 20, { align: "right" })
+        doc.text("COTIZACIÓN", pageWidth - margin, 21, { align: "right" })
 
-        // 3. logo SI (Left - Vertical Aligned with title)
+        // 3. logo SI (Fixed Position - Left)
         if (LOGO_SI) {
             try {
                 const props = doc.getImageProperties(LOGO_SI)
                 const w = (props.width * siH) / props.height
-                doc.addImage(LOGO_SI, 'PNG', margin, 12, w, siH)
+                doc.addImage(LOGO_SI, 'PNG', logoSI_X, logoSI_Y, w, siH)
             } catch (e) {
                 doc.setFontSize(10)
                 doc.setTextColor(COLOR_PRIMARY)
-                doc.text("STORE INTELLIGENCE", margin, 20)
+                doc.text("THE STORE INTELLIGENCE", logoSI_X, logoSI_Y + 5)
             }
         }
 
-        // Space/Divider below header
+        // Space/Divider below header (Fixed Y)
         doc.setDrawColor(COLOR_PRIMARY)
-        doc.setLineWidth(0.5)
+        doc.setLineWidth(0.4)
         doc.line(margin, 35, pageWidth - margin, 35)
     }
 
-    const drawFooter = (pageNum: number) => {
-        doc.setFontSize(8)
-        doc.setTextColor(150)
-        doc.text(`Confidencial - The Store Intelligence | Pág. ${pageNum}`, margin, pageHeight - 10)
+    const drawFooter = () => {
+        const pageCount = doc.internal.pages.length - 1
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i)
+            doc.setFontSize(7)
+            doc.setFont(FONT_REG, "normal")
+            doc.setTextColor(150)
+            doc.text(`The Store Intelligence | Confidencial | Pág. ${i} de ${pageCount}`, margin, pageHeight - 10, { align: 'left' })
+            doc.text(`Propuesta Comercial SI`, pageWidth - margin, pageHeight - 10, { align: 'right' })
+        }
     }
 
-    // --- PAGE 1: INFORMATION + OBJECTIVE + DIAGRAM ---
-    drawHeader(true)
+    // --- CONTENT FLOW ---
+    drawHeader()
 
-    let y = 50
+    let y = 48
 
-    // INFO BLOCKS IN A SINGLE ROW
+    // 1. INFO ROW (Clean side-by-side)
     doc.setFont(FONT_BOLD, "bold")
     doc.setFontSize(9)
     doc.setTextColor(COLOR_PRIMARY)
@@ -218,7 +228,6 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     doc.setTextColor(COLOR_CHARCOAL)
     doc.text(cleanText(data.clientName), margin, y)
 
-    // Details col
     const rightX = pageWidth / 2 + 5
     doc.setFontSize(9)
     doc.setFont(FONT_REG, "normal")
@@ -234,7 +243,8 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     doc.text(`Consultor: ${cleanText(data.clientContact?.areaLeader || "Equipo Comercial")}`, pageWidth - margin, y, { align: 'right' })
 
     y += 15
-    // STRATEGIC OBJECTIVE
+
+    // 2. STRATEGIC OBJECTIVE
     doc.setFont(FONT_BOLD, "bold")
     doc.setTextColor(COLOR_PRIMARY)
     doc.text("OBJETIVO ESTRATÉGICO", margin, y)
@@ -251,60 +261,34 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
     const objLines = doc.splitTextToSize(objText, contentWidth)
     doc.text(objLines, margin, y)
-    y += (objLines.length * 5) + 8
+    y += (objLines.length * 5) + 12
 
-    // DYNAMIC DIAGRAM (Now on Page 1)
-    if (data.diagramImage) {
-        doc.setFont(FONT_BOLD, "bold")
-        doc.setFontSize(10)
-        doc.setTextColor(COLOR_PRIMARY)
-        doc.text("ARQUITECTURA DE LA SOLUCIÓN", margin, y)
-        y += 5
-
-        try {
-            const imgProps = doc.getImageProperties(data.diagramImage)
-            const imgW = contentWidth
-            const imgH = (imgProps.height * imgW) / imgProps.width
-
-            // Check if diagram fits, if not, move to next page or scale down
-            if (y + imgH > pageHeight - 20) {
-                const scaledH = pageHeight - y - 15
-                const scaledW = (imgProps.width * scaledH) / imgProps.height
-                doc.addImage(data.diagramImage, 'PNG', margin + (contentWidth - scaledW) / 2, y, scaledW, scaledH)
-            } else {
-                doc.addImage(data.diagramImage, 'PNG', margin, y, imgW, imgH)
-            }
-        } catch (e) {
-            doc.setFont(FONT_REG, "italic")
-            doc.text("[Diagrama no disponible]", margin, y + 5)
-        }
-    }
-
-    // --- PAGE 2: INVESTMENT + TERMS ---
-    doc.addPage()
-    drawHeader(false)
-    y = 50
-
+    // 3. INVESTMENT TABLE (Now BEFORE Diagram)
     doc.setFont(FONT_BOLD, "bold")
-    doc.setFontSize(14)
+    doc.setFontSize(11)
     doc.setTextColor(COLOR_PRIMARY)
     doc.text("DETALLE DE INVERSIÓN", margin, y)
-    y += 10
+    y += 6
 
     // Table Header
     doc.setFillColor(COLOR_PRIMARY)
     doc.rect(margin, y, contentWidth, 8, 'F')
     doc.setFontSize(9)
     doc.setTextColor(255)
-    doc.text("PERFIL / CONCEPTO", margin + 5, y + 5.5)
+    doc.text("CONCEPTO / PERFIL", margin + 4, y + 5.5) // Increased padding
     doc.text("CANT.", pageWidth - margin - 75, y + 5.5, { align: 'center' })
     doc.text("MENSUAL", pageWidth - margin - 40, y + 5.5, { align: 'right' })
     doc.text("TOTAL", pageWidth - margin - 5, y + 5.5, { align: 'right' })
     y += 8
 
-    // Rows
     let isReview = true
     const drawRow = (label: string, meta: string, monthly: string, total: string) => {
+        if (y > pageHeight - 40) { // Safety page break
+            doc.addPage()
+            drawHeader()
+            y = 45
+        }
+
         if (isReview) {
             doc.setFillColor(COLOR_ROW_ALT)
             doc.rect(margin, y, contentWidth, 7, 'F')
@@ -312,8 +296,9 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         isReview = !isReview
 
         doc.setTextColor(COLOR_TEXT)
+        doc.setFontSize(8.5)
         doc.setFont(FONT_BOLD, "bold")
-        doc.text(cleanText(label), margin + 5, y + 4.5)
+        doc.text(cleanText(label), margin + 4, y + 4.5)
 
         doc.setFont(FONT_REG, "normal")
         doc.text(cleanText(meta), pageWidth - margin - 75, y + 4.5, { align: 'center' })
@@ -324,36 +309,29 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         y += 7
     }
 
-    if (data.serviceType === 'Staffing' || data.serviceType === 'Sustain') {
-        data.staffingDetails.profiles.forEach(p => {
+    const profiles = data.staffingDetails?.profiles || []
+    if (profiles.length > 0) {
+        profiles.forEach(p => {
             if ((p.count || 0) <= 0) return
-
-            const rate = p.price || (RATES[Object.keys(RATES).find(k => p.role.toLowerCase().includes(k.replace('_', ' '))) || 'react_dev'] || 4000)
-            const alloc = (p.allocationPercentage || 100) / 100
-            const monthlySub = rate * alloc * p.count
-            const totalSub = monthlySub * data.durationMonths
-
-            drawRow(`${p.role} (${p.seniority || 'Ssr'})`, `${p.count} Rec.`, fmt(monthlySub), fmt(totalSub))
+            const rate = p.price || p.cost || 0
+            const monthlySub = rate * (p.allocationPercentage || 100) / 100 * p.count
+            drawRow(`${p.role} (${p.seniority || 'Ssr'})`, `${p.count} Rec.`, fmt(monthlySub), fmt(monthlySub * data.durationMonths))
         })
     } else {
-        Object.entries(data.roles).forEach(([role, count]) => {
+        Object.entries(data.roles || {}).forEach(([role, count]) => {
             if (count > 0) {
                 const rate = RATES[role] || 0
-                const sub = rate * count
-                if (sub > 0) {
-                    drawRow(role.replace(/_/g, ' ').toUpperCase(), `${count} Rec.`, fmt(sub), fmt(sub * data.durationMonths))
-                }
+                if (rate > 0) drawRow(role.replace(/_/g, ' ').toUpperCase(), `${count} Rec.`, fmt(rate * count), fmt(rate * count * data.durationMonths))
             }
         })
     }
 
-    if (data.l2SupportCost > 0) drawRow("Soporte L2", "10% Mensual", fmt(data.l2SupportCost), fmt(data.l2SupportCost * data.durationMonths))
+    if (data.l2SupportCost > 0) drawRow("Soporte L2", "10%", fmt(data.l2SupportCost), fmt(data.l2SupportCost * data.durationMonths))
     if (data.riskCost > 0) drawRow("Fee de Gestión y Riesgo", `${((data.criticitnessLevel?.margin || 0) * 100).toFixed(0)}%`, fmt(data.riskCost), fmt(data.riskCost * data.durationMonths))
-    if (data.discountAmount > 0) drawRow("Descuento Comercial", `${data.commercialDiscount}%`, `-${fmt(data.discountAmount)}`, `-${fmt(data.discountAmount * data.durationMonths)}`)
+    if (data.discountAmount > 0) drawRow("Descuento Comercial", `${data.commercialDiscount || 0}%`, `-${fmt(data.discountAmount)}`, `-${fmt(data.discountAmount * data.durationMonths)}`)
 
+    // Totals Box
     y += 10
-
-    // --- Calcs for Safety (Direct Dashboard Sync) ---
     const displayGross = data.grossTotal || data.finalTotal
     let displayRetention = data.retentionAmount || 0
     let displayNet = data.finalTotal
@@ -362,94 +340,103 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         displayRetention = displayGross * (data.retention.percentage / 100)
         displayNet = displayGross - displayRetention
     }
-    // -----------------------------------------
 
-    // Totals Box
-    doc.setDrawColor(COLOR_PRIMARY)
-    doc.setLineWidth(0.6)
-    const boxHeight = data.retention?.enabled ? 55 : 40
+    const boxH = data.retention?.enabled ? 35 : 25
+    if (y + boxH > pageHeight - 30) { doc.addPage(); drawHeader(); y = 45; }
 
-    doc.rect(margin + 20, y, contentWidth - 40, boxHeight)
+    doc.setFillColor(245, 203, 92) // #F5CB5C
+    doc.rect(pageWidth - margin - 90, y, 90, boxH, 'F')
 
-    let ty = y + 15
-    doc.setFontSize(11)
-    doc.setTextColor(COLOR_TEXT)
-    doc.setFont(FONT_REG, "normal")
+    let ty = y + 7
+    doc.setTextColor(COLOR_PRIMARY)
+    doc.setFontSize(10)
+    doc.text("TOTAL ESTIMADO:", pageWidth - margin - 85, ty)
+    doc.text(fmt(displayGross), pageWidth - margin - 5, ty, { align: 'right' })
 
     if (data.retention?.enabled) {
-        doc.text(cleanText("Subtotal:"), margin + 30, ty)
-        doc.setFont(FONT_BOLD, "bold")
-        doc.text(fmt(displayGross), pageWidth - margin - 30, ty, { align: "right" })
-
+        ty += 8
+        doc.text(`Retención (${data.retention.percentage}%):`, pageWidth - margin - 85, ty)
+        doc.text(`- ${fmt(displayRetention)}`, pageWidth - margin - 5, ty, { align: 'right' })
         ty += 10
-        doc.setTextColor(COLOR_TEXT)
-        doc.setFont(FONT_REG, "normal")
-        doc.text(`Retención (${data.retention.percentage}%):`, margin + 30, ty)
-
-        doc.setTextColor(220, 50, 50)
-        doc.setFont(FONT_BOLD, "bold")
-        doc.text(`- ${fmt(displayRetention)}`, pageWidth - margin - 30, ty, { align: "right" })
-
-        ty += 15
-        doc.setTextColor(COLOR_CHARCOAL)
-        doc.setFontSize(14)
-        doc.text(`TOTAL NETO:`, margin + 30, ty)
-        doc.setTextColor(COLOR_PRIMARY)
-        doc.setFontSize(18)
-        doc.text(fmt(displayNet), pageWidth - margin - 30, ty, { align: "right" })
-
-    } else {
-        doc.text(cleanText("TOTAL ESTIMADO:"), margin + 30, ty)
-        doc.setFont(FONT_BOLD, "bold")
-        doc.text(fmt(data.finalTotal), pageWidth - margin - 30, ty, { align: "right" })
-
-        ty += 15
-        doc.setFontSize(14)
-        doc.setTextColor(COLOR_CHARCOAL)
-        doc.text(`TOTAL PROYECTO (${durationText()}):`, margin + 30, ty)
-        doc.setTextColor(COLOR_PRIMARY)
-        doc.setFontSize(18)
-        doc.text(fmt(data.finalTotal * data.durationMonths), pageWidth - margin - 30, ty, { align: "right" })
+        doc.setFontSize(12)
+        doc.text("INVERSIÓN NETA:", pageWidth - margin - 85, ty)
+        doc.text(fmt(displayNet), pageWidth - margin - 5, ty, { align: 'right' })
     }
+    y += boxH + 15
 
-    // Notes - Positioned BELOW the box
-    y += boxHeight + 8 // Move Y past the box + gap
+    // Notes
     doc.setFontSize(8)
     doc.setTextColor(COLOR_TEXT)
     doc.setFont(FONT_REG, "normal")
-    doc.text("* Valores no incluyen impuestos aplicables.", margin + 20, y)
+    doc.text("* Valores no incluyen impuestos aplicables.", margin, y)
     if (data.retention?.enabled) {
         y += 4
-        doc.text(`* Retención financiera interna del ${data.retention.percentage}% aplicada pro-forma.`, margin + 20, y)
+        doc.text(`* Retención financiera interna del ${data.retention.percentage}% aplicada pro-forma.`, margin, y)
+    }
+    y += 10
+
+    // 4. ARCHITECTURE DIAGRAM
+    if (data.diagramImage) {
+        const imgProps = doc.getImageProperties(data.diagramImage)
+        const imgW = contentWidth
+        const imgH = (imgProps.height * imgW) / imgProps.width
+
+        // Critical: If it doesn't fit, move to next page to avoid cuts
+        if (y + imgH > pageHeight - 30) {
+            doc.addPage()
+            drawHeader()
+            y = 45
+        }
+
+        doc.setFont(FONT_BOLD, "bold")
+        doc.setFontSize(11)
+        doc.setTextColor(COLOR_PRIMARY)
+        doc.text("ARQUITECTURA DE LA SOLUCIÓN", margin, y)
+        y += 6
+
+        try {
+            doc.addImage(data.diagramImage, 'PNG', margin, y, imgW, imgH)
+            y += imgH + 15
+        } catch (e) {
+            doc.setFont(FONT_REG, "italic")
+            doc.text("[Diagrama no disponible]", margin, y + 5)
+            y += 10
+        }
     }
 
-    drawFooter(3)
+    // 5. TERMS & CONDITIONS (Bottom of Last Page)
+    if (y > pageHeight - 80) { // Safety page break for terms
+        doc.addPage()
+        drawHeader()
+        y = 45
+    } else {
+        y = Math.max(y + 10, pageHeight - 85)
+    }
 
-    // --- PAGE 4: TERMS & APPROVAL ---
-    doc.addPage()
-    drawHeader()
-    y = 35
-
-    // TÉRMINOS Y CONDICIONES
-    doc.setFont(FONT_BOLD, "bold")
-    doc.setFontSize(11) // Header size
-    doc.setTextColor(COLOR_PRIMARY)
-    doc.text("TÉRMINOS Y CONDICIONES", margin, y)
+    doc.setDrawColor(COLOR_PRIMARY)
+    doc.setLineWidth(0.3)
+    doc.line(margin, y, pageWidth - margin, y)
     y += 8
 
+    doc.setFont(FONT_BOLD, "bold")
+    doc.setFontSize(10)
+    doc.setTextColor(COLOR_PRIMARY)
+    doc.text("TÉRMINOS Y CONDICIONES:", margin, y)
+    y += 6
+
     doc.setFont(FONT_REG, "normal")
-    doc.setFontSize(9) // Legal size
+    doc.setFontSize(7) // Slightly smaller for prolijidad
     doc.setTextColor(COLOR_TEXT)
 
     const terms = [
         "Propuesta Válida durante 30 días desde su emisión.",
-        "Proyecto a iniciar por parte de SI cuando exista una Orden de Compra.",
-        "El costo de los recursos está tasado al precio acordado con Nestlé regionalmente.",
-        "Sustain no se incluye en espera que los requerimientos no evolucionen posterior al proyecto.",
-        "Desarrollos adicionales serán cotizados en propuestas adicionales.",
-        "Requerimientos: diseño funcional del app y analytics aprobados al inicio del proyecto.",
-        "Códigos y entregables serán propiedad de Nestlé finalizado el proyecto.",
-        "Los Sprints de Pago se acordaran al inicio del proyecto."
+        "Proyecto a iniciar con Orden de Compra formal.",
+        "Costos tasados según acuerdo regional Store Intelligence.",
+        "Sustain no se incluye en espera que el requerimiento no evolucione.",
+        "Desarrollos adicionales serán cotizados por separado.",
+        "Entregables propiedad de Nestlé finalizado el proyecto.",
+        "Sprints de Pago acordados al inicio del proyecto.",
+        "Acuerdo de confidencialidad absoluto sobre datos compartidos."
     ]
 
     const mid = Math.ceil(terms.length / 2)
@@ -458,42 +445,14 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
     const termsYStart = y
     leftTerms.forEach((term, idx) => {
-        doc.text(`• ${cleanText(term)}`, margin + 2, termsYStart + (idx * 6), { maxWidth: (contentWidth / 2) - 5 })
+        doc.text(`• ${cleanText(term)}`, margin, termsYStart + (idx * 4.2), { maxWidth: (contentWidth / 2) - 5 })
     })
 
     rightTerms.forEach((term, idx) => {
-        doc.text(`• ${cleanText(term)}`, (pageWidth / 2) + 5, termsYStart + (idx * 6), { maxWidth: (contentWidth / 2) - 5 })
+        doc.text(`• ${cleanText(term)}`, (pageWidth / 2) + 5, termsYStart + (idx * 4.2), { maxWidth: (contentWidth / 2) - 5 })
     })
 
-    y = termsYStart + (mid * 6) + 15
-
-    y += 15
-
-    // APPROVAL SECTION
-    doc.setFont(FONT_BOLD, "bold")
-    doc.setFontSize(14)
-    doc.setTextColor(COLOR_PRIMARY)
-    doc.text(cleanText("APROBACIÓN DE PROPUESTA"), margin, y)
-    y += 15
-
-    doc.setFont(FONT_REG, "normal")
-    doc.setFontSize(10)
-    doc.setTextColor(COLOR_TEXT)
-    doc.text("Firma de conformidad con la propuesta presentada.", margin, y)
-
-    y += 40
-
-    doc.setDrawColor(150)
-    doc.setLineWidth(0.2)
-
-    doc.line(margin + 10, y, margin + 80, y)
-    doc.setFontSize(8)
-    doc.text("Por THE STORE INTELLIGENCE", margin + 15, y + 5)
-
-    doc.line(pageWidth - margin - 80, y, pageWidth - margin - 10, y)
-    doc.text("Por EL CLIENTE", pageWidth - margin - 70, y + 5)
-
-    drawFooter(4)
+    drawFooter()
 
     return doc
 }
@@ -558,7 +517,7 @@ export async function exportToWord(data: any) {
                     new Paragraph({
                         children: [
                             new TextRun({ text: "Total: ", bold: true, size: 28, color: "004B8D" }),
-                            new TextRun({ text: `$${(data.finalTotal * data.durationMonths).toLocaleString()}`, bold: true, size: 28, color: "004B8D" })
+                            new TextRun({ text: `$${(data.finalTotal).toLocaleString()}`, bold: true, size: 28, color: "004B8D" })
                         ],
                         alignment: AlignmentType.RIGHT
                     }),
@@ -574,13 +533,13 @@ export async function exportToWord(data: any) {
                 }),
                 ...[
                     "Propuesta Válida durante 30 días desde su emisión.",
-                    "Proyecto a iniciar por parte de SI cuando exista una Orden de Compra.",
-                    "El costo de los recursos está tasado al precio acordado con Nestlé regionalmente.",
-                    "Sustain no se incluye en espera que los requerimientos no evolucionen posterior al proyecto.",
-                    "Desarrollos adicionales serán cotizados en propuestas adicionales.",
-                    "Requerimientos: diseño funcional del app y analytics aprobados al inicio del proyecto.",
-                    "Códigos y entregables serán propiedad de Nestlé finalizado el proyecto.",
-                    "Los Sprints de Pago (en caso de parcialidades) se acordaran al inicio del proyecto."
+                    "Proyecto a iniciar con Orden de Compra formal.",
+                    "Costos tasados según acuerdo regional Store Intelligence.",
+                    "Sustain no se incluye en espera que el requerimiento no evolucione.",
+                    "Desarrollos adicionales serán cotizados por separado.",
+                    "Entregables propiedad de Nestlé finalizado el proyecto.",
+                    "Sprints de Pago acordados al inicio del proyecto.",
+                    "Acuerdo de confidencialidad absoluto sobre datos compartidos."
                 ].map(term => new Paragraph({
                     children: [new TextRun({ text: term, size: 18 })], // Size 18 is 9pt
                     bullet: { level: 0 }
