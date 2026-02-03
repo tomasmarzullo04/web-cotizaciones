@@ -999,6 +999,10 @@ export async function getQuoteById(id: string) {
 
     const quote = await prisma.quote.findUnique({
         where: { id },
+        include: {
+            user: true, // Fetch Author
+            client: true // Fetch Client details if linked
+        }
     })
     return quote
 }

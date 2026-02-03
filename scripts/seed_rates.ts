@@ -7,17 +7,16 @@ async function main() {
     console.log('Seeding Rates...')
 
     const rates = [
-        // BI Visualization
-        { service: 'BI Visualization', complexity: 'Jr', basePrice: 2831.11 },
-        { service: 'BI Visualization', complexity: 'Ssr', basePrice: 4128.70 }, // Map Med -> Ssr
-        { service: 'BI Visualization', complexity: 'Sr', basePrice: 5308.33 },
-        { service: 'BI Visualization', complexity: 'Expert', basePrice: 5780.19 },
+        // BI Visualization Developer
+        { service: 'BI Visualization Developer', complexity: 'Jr', basePrice: 2831.11 },
+        { service: 'BI Visualization Developer', complexity: 'Ssr', basePrice: 4128.70 },
+        { service: 'BI Visualization Developer', complexity: 'Sr', basePrice: 5308.33 },
+        { service: 'BI Visualization Developer', complexity: 'Expert', basePrice: 5780.19 },
 
         // Azure Developer
         { service: 'Azure Developer', complexity: 'Jr', basePrice: 2949.07 },
         { service: 'Azure Developer', complexity: 'Ssr', basePrice: 4128.70 },
         { service: 'Azure Developer', complexity: 'Sr', basePrice: 5898.15 },
-        // No Expert for Azure Dev
 
         // Solution Architect
         { service: 'Solution Architect', complexity: 'Jr', basePrice: 4128.70 },
@@ -25,11 +24,11 @@ async function main() {
         { service: 'Solution Architect', complexity: 'Sr', basePrice: 6370.00 },
         { service: 'Solution Architect', complexity: 'Expert', basePrice: 7962.50 },
 
-        // BI Data Architect (Assuming 'Data Architect' key in FE)
-        { service: 'Data Architect', complexity: 'Jr', basePrice: 4128.70 },
-        { service: 'Data Architect', complexity: 'Ssr', basePrice: 5308.33 },
-        { service: 'Data Architect', complexity: 'Sr', basePrice: 6370.00 },
-        { service: 'Data Architect', complexity: 'Expert', basePrice: 7325.50 },
+        // BI Data Architect
+        { service: 'BI Data Architect', complexity: 'Jr', basePrice: 4128.70 },
+        { service: 'BI Data Architect', complexity: 'Ssr', basePrice: 5308.33 },
+        { service: 'BI Data Architect', complexity: 'Sr', basePrice: 6370.00 },
+        { service: 'BI Data Architect', complexity: 'Expert', basePrice: 7325.50 },
 
         // Data Engineer
         { service: 'Data Engineer', complexity: 'Jr', basePrice: 4128.70 },
@@ -37,25 +36,35 @@ async function main() {
         { service: 'Data Engineer', complexity: 'Sr', basePrice: 7077.78 },
         { service: 'Data Engineer', complexity: 'Expert', basePrice: 7431.67 },
 
-        // Data Scientist (Mapped to 'Data Science' key)
-        // No Jr
-        { service: 'Data Science', complexity: 'Ssr', basePrice: 5190.37 },
-        { service: 'Data Science', complexity: 'Sr', basePrice: 6252.04 },
-        { service: 'Data Science', complexity: 'Expert', basePrice: 7502.44 },
+        // Data Scientist
+        { service: 'Data Scientist', complexity: 'Ssr', basePrice: 5190.37 },
+        { service: 'Data Scientist', complexity: 'Sr', basePrice: 6252.04 },
+        { service: 'Data Scientist', complexity: 'Expert', basePrice: 7502.44 },
 
-        // Operations Analyst
-        { service: 'Operations Analyst', complexity: 'Jr', basePrice: 2831.11 },
-        { service: 'Operations Analyst', complexity: 'Ssr', basePrice: 3538.89 },
-        { service: 'Operations Analyst', complexity: 'Sr', basePrice: 4718.52 },
-        { service: 'Operations Analyst', complexity: 'Expert', basePrice: 5426.30 },
+        // Data / Operations Analyst
+        { service: 'Data / Operations Analyst', complexity: 'Jr', basePrice: 2831.11 },
+        { service: 'Data / Operations Analyst', complexity: 'Ssr', basePrice: 3538.89 },
+        { service: 'Data / Operations Analyst', complexity: 'Sr', basePrice: 4718.52 },
+        { service: 'Data / Operations Analyst', complexity: 'Expert', basePrice: 5426.30 },
 
-        // Low Code Dev (Mapped to 'Power Apps' key or new key)
-        // Let's assume we map 'Power Apps' to this, or create new.
-        // I will use 'Low Code Dev' service name. I'll update FE to use this key.
-        { service: 'Low Code Dev', complexity: 'Jr', basePrice: 1500.00 },
-        { service: 'Low Code Dev', complexity: 'Ssr', basePrice: 3538.00 },
-        { service: 'Low Code Dev', complexity: 'Sr', basePrice: 4128.00 },
-        { service: 'Low Code Dev', complexity: 'Expert', basePrice: 5308.00 },
+        // Project / Product Manager
+        { service: 'Project / Product Manager', complexity: 'Ssr', basePrice: 5308.33 },
+        { service: 'Project / Product Manager', complexity: 'Sr', basePrice: 6370.00 },
+        { service: 'Project / Product Manager', complexity: 'Expert', basePrice: 7962.50 },
+
+        // Business Analyst
+        { service: 'Business Analyst', complexity: 'Ssr', basePrice: 4128.70 },
+        { service: 'Business Analyst', complexity: 'Sr', basePrice: 5308.33 },
+
+        // Low Code Developer
+        { service: 'Low Code Developer', complexity: 'Jr', basePrice: 1500.00 },
+        { service: 'Low Code Developer', complexity: 'Ssr', basePrice: 3538.00 },
+        { service: 'Low Code Developer', complexity: 'Sr', basePrice: 4128.00 },
+        { service: 'Low Code Developer', complexity: 'Expert', basePrice: 5308.00 },
+
+        // Power App / Streamlit Developer
+        { service: 'Power App / Streamlit Developer', complexity: 'Ssr', basePrice: 3538.00 },
+        { service: 'Power App / Streamlit Developer', complexity: 'Sr', basePrice: 4128.00 },
     ]
 
     for (const r of rates) {

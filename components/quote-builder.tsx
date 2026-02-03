@@ -29,23 +29,18 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 // Hardcoded fallback rates in case DB fails or during transition
 // Updated Q3 Rates based on User Request
 // Updated Q3 Rates based on User Request (Excel)
-const FALLBACK_RATES = {
-    data_analyst: 2500, // Not specified in recent list, keeping
-    data_science: 5190.37, // Ssr aligned
-    bi_developer: 4128.70, // Aligned with BI Vis
-    data_engineer: 4954.44, // Ssr aligned
-    power_apps: 3538.00, // Aligned with Low Code
-    react_dev: 4500,
-    power_automate: 3538.00,
-    // New Roles
-    bi_visualization: 4128.70, // Ssr
-    azure_developer: 4128.70, // Ssr
-    data_architect: 5308.33, // Ssr
-    bi_data_scientist: 5190.37, // Ssr
-    operations_analyst: 3538.89, // Ssr
-    project_manager: 5308.33,
-    solution_architect: 5308.33, // Ssr
-    low_code_dev: 3538.00 // Ssr
+const ROLE_CONFIG = {
+    bi_visualization_developer: { label: "BI Visualization Developer", defaultPrice: 4128.70 },
+    azure_developer: { label: "Azure Developer", defaultPrice: 4128.70 },
+    solution_architect: { label: "Solution Architect", defaultPrice: 5308.33 },
+    bi_data_architect: { label: "BI Data Architect", defaultPrice: 5308.33 },
+    data_engineer: { label: "Data Engineer", defaultPrice: 4954.44 },
+    data_scientist: { label: "Data Scientist", defaultPrice: 5190.37 },
+    data_operations_analyst: { label: "Data / Operations Analyst", defaultPrice: 3538.89 },
+    project_product_manager: { label: "Project / Product Manager", defaultPrice: 5308.33 },
+    business_analyst: { label: "Business Analyst", defaultPrice: 4128.70 },
+    low_code_developer: { label: "Low Code Developer", defaultPrice: 3538.00 },
+    power_app_streamlit_developer: { label: "Power App / Streamlit Developer", defaultPrice: 3538.00 }
 }
 
 const SENIORITY_MODIFIERS = {
@@ -72,7 +67,7 @@ const COMPLEXITY_MODIFIERS = {
     'high': 1.5
 }
 
-type RoleKey = keyof typeof FALLBACK_RATES;
+type RoleKey = keyof typeof ROLE_CONFIG;
 
 interface QuoteState {
     // 1. General
@@ -197,22 +192,17 @@ const INITIAL_STATE: QuoteState = {
     updateFrequency: 'daily',
     serviceType: 'Proyecto',
     roles: {
-        data_engineer: 0,
-        bi_developer: 0,
-        data_science: 0,
-        power_apps: 0,
-        react_dev: 0,
-        power_automate: 0,
-        data_analyst: 0,
-        // New Roles Init
-        bi_visualization: 0,
+        bi_visualization_developer: 0,
         azure_developer: 0,
-        data_architect: 0,
-        bi_data_scientist: 0,
-        operations_analyst: 0,
-        project_manager: 0,
         solution_architect: 0,
-        low_code_dev: 0
+        bi_data_architect: 0,
+        data_engineer: 0,
+        data_scientist: 0,
+        data_operations_analyst: 0,
+        project_product_manager: 0,
+        business_analyst: 0,
+        low_code_developer: 0,
+        power_app_streamlit_developer: 0
     },
     pipelinesCount: 0,
     notebooksCount: 0,
@@ -1721,8 +1711,8 @@ graph TD
                             <div className="space-y-4">
                                 <h4 className="text-sm font-bold uppercase tracking-wider text-[#CFDBD5]">Roles Disponibles</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {Object.keys(FALLBACK_RATES).map((roleKey) => {
-                                        const roleName = roleKey.replace(/_/g, ' ')
+                                    {Object.entries(ROLE_CONFIG).map(([roleKey, config]) => {
+                                        const roleName = config.label
                                         const serviceRates = dbRates.filter(r => r.service.toLowerCase() === roleName.toLowerCase())
                                         // Filter capabilities: Jr, Ssr, Sr, Expert
                                         const capabilities = ['Jr', 'Ssr', 'Sr', 'Expert']

@@ -36,6 +36,20 @@ type StaffingGroup = {
     }
 }
 
+const ALLOWED_PROFILES = [
+    "BI Visualization Developer",
+    "Azure Developer",
+    "Solution Architect",
+    "BI Data Architect",
+    "Data Engineer",
+    "Data Scientist",
+    "Data / Operations Analyst",
+    "Project / Product Manager",
+    "Business Analyst",
+    "Low Code Developer",
+    "Power App / Streamlit Developer"
+]
+
 export function AdminRatesEditor() {
     const [rates, setRates] = useState<ServiceRate[]>([])
     const [loading, setLoading] = useState(true)
@@ -307,12 +321,19 @@ export function AdminRatesEditor() {
                     <div className="grid gap-6 py-4">
                         <div className="space-y-2">
                             <Label className="text-[#CFDBD5]">Nombre del Rol / Perfil</Label>
-                            <Input
+                            <Select
                                 value={matrixForm.service}
-                                onChange={(e) => setMatrixForm({ ...matrixForm, service: e.target.value })}
-                                placeholder="Ej. Data Engineer"
-                                className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"
-                            />
+                                onValueChange={(val) => setMatrixForm({ ...matrixForm, service: val })}
+                            >
+                                <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]">
+                                    <SelectValue placeholder="Seleccionar Perfil Oficial" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ALLOWED_PROFILES.map((profile) => (
+                                        <SelectItem key={profile} value={profile}>{profile}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
 
                         <div className="space-y-4 border-t border-[#333533] pt-4">

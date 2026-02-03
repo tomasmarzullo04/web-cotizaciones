@@ -8,7 +8,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
-import { ShieldCheck, Calendar, Building2, Briefcase, Loader2, AlertTriangle } from "lucide-react"
+import { ShieldCheck, Calendar, Building2, Briefcase, Loader2, AlertTriangle, User, Network } from "lucide-react"
+import { MermaidDiagram } from "@/components/mermaid-diagram"
 import { getQuoteById } from "@/lib/actions"
 import { toast } from "sonner"
 
@@ -92,9 +93,9 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                     <div className="text-xs text-[#CFDBD5] opacity-50 font-mono mb-1">REF: {quote.id.substring(0, 8)}</div>
                                     <Badge
                                         className={`px-3 py-0.5 text-xs font-bold border rounded-full capitalize ${quote.status === 'APROBADA' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
-                                                quote.status === 'RECHAZADA' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
-                                                    quote.status === 'ENVIADA' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
-                                                        'bg-zinc-500/20 text-zinc-400 border-zinc-500/30'
+                                            quote.status === 'RECHAZADA' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                                                quote.status === 'ENVIADA' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                                                    'bg-zinc-500/20 text-zinc-400 border-zinc-500/30'
                                             }`}
                                     >
                                         {quote.status.toLowerCase()}
@@ -105,20 +106,61 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
 
                         <div className="p-6 md:p-8 space-y-8 flex-1">
                             {/* Meta Info */}
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-[#CFDBD5] p-4 bg-[#242423]/50 rounded-xl border border-[#333533]">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-[#CFDBD5] p-4 bg-[#242423]/50 rounded-xl border border-[#333533]">
                                 <div className="flex items-center gap-3">
                                     <Building2 className="w-4 h-4 text-[#F5CB5C]" />
-                                    <span className="font-medium">{quote.clientName || 'Cliente Confidencial'}</span>
+                                    <div>
+                                        <div className="text-[10px] opacity-50 uppercase">Cliente</div>
+                                        <div className="font-medium">{quote.clientName || 'Cliente Confidencial'}</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <User className="w-4 h-4 text-[#F5CB5C]" />
+                                    <div>
+                                        <div className="text-[10px] opacity-50 uppercase">Consultor</div>
+                                        <div className="font-medium">{quote.user?.name || 'Sistema'}</div>
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <Calendar className="w-4 h-4 text-[#F5CB5C]" />
-                                    <span>{format(new Date(quote.createdAt), "d MMM, yyyy", { locale: es })}</span>
+                                    <div>
+                                        <div className="text-[10px] opacity-50 uppercase">Fecha</div>
+                                        <div>{format(new Date(quote.createdAt), "d MMM, yyyy", { locale: es })}</div>
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <Briefcase className="w-4 h-4 text-[#F5CB5C]" />
-                                    <span>{quote.serviceType}</span>
+                                    <div>
+                                        <div className="text-[10px] opacity-50 uppercase">Servicio</div>
+                                        <div>{quote.serviceType}</div>
+                                    </div>
                                 </div>
                             </div>
+
+                            {/* SUSTAIN ARCHITECTURE (If Applicable) */}
+                            {quote.serviceType === 'Sustain' && (quote.diagramDefinition || details.diagramDefinition) && (
+                                <div className="space-y-4">
+                                    <h3 className="text-sm font-bold text-[#F5CB5C] uppercase tracking-widest flex items-center gap-2 border-b border-[#333533] pb-2">
+                                        <Network className="w-4 h-4" /> Arquitectura & Stack
+                                    </h3>
+                                    <Card className="bg-[#242423] border-[#333533] overflow-hidden p-4">
+                                        <div className="bg-white/5 rounded-lg p-2 mb-4">
+                                            <MermaidDiagram chart={quote.diagramDefinition || details.diagramDefinition} />
+                                        </div>
+
+                                        {/* Tech Stack List */}
+                                        {details.sustainDetails?.selectedTech && details.sustainDetails.selectedTech.length > 0 && (
+                                            <div className="flex flex-wrap gap-2">
+                                                {details.sustainDetails.selectedTech.map((tech: string) => (
+                                                    <Badge key={tech} variant="secondary" className="bg-[#333533] text-[#CFDBD5] border border-[#4A4D4A]">
+                                                        {tech}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </Card>
+                                </div>
+                            )}
 
                             {/* TEAM BREAKDOWN */}
                             <div className="space-y-4">
@@ -127,9 +169,10 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                 </h3>
                                 <Card className="bg-[#242423] border-[#333533] overflow-hidden">
                                     <div className="grid grid-cols-12 gap-2 p-3 bg-[#333533]/50 text-[10px] font-bold text-[#CFDBD5] uppercase tracking-wider border-b border-[#333533]">
-                                        <div className="col-span-5 pl-2">Perfil</div>
+                                        <div className="col-span-4 pl-2">Perfil</div>
                                         <div className="col-span-2 text-center">Lvl</div>
-                                        <div className="col-span-2 text-center">Cant</div>
+                                        <div className="col-span-1 text-center">Cant</div>
+                                        <div className="col-span-2 text-right">Tarifa</div>
                                         <div className="col-span-3 text-right pr-2">Total</div>
                                     </div>
                                     <div className="divide-y divide-[#333533]">
@@ -139,19 +182,22 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                                 const total = cost * (p.count || 1)
                                                 return (
                                                     <div key={idx} className="grid grid-cols-12 gap-2 p-3 text-sm hover:bg-[#333533]/30 transition-colors items-center">
-                                                        <div className="col-span-5 font-medium text-white pl-2">
+                                                        <div className="col-span-4 font-medium text-white pl-2">
                                                             {p.role}
                                                             {p.skills && <div className="text-[10px] text-[#CFDBD5] mt-0.5 truncate max-w-[150px] opacity-70">{p.skills}</div>}
                                                         </div>
                                                         <div className="col-span-2 flex justify-center">
                                                             <Badge variant="outline" className={`border-0 font-mono text-[10px] px-1.5 py-0 ${p.seniority === 'Expert' ? 'bg-amber-500/10 text-amber-500' :
-                                                                    p.seniority === 'Sr' ? 'bg-purple-500/10 text-purple-500' :
-                                                                        p.seniority === 'Ssr' ? 'bg-blue-500/10 text-blue-500' : 'bg-emerald-500/10 text-emerald-500'
+                                                                p.seniority === 'Sr' ? 'bg-purple-500/10 text-purple-500' :
+                                                                    p.seniority === 'Ssr' ? 'bg-blue-500/10 text-blue-500' : 'bg-emerald-500/10 text-emerald-500'
                                                                 }`}>
                                                                 {p.seniority}
                                                             </Badge>
                                                         </div>
-                                                        <div className="col-span-2 text-center text-[#CFDBD5] font-mono">{p.count}</div>
+                                                        <div className="col-span-1 text-center text-[#CFDBD5] font-mono">{p.count}</div>
+                                                        <div className="col-span-2 text-right font-mono text-[#CFDBD5] opacity-70">
+                                                            ${cost.toLocaleString('en-US')}
+                                                        </div>
                                                         <div className="col-span-3 text-right pr-2 font-mono text-[#F5CB5C]">
                                                             ${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                                         </div>
