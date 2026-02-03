@@ -189,7 +189,7 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                                         <div className="col-span-2 flex justify-center">
                                                             <Badge variant="outline" className={`border-0 font-mono text-[10px] px-1.5 py-0 ${p.seniority === 'Expert' ? 'bg-amber-500/10 text-amber-500' :
                                                                 p.seniority === 'Sr' ? 'bg-purple-500/10 text-purple-500' :
-                                                                    p.seniority === 'Ssr' ? 'bg-blue-500/10 text-blue-500' : 'bg-emerald-500/10 text-emerald-500'
+                                                                    p.seniority === 'Med' ? 'bg-blue-500/10 text-blue-500' : 'bg-emerald-500/10 text-emerald-500'
                                                                 }`}>
                                                                 {p.seniority}
                                                             </Badge>

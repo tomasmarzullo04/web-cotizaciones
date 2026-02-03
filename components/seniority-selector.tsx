@@ -70,7 +70,7 @@ export function SenioritySelector({ roleName, roleKey, capabilities, serviceRate
                                     <div className={cn("w-2 h-2 rounded-full",
                                         level === 'Expert' ? "bg-amber-500" :
                                             level === 'Sr' ? "bg-purple-500" :
-                                                level === 'Ssr' ? "bg-blue-500" : "bg-emerald-500"
+                                                level === 'Med' ? "bg-blue-500" : "bg-emerald-500"
                                     )} />
                                     {level}
                                 </span>

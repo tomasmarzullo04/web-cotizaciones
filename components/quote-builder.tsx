@@ -45,9 +45,9 @@ const ROLE_CONFIG = {
 
 const SENIORITY_MODIFIERS = {
     'Jr': 0.7,
-    'Ssr': 1.0,
+    'Med': 1.0,
     'Sr': 1.3,
-    'Lead': 1.5
+    'Expert': 1.5
 }
 
 const HOURS_MODIFIERS = {
@@ -1714,8 +1714,8 @@ graph TD
                                     {Object.entries(ROLE_CONFIG).map(([roleKey, config]) => {
                                         const roleName = config.label
                                         const serviceRates = dbRates.filter(r => r.service.toLowerCase() === roleName.toLowerCase())
-                                        // Filter capabilities: Jr, Ssr, Sr, Expert
-                                        const capabilities = ['Jr', 'Ssr', 'Sr', 'Expert']
+                                        // Filter capabilities: Jr, Med, Sr, Expert
+                                        const capabilities = ['Jr', 'Med', 'Sr', 'Expert']
 
                                         return (
                                             <div key={roleKey} className="flex items-center justify-between p-3 bg-[#333533] border border-[#4A4D4A] rounded-xl hover:border-[#F5CB5C] transition-colors group">

@@ -29,9 +29,9 @@ type StaffingGroup = {
     service: string
     rates: {
         Jr?: ServiceRate
-        Ssr?: ServiceRate
+        Med?: ServiceRate
         Sr?: ServiceRate
-        Lead?: ServiceRate
+        Expert?: ServiceRate
         [key: string]: ServiceRate | undefined
     }
 }
@@ -62,9 +62,9 @@ export function AdminRatesEditor() {
         service: '',
         prices: {
             Jr: 0,
-            Ssr: 0,
+            Med: 0,
             Sr: 0,
-            Expert: 0 // Renamed/Added Expert. Keeping Lead as equiv if needed, but user wants Expert.
+            Expert: 0
         }
     })
     const [isSaving, setIsSaving] = useState(false)
@@ -101,7 +101,7 @@ export function AdminRatesEditor() {
     const staffingGroups = useMemo(() => {
         const groups: Record<string, StaffingGroup> = {}
         const staffingRates = rates.filter(r =>
-            ['Jr', 'Ssr', 'Sr', 'Expert'].includes(r.complexity) ||
+            ['Jr', 'Med', 'Sr', 'Expert'].includes(r.complexity) ||
             (r.frequency === 'Mensual' && activeTab === 'staffing')
         )
 
@@ -128,7 +128,7 @@ export function AdminRatesEditor() {
             service: group.service,
             prices: {
                 Jr: group.rates['Jr']?.basePrice || 0,
-                Ssr: group.rates['Ssr']?.basePrice || 0,
+                Med: group.rates['Med']?.basePrice || 0,
                 Sr: group.rates['Sr']?.basePrice || 0,
                 Expert: group.rates['Expert']?.basePrice || 0
             }
@@ -140,7 +140,7 @@ export function AdminRatesEditor() {
         setEditingService(null) // New
         setMatrixForm({
             service: '',
-            prices: { Jr: 0, Ssr: 0, Sr: 0, Expert: 0 }
+            prices: { Jr: 0, Med: 0, Sr: 0, Expert: 0 }
         })
         setIsDialogOpen(true)
     }
@@ -152,8 +152,8 @@ export function AdminRatesEditor() {
         }
         setIsSaving(true)
         try {
-            // We need to upsert 4 rows (Jr, Ssr, Sr, Expert)
-            const levels = ['Jr', 'Ssr', 'Sr', 'Expert']
+            // We need to upsert 4 rows (Jr, Med, Sr, Expert)
+            const levels = ['Jr', 'Med', 'Sr', 'Expert']
 
             // Find existing IDs if editing
             const currentGroup = staffingGroups.find(g => g.service === (editingService || matrixForm.service))
@@ -252,11 +252,11 @@ export function AdminRatesEditor() {
                                                 ) : <span className="text-xs text-[#CFDBD5]/30">-</span>}
                                             </TableCell>
 
-                                            {/* Medium (Ssr) */}
+                                            {/* Medium (Med) */}
                                             <TableCell className="text-center">
-                                                {group.rates['Ssr'] ? (
+                                                {group.rates['Med'] ? (
                                                     <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-mono">
-                                                        ${group.rates['Ssr'].basePrice.toLocaleString()}
+                                                        ${group.rates['Med'].basePrice.toLocaleString()}
                                                     </Badge>
                                                 ) : <span className="text-xs text-[#CFDBD5]/30">-</span>}
                                             </TableCell>
@@ -353,8 +353,8 @@ export function AdminRatesEditor() {
                                 <Label className="text-right text-[#CFDBD5]">Medium</Label>
                                 <Input
                                     type="number"
-                                    value={matrixForm.prices.Ssr}
-                                    onChange={(e) => setMatrixForm({ ...matrixForm, prices: { ...matrixForm.prices, Ssr: Number(e.target.value) } })}
+                                    value={matrixForm.prices.Med}
+                                    onChange={(e) => setMatrixForm({ ...matrixForm, prices: { ...matrixForm.prices, Med: Number(e.target.value) } })}
                                     className="col-span-2 bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"
                                 />
                             </div>
