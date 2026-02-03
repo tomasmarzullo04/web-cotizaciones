@@ -548,10 +548,10 @@ export async function saveServiceRate(rate: {
     basePrice: number,
     multiplier: number
 }) {
-    // Check if user is admin? (Assumed shielded by UI/Middleware for now)
     try {
+        let result;
         if (rate.id) {
-            return await prisma.serviceRate.update({
+            result = await prisma.serviceRate.update({
                 where: { id: rate.id },
                 data: {
                     service: rate.service,
@@ -562,7 +562,7 @@ export async function saveServiceRate(rate: {
                 }
             })
         } else {
-            return await prisma.serviceRate.create({
+            result = await prisma.serviceRate.create({
                 data: {
                     service: rate.service,
                     frequency: rate.frequency,
@@ -572,6 +572,9 @@ export async function saveServiceRate(rate: {
                 }
             })
         }
+        revalidatePath('/quote/new')
+        revalidatePath('/admin')
+        return result
     } catch (e) {
         console.error("Failed to save rate", e)
         throw new Error("Failed to save rate")
@@ -581,6 +584,8 @@ export async function saveServiceRate(rate: {
 export async function deleteServiceRate(id: string) {
     try {
         await prisma.serviceRate.delete({ where: { id } })
+        revalidatePath('/quote/new')
+        revalidatePath('/admin')
         return { success: true }
     } catch (e) {
         console.error("Failed to delete rate", e)
