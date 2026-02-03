@@ -916,3 +916,51 @@ export async function getConsultants() {
         return []
     }
 }
+
+export async function reviewQuote(quoteId: string, status: 'APROBADA' | 'RECHAZADA', comment: string) {
+    const cookieStore = await cookies()
+    const userId = cookieStore.get('session_user_id')?.value
+
+    // Optional: Verify Role
+    // const role = cookieStore.get('session_role')?.value
+    // if (role !== 'ADMIN') return { success: false, error: "Unauthorized" }
+
+    if (!userId) return { success: false, error: "Unauthorized" }
+
+    try {
+        const quote = await prisma.quote.update({
+            where: { id: quoteId },
+            data: {
+                status: status,
+                adminComment: comment
+            },
+            include: { user: true }
+        })
+
+        // Webhook Notification (Fire and Forget)
+        const webhookUrl = process.env.N8N_MONDAY_WEBHOOK || process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL
+        if (webhookUrl && quote.user?.email) {
+            // We don't await this to speed up UI, or we await if we want to guarantee sending
+            fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: "review_decision",
+                    id: quote.id,
+                    status: status,
+                    adminComment: comment,
+                    consultantEmail: quote.user.email,
+                    clientName: quote.clientName,
+                    date: new Date().toISOString()
+                })
+            }).catch(err => console.error("Webhook trigger failed", err))
+        }
+
+        revalidatePath('/admin')
+        revalidatePath('/dashboard')
+        return { success: true }
+    } catch (e: any) {
+        console.error("Review Quote Failed", e)
+        return { success: false, error: e.message }
+    }
+}

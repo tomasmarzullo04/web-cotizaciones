@@ -12,6 +12,7 @@ import { Download, FileSpreadsheet, LayoutGrid, DollarSign, Search, FilterX, Act
 import * as XLSX from 'xlsx'
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AdminReviewModal } from "@/components/admin-review-modal"
 
 type Quote = {
     id: string
@@ -69,6 +70,10 @@ export function AdminHistory({ quotes: serverQuotes, consultants: serverConsulta
         max: ""
     })
     const [isFiltering, setIsFiltering] = useState(false)
+
+    // Modal State
+    const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null)
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
 
     const handleApplyFilters = () => {
         setIsFiltering(true)
@@ -340,7 +345,14 @@ export function AdminHistory({ quotes: serverQuotes, consultants: serverConsulta
                                 try { params = quote.technicalParameters ? JSON.parse(quote.technicalParameters) : (quote.params || {}) } catch { }
 
                                 return (
-                                    <TableRow key={quote.id || Math.random()} className="border-[#2D2D2D] hover:bg-[#2D2D2D]/30 transition-colors group">
+                                    <TableRow
+                                        key={quote.id || Math.random()}
+                                        className="border-[#2D2D2D] hover:bg-[#2D2D2D]/30 transition-colors group cursor-pointer"
+                                        onClick={() => {
+                                            setSelectedQuote(quote)
+                                            setIsReviewModalOpen(true)
+                                        }}
+                                    >
                                         {/* Client */}
                                         <TableCell className="font-bold text-[#E8EDDF] pl-8 py-5">
                                             {quote.clientName || 'Sin Nombre'}
@@ -421,6 +433,19 @@ export function AdminHistory({ quotes: serverQuotes, consultants: serverConsulta
                     </Table>
                 </div>
             </CardContent>
+
+            <AdminReviewModal
+                quote={selectedQuote}
+                isOpen={isReviewModalOpen}
+                onClose={() => setIsReviewModalOpen(false)}
+                onStatusChange={() => {
+                    // Optional: refresh data or just let revalidatePath handle it via nextjs
+                    // But for immediate feedback we might want to update local state too
+                    if (selectedQuote) {
+                        // Optimistic update or just rely on revalidate
+                    }
+                }}
+            />
         </Card>
     )
 }

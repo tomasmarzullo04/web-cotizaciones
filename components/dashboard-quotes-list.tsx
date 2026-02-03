@@ -201,8 +201,19 @@ export function DashboardQuotesList({ serverQuotes = [] }: { serverQuotes?: any[
                                     </div>
                                     {/* Mobile Only Status Badge (Top Right) */}
                                     <div className="md:hidden">
-                                        <Badge variant="outline" className={`${getStatusStyles(quote.status)} text-[10px] px-2 h-5`}>
+                                        <Badge variant="outline" className={`${getStatusStyles(quote.status)} text-[10px] px-2 h-5 flex items-center gap-1`}>
                                             {(quote.status || 'BORRADOR')}
+                                            {quote.status === 'RECHAZADA' && quote.adminComment && (
+                                                <div className="relative group p-0.5" onClick={(e) => {
+                                                    // On mobile, maybe click to toggle? For now simple hover/active
+                                                    e.stopPropagation()
+                                                }}>
+                                                    <Activity className="w-3 h-3 text-red-400" />
+                                                    <div className="absolute bottom-full left-0 mb-2 w-48 p-2 bg-[#242423] border border-[#2D2D2D] rounded-lg text-xs text-[#CFDBD5] hidden group-hover:block z-50 shadow-xl">
+                                                        {quote.adminComment}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </Badge>
                                     </div>
                                 </div>
@@ -214,8 +225,17 @@ export function DashboardQuotesList({ serverQuotes = [] }: { serverQuotes?: any[
                                             {quote.serviceType || 'Proyecto'}
                                         </Badge>
                                         {/* Status Badge (Desktop) */}
-                                        <Badge variant="outline" className={`hidden md:inline-flex ${getStatusStyles(quote.status)} text-[10px] px-2 h-5`}>
+                                        <Badge variant="outline" className={`hidden md:inline-flex ${getStatusStyles(quote.status)} text-[10px] px-2 h-5 flex items-center gap-1`}>
                                             {(quote.status || 'BORRADOR')}
+                                            {quote.status === 'RECHAZADA' && quote.adminComment && (
+                                                <div className="relative group p-0.5">
+                                                    <Activity className="w-3 h-3 text-red-400 cursor-help" />
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-[#242423] border border-[#2D2D2D] rounded-lg text-xs text-[#CFDBD5] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl">
+                                                        {quote.adminComment}
+                                                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#242423] border-r border-b border-[#2D2D2D] rotate-45"></div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </Badge>
                                     </div>
                                 </div>

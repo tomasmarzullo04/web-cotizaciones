@@ -39,6 +39,8 @@ model Quote {
   linkedClientId String? @map("linked_client_id")
   client               Client?  @relation(fields: [linkedClientId], references: [id])
 
+  adminComment         String?  // Comment from admin upon approval/rejection
+
   @@index([userId]) // Performance optimization
 }
 
