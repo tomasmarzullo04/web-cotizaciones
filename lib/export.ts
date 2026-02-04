@@ -205,7 +205,7 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i)
 
-            // 1. SI LOGO (Bottom Right - Fixed Coordinate) - SWAPPED & ENLARGED 20%
+            // 1. SI LOGO (Bottom Right - Margin Aligned) - SWAPPED & ENLARGED 20%
             if (LOGO_SI) {
                 try {
                     const props = doc.getImageProperties(LOGO_SI)
@@ -219,11 +219,11 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
                         h = (props.height * maxW) / props.width
                     }
 
-                    // Vertically aligned with footer text baseline
-                    // Footer text is at pageHeight - 10 and pageHeight - 6
-                    // Logo should align its bottom with the lower text line (pageHeight - 6)
-                    const logoX = 182 + (maxW - w) / 2
-                    const logoY = (pageHeight - 6) - h  // Bottom of logo aligns with text baseline
+                    // GEOMETRIC ALIGNMENT:
+                    // X: Right edge aligns with page right margin (same as header blue block)
+                    // Y: Bottom edge aligns exactly with footer text baseline (pageHeight - 6)
+                    const logoX = pageWidth - margin - w  // Right-aligned to margin
+                    const logoY = (pageHeight - 6) - h    // Bottom aligns with text baseline
 
                     doc.addImage(LOGO_SI, 'PNG', logoX, logoY, w, h)
                 } catch (e) {
