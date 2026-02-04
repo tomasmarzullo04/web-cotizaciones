@@ -168,18 +168,18 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         const siH = 7.0 // Reduced size for prolijidad
 
         const block_Y = 0
-        const block_H = 32
-        const block_W = pageWidth * 0.55 // Focused on the right
+        const block_H = 24  // Reduced from 32 to 24 for minimalism
+        const block_W = pageWidth * 0.45 // Reduced from 0.55 to 0.45
 
         // 1. Blue Background Block for Title (Fixed Position)
         doc.setFillColor(COLOR_PRIMARY)
         doc.rect(pageWidth - block_W, block_Y, block_W, block_H, 'F')
 
-        // 2. "COTIZACIÓN" Text
+        // 2. "COTIZACIÓN" Text - Smaller and more elegant
         doc.setFont(FONT_BOLD, "bold")
-        doc.setFontSize(30)
+        doc.setFontSize(22)  // Reduced from 30 to 22
         doc.setTextColor(255)
-        doc.text("COTIZACIÓN", pageWidth - margin, 21, { align: "right" })
+        doc.text("COTIZACIÓN", pageWidth - margin, 16, { align: "right" })  // Adjusted Y from 21 to 16
 
         // 3. logo SI (Fixed Position - Left)
         if (LOGO_SI) {
@@ -194,10 +194,10 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
             }
         }
 
-        // Space/Divider below header (Fixed Y)
+        // Space/Divider below header (Fixed Y) - Adjusted for smaller header
         doc.setDrawColor(COLOR_PRIMARY)
         doc.setLineWidth(0.4)
-        doc.line(margin, 35, pageWidth - margin, 35)
+        doc.line(margin, 30, pageWidth - margin, 30)  // Moved up from 35 to 30
     }
 
     const drawFooter = () => {
@@ -219,9 +219,11 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
                         h = (props.height * maxW) / props.width
                     }
 
-                    // Adjusted coordinates for larger logo
+                    // Vertically aligned with footer text baseline
+                    // Footer text is at pageHeight - 10 and pageHeight - 6
+                    // Logo should align its bottom with the lower text line (pageHeight - 6)
                     const logoX = 182 + (maxW - w) / 2
-                    const logoY = 273 + (maxH - h) / 2
+                    const logoY = (pageHeight - 6) - h  // Bottom of logo aligns with text baseline
 
                     doc.addImage(data.clientLogoBase64, 'PNG', logoX, logoY, w, h)
                 } catch (e) {
