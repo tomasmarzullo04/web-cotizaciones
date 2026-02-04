@@ -205,12 +205,12 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i)
 
-            // 1. Client Logo (Bottom Right - Fixed Coordinate)
+            // 1. Client Logo (Bottom Right - Fixed Coordinate) - INCREASED 20%
             if (data.clientLogoBase64) {
                 try {
                     const props = doc.getImageProperties(data.clientLogoBase64)
-                    const maxW = 15
-                    const maxH = 10
+                    const maxW = 18  // Increased from 15 to 18 (20% larger)
+                    const maxH = 12  // Increased from 10 to 12 (20% larger)
                     let w = (props.width * maxH) / props.height
                     let h = maxH
 
@@ -219,10 +219,9 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
                         h = (props.height * maxW) / props.width
                     }
 
-                    // Security Coordinates: x: 185mm, y: 275mm
-                    // Adjusted for centering within the 15x10 area if smaller
-                    const logoX = 185 + (maxW - w) / 2
-                    const logoY = 275 + (maxH - h) / 2
+                    // Adjusted coordinates for larger logo
+                    const logoX = 182 + (maxW - w) / 2
+                    const logoY = 273 + (maxH - h) / 2
 
                     doc.addImage(data.clientLogoBase64, 'PNG', logoX, logoY, w, h)
                 } catch (e) {
@@ -230,11 +229,12 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
                 }
             }
 
+            // Footer text - ALL LEFT ALIGNED
             doc.setFontSize(7)
             doc.setFont(FONT_REG, "normal")
             doc.setTextColor(150)
             doc.text(`The Store Intelligence | Confidencial | Pág. ${i} de ${pageCount}`, margin, pageHeight - 10, { align: 'left' })
-            doc.text(`Propuesta Comercial SI`, pageWidth - margin, pageHeight - 10, { align: 'right' })
+            doc.text(`Propuesta Comercial SI`, margin, pageHeight - 6, { align: 'left' })
         }
     }
 
@@ -288,7 +288,35 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
     const objLines = doc.splitTextToSize(objText, contentWidth)
     doc.text(objLines, margin, y)
-    y += (objLines.length * 5) + 12
+    y += (objLines.length * 5) + 8
+
+    // 2.5. AI SUMMARY (if available)
+    if (data.description && data.description.trim()) {
+        // Blockquote-style design with left border
+        const summaryY = y
+        const summaryPadding = 8
+        const summaryContent = cleanText(data.description)
+        const summaryLines = doc.splitTextToSize(summaryContent, contentWidth - summaryPadding - 5)
+        const summaryHeight = (summaryLines.length * 4.5) + 10
+
+        // Background box
+        doc.setFillColor(240, 245, 250) // Light blue background
+        doc.rect(margin, summaryY, contentWidth, summaryHeight, 'F')
+
+        // Left border accent
+        doc.setFillColor(0, 75, 141) // Primary blue
+        doc.rect(margin, summaryY, 3, summaryHeight, 'F')
+
+        // Summary text
+        doc.setFont(FONT_REG, "italic")
+        doc.setFontSize(8.5)
+        doc.setTextColor(COLOR_TEXT)
+        doc.text(summaryLines, margin + summaryPadding, summaryY + 6)
+
+        y += summaryHeight + 12
+    } else {
+        y += 4
+    }
 
     // 3. INVESTMENT TABLE (Now BEFORE Diagram)
     doc.setFont(FONT_BOLD, "bold")
@@ -371,21 +399,24 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     const boxH = data.retention?.enabled ? 35 : 25
     if (y + boxH > pageHeight - 30) { doc.addPage(); drawHeader(); y = 45; }
 
-    doc.setFillColor(245, 203, 92) // #F5CB5C
+    // Professional Dark Blue Box (instead of yellow)
+    doc.setFillColor(0, 75, 141) // #004B8D - Professional Blue
     doc.rect(pageWidth - margin - 90, y, 90, boxH, 'F')
 
     let ty = y + 7
-    doc.setTextColor(COLOR_PRIMARY)
+    doc.setTextColor(255, 255, 255) // White text for contrast
     doc.setFontSize(10)
     doc.text("TOTAL ESTIMADO:", pageWidth - margin - 85, ty)
     doc.text(fmt(displayGross), pageWidth - margin - 5, ty, { align: 'right' })
 
     if (data.retention?.enabled) {
         ty += 8
+        doc.setTextColor(255, 255, 255) // Keep white text
         doc.text(`Retención (${data.retention.percentage}%):`, pageWidth - margin - 85, ty)
         doc.text(`- ${fmt(displayRetention)}`, pageWidth - margin - 5, ty, { align: 'right' })
         ty += 10
         doc.setFontSize(12)
+        doc.setTextColor(255, 255, 255) // Keep white text
         doc.text("INVERSIÓN NETA:", pageWidth - margin - 85, ty)
         doc.text(fmt(displayNet), pageWidth - margin - 5, ty, { align: 'right' })
     }
@@ -423,7 +454,55 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
         try {
             doc.addImage(data.diagramImage, 'PNG', margin, y, imgW, imgH)
-            y += imgH + 15
+            y += imgH + 10
+
+            // TECH STACK LIST (below diagram)
+            if (data.techStack && data.techStack.length > 0) {
+                y += 5
+                doc.setFont(FONT_BOLD, "bold")
+                doc.setFontSize(9)
+                doc.setTextColor(COLOR_PRIMARY)
+                doc.text("STACK TECNOLÓGICO:", margin, y)
+                y += 5
+
+                // Map tech IDs to readable names
+                const techNames: Record<string, string> = {
+                    'azure': 'Azure Data Factory',
+                    'databricks': 'Azure Databricks',
+                    'synapse': 'Azure Synapse',
+                    'snowflake': 'Snowflake',
+                    'powerbi': 'Power BI',
+                    'sqlserver': 'SQL Server',
+                    'logicapps': 'Azure Logic Apps',
+                    'tableau': 'Tableau',
+                    'python': 'Python/Airflow',
+                    'n8n': 'n8n',
+                    'antigravity': 'Google Antigravity',
+                    'lovable': 'Lovable',
+                    'powerapps': 'Power Apps',
+                    'azure_df': 'Azure Data Factory',
+                    'dotnet': '.NET',
+                    'react': 'React',
+                    'sql': 'SQL',
+                    'streamlit': 'Streamlit',
+                    'datascience': 'Data Science / ML',
+                    'other': 'Otros'
+                }
+
+                // Display tech stack as comma-separated list
+                const techList = data.techStack
+                    .map((id: string) => techNames[id] || id)
+                    .join(' • ')
+
+                doc.setFont(FONT_REG, "normal")
+                doc.setFontSize(8.5)
+                doc.setTextColor(COLOR_TEXT)
+                const techLines = doc.splitTextToSize(techList, contentWidth)
+                doc.text(techLines, margin, y)
+                y += (techLines.length * 4) + 10
+            }
+
+            y += 5
         } catch (e) {
             doc.setFont(FONT_REG, "italic")
             doc.text("[Diagrama no disponible]", margin, y + 5)
@@ -466,17 +545,10 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
         "Acuerdo de confidencialidad absoluto sobre datos compartidos."
     ]
 
-    const mid = Math.ceil(terms.length / 2)
-    const leftTerms = terms.slice(0, mid)
-    const rightTerms = terms.slice(mid)
-
+    // Single column format for better readability
     const termsYStart = y
-    leftTerms.forEach((term, idx) => {
-        doc.text(`• ${cleanText(term)}`, margin, termsYStart + (idx * 4.2), { maxWidth: (contentWidth / 2) - 5 })
-    })
-
-    rightTerms.forEach((term, idx) => {
-        doc.text(`• ${cleanText(term)}`, (pageWidth / 2) + 5, termsYStart + (idx * 4.2), { maxWidth: (contentWidth / 2) - 5 })
+    terms.forEach((term, idx) => {
+        doc.text(`• ${cleanText(term)}`, margin, termsYStart + (idx * 4.5), { maxWidth: contentWidth })
     })
 
     drawFooter()
