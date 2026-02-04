@@ -118,7 +118,7 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                             {/* Meta Info */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-4">
-                                    <div className="text-[10px] font-bold text-[#004B8D] uppercase tracking-widest border-b border-[#333533] pb-1">Cotizado a:</div>
+                                    <div className="text-[10px] font-bold text-[#06B6D4] uppercase tracking-widest border-b border-[#333533] pb-1">Cotizado a:</div>
                                     <div className="flex items-center gap-4">
                                         <div className="p-3 bg-[#f0f5fa] rounded-xl text-[#004B8D] w-12 h-12 flex items-center justify-center overflow-hidden border border-[#BDC9D7]">
                                             {details.clientLogoUrl ? (
@@ -134,7 +134,7 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                     </div>
                                 </div>
                                 <div className="space-y-4">
-                                    <div className="text-[10px] font-bold text-[#004B8D] uppercase tracking-widest border-b border-[#333533] pb-1">Detalles de Cotización:</div>
+                                    <div className="text-[10px] font-bold text-[#06B6D4] uppercase tracking-widest border-b border-[#333533] pb-1">Detalles de Cotización:</div>
                                     <div className="grid grid-cols-2 gap-4 text-sm">
                                         <div>
                                             <span className="text-[10px] text-[#CFDBD5] uppercase block opacity-50">Fecha</span>
@@ -187,7 +187,7 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
 
                             {/* 2. Strategic Objective (Moved up) */}
                             <div className="p-4 bg-white/5 rounded-xl border border-[#333533]">
-                                <div className="text-[10px] font-bold text-[#004B8D] uppercase tracking-widest mb-2">Objetivo Estratégico</div>
+                                <div className="text-[10px] font-bold text-[#06B6D4] uppercase tracking-widest mb-2">Objetivo Estratégico</div>
                                 <p className="text-sm text-[#CFDBD5] leading-relaxed">
                                     {quote.serviceType === 'Project'
                                         ? "Diseño e implementación de una solución tecnológica punta a punta, garantizando escalabilidad y alineación con los estándares regionales de Nestlé."
@@ -263,44 +263,12 @@ export function QuoteDetailSheet({ quoteId, isOpen, onClose }: QuoteDetailSheetP
                                     )}
                                     <Separator className="bg-[#333533]" />
                                     <div className="flex justify-between items-center">
-                                        <span className="text-sm font-bold text-[#004B8D] uppercase tracking-widest">Inversión Final:</span>
+                                        <span className="text-sm font-bold text-[#06B6D4] uppercase tracking-widest">Inversión Final:</span>
                                         <span className="text-xl font-black text-[#F5CB5C] font-mono">${totals.net.toLocaleString('en-US')}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* 4. Architecture Diagram (Mandatory Goal: End of flow) */}
-                            <div className="p-4 bg-white/5 rounded-xl border border-[#333533]">
-                                <div className="text-[10px] font-bold text-[#004B8D] uppercase tracking-widest mb-4">Arquitectura de la Solución (Mandatorio)</div>
-                                <div className="bg-[#171717] rounded-lg p-4 border border-[#333533] min-h-[300px] flex items-center justify-center">
-                                    <div className="w-full">
-                                        <MermaidDiagram chart={details.chartCode} />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Terms & Conditions Mirror */}
-                            <div className="mt-8 pt-8 border-t border-[#333533]">
-                                <div className="text-[10px] font-bold text-[#004B8D] uppercase tracking-widest mb-4">Términos y Condiciones (Vista Previa)</div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-[10px] text-[#CFDBD5] opacity-70">
-                                    <div className="flex items-start gap-2">
-                                        <span className="text-[#004B8D]">•</span>
-                                        <span>Propuesta Válida durante 30 días desde su emisión.</span>
-                                    </div>
-                                    <div className="flex items-start gap-2">
-                                        <span className="text-[#004B8D]">•</span>
-                                        <span>Proyecto a iniciar con Orden de Compra.</span>
-                                    </div>
-                                    <div className="flex items-start gap-2">
-                                        <span className="text-[#004B8D]">•</span>
-                                        <span>Costos tasados según acuerdo regional.</span>
-                                    </div>
-                                    <div className="flex items-start gap-2">
-                                        <span className="text-[#004B8D]">•</span>
-                                        <span>Entregables propiedad de Nestlé finalizado el proyecto.</span>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         {/* Footer (Mirror PDF Page 2) */}
