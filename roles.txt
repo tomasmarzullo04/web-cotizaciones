@@ -1,16 +1,12 @@
 Roles
 
 - Admin
-    - admin@antigravity.com
+    - maxhigareda@thestoreintelligence.com
     - admin2026
-
     
 - User
     - tomasmarzullo04@gmail.com
-    - user2026
-
-    - maxhigareda@thestoreintelligence.com
-    - max2026
+    - tomas2026
 
     - viridiana@thestoreintelligence.com
     - viridiana2026
