@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { loginAction, registerAction, syncSessionAction } from '@/lib/auth'
+import { loginAction, registerAction } from '@/lib/auth'
 import { Label } from '@/components/ui/label'
 import { Loader2, ArrowRight, Lock } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
@@ -27,70 +27,6 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false)
     const [isGoogleLoading, setIsGoogleLoading] = useState(false)
     const [error, setError] = useState<string | null>(searchParams.get('error'))
-
-    // Real-Time Auth Listener
-    const isRedirecting = useRef(false) // Prevent infinite loops
-
-    useEffect(() => {
-        const supabase = getSupabaseClient()
-        if (!supabase) return
-
-        // RESET Semaphore on every mount to ensure we are ready
-        isRedirecting.current = false
-
-        // 1. Initial State Check (Silent Redirect if already logged in)
-        supabase.auth.getUser().then(({ data: { user } }) => {
-            if (user && !isRedirecting.current) {
-                console.log("User already active, redirecting silent")
-                isRedirecting.current = true
-                // Basic sync without UI flash
-                syncSessionAction().then(() => {
-                    window.location.assign('/quote/new')
-                })
-            }
-        })
-
-        // 2. Strict Event Listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log(`[Auth Event] ${event}`, session?.user?.email)
-
-            if (!session) return
-
-            // ONLY handle explicit sign-ins that are NOT initial session restoration
-            // 'SIGNED_IN' triggers on login. 'USER_UPDATED' triggers on email confirm (link click).
-            // We want to block generic re-renders or 'INITIAL_SESSION' from looping.
-
-            if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && !isRedirecting.current) {
-                if (window.location.pathname === '/quote/new') return
-
-                // Filter: If it's just a session refresh, ignore? 
-                // We assume explicit action if we are on login page.
-
-                isRedirecting.current = true
-
-                // Show message specific to event?
-                const isVerification = event === 'USER_UPDATED' || window.location.hash.includes('type=recovery') || window.location.hash.includes('type=invite')
-
-                if (isVerification) {
-                    setSuccessMessage("¡Cuenta verificada! Sincronizando...")
-                } else {
-                    setSuccessMessage("Ingreso detectado. Redirigiendo...")
-                }
-
-                await syncSessionAction()
-
-                // Delay slightly for UX only if message was shown
-                setTimeout(() => {
-                    window.location.assign('/quote/new')
-                }, 800)
-            }
-        })
-
-        return () => {
-            subscription.unsubscribe()
-            isRedirecting.current = false // Reset on unmount
-        }
-    }, [])
 
     const handleGoogleLogin = async () => {
         setIsGoogleLoading(true)
@@ -130,42 +66,60 @@ export default function LoginPage() {
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        // CRITICAL: Prevent any default form behavior
         event.preventDefault()
+        event.stopPropagation()
+
+        // Prevent double submission
+        if (loading) return
+
         setLoading(true)
         setError(null)
         setSuccessMessage(null)
 
         const formData = new FormData(event.currentTarget)
+
         try {
             // Choose action based on mode
             const action = isRegistering ? registerAction : loginAction
             const result = await action(formData)
 
+            // Handle errors
             if (result && 'error' in result && result.error) {
                 setError(result.error)
-            } else if (result && 'success' in result) {
+                setLoading(false)
+                return
+            }
+
+            // Handle registration verification flow
+            if (result && 'success' in result) {
                 if ((result as any).pendingVerification) {
                     const emailVal = formData.get('email') as string
                     window.location.href = `/auth/verify?email=${encodeURIComponent(emailVal)}`
                     return
                 }
 
+                // ONLY redirect after successful server validation
                 if (result.success) {
-                    // FORCE CLIENT-SIDE NAVIGATION
-                    // This ensures cookies are read freshly by the browser
                     setSuccessMessage("Acceso concedido. Entrando...")
 
-                    // Prevent button re-enable
-                    setLoading(true)
+                    // Wait for server to set cookies properly
+                    await new Promise(resolve => setTimeout(resolve, 300))
 
+                    // Use the validated redirect URL from server
                     const target = (result as any).redirectUrl || '/quote/new'
                     window.location.href = target
+                    return
                 }
             }
+
+            // If we reach here without success, show generic error
+            setError("Error inesperado. Intenta nuevamente.")
+            setLoading(false)
+
         } catch (err) {
             console.error("Auth process failed", err)
             setError(err instanceof Error ? err.message : "Error. Verifica tus credenciales.")
-        } finally {
             setLoading(false)
         }
     }
