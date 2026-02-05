@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from "react"
-import { Check, ChevronsUpDown, Loader2, Plus, Search, User, Building2, Mail } from "lucide-react"
+import { Check, ChevronsUpDown, Loader2, Plus, Search, User, Building2, Mail, Upload, Link2, CheckCircle2, XCircle, AlertCircle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -20,8 +20,11 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createClient, searchClients } from "@/lib/actions"
-// Simple Debounce Implementation if hooks file doesn't exist or is complex
+import { createClient, searchClients, uploadClientLogo, validateExternalLogoUrl } from "@/lib/actions"
+import { toast } from "sonner"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+
+// Simple Debounce Implementation
 function useDebounceValue<T>(value: T, delay: number): T {
     const [debouncedValue, setDebouncedValue] = React.useState<T>(value);
     React.useEffect(() => {
@@ -61,20 +64,36 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
     const [newClientData, setNewClientData] = React.useState({
         companyName: "",
         contactName: "",
-        email: ""
+        email: "",
+        clientLogoUrl: ""
     })
     const [isCreating, setIsCreating] = React.useState(false)
+
+    // Logo Upload State
+    const [uploadMode, setUploadMode] = React.useState<'url' | 'file'>('url')
+    const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
+    const [previewUrl, setPreviewUrl] = React.useState<string | null>(null)
+    const [isUploading, setIsUploading] = React.useState(false)
+    const [urlValidationStatus, setUrlValidationStatus] = React.useState<'idle' | 'validating' | 'valid' | 'invalid'>('idle')
+    const [validationError, setValidationError] = React.useState<string>('')
+
+    const fileInputRef = React.useRef<HTMLInputElement>(null)
+    const urlDebounceRef = React.useRef<NodeJS.Timeout | undefined>(undefined)
+
+    // Cleanup objectURL
+    React.useEffect(() => {
+        return () => {
+            if (previewUrl && previewUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(previewUrl)
+            }
+        }
+    }, [previewUrl])
 
     // Search Effect
     React.useEffect(() => {
         async function fetchClients() {
             // Allow empty query if open (Initial Load) or > 2 chars
-            if (debouncedQuery.length < 2 && debouncedQuery.length > 0) {
-                // Determine if we should clear or wait. 
-                // If length is 1, maybe wait. 
-                // But if length is 0 (empty), we might want initial load IF popup is open.
-                return
-            }
+            if (debouncedQuery.length < 2 && debouncedQuery.length > 0) return
 
             // Only fetch if open or valid query
             if (!open && !debouncedQuery) return
@@ -96,6 +115,76 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
         }
     }, [debouncedQuery, open])
 
+    // Handle File Select
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        const validTypes = ['image/png', 'image/jpeg', 'image/jpg']
+        if (!validTypes.includes(file.type)) {
+            alert("Formato inválido. Solo se permiten PNG y JPG.")
+            return
+        }
+
+        const maxSize = 2 * 1024 * 1024
+        if (file.size > maxSize) {
+            alert("El archivo es demasiado grande. Máximo 2MB.")
+            return
+        }
+
+        if (previewUrl && previewUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(previewUrl)
+        }
+
+        const objectUrl = URL.createObjectURL(file)
+        setSelectedFile(file)
+        setPreviewUrl(objectUrl)
+        setValidationError('')
+    }
+
+    // Handle URL Change
+    const handleUrlChange = (url: string) => {
+        setNewClientData({ ...newClientData, clientLogoUrl: url })
+
+        if (urlDebounceRef.current) clearTimeout(urlDebounceRef.current)
+
+        if (!url) {
+            setPreviewUrl(null)
+            setUrlValidationStatus('idle')
+            setValidationError('')
+            return
+        }
+
+        setUrlValidationStatus('validating')
+        setValidationError('')
+
+        urlDebounceRef.current = setTimeout(async () => {
+            const result = await validateExternalLogoUrl(url)
+            if (result.valid) {
+                setUrlValidationStatus('valid')
+                setPreviewUrl(url)
+                setValidationError('')
+            } else {
+                setUrlValidationStatus('invalid')
+                setPreviewUrl(null)
+                setValidationError(result.error || 'URL inválida')
+            }
+        }, 500)
+    }
+
+    // Handle Mode Change
+    const handleModeChange = (mode: 'url' | 'file') => {
+        if (uploadMode === 'file' && previewUrl && previewUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(previewUrl)
+        }
+        setUploadMode(mode)
+        setSelectedFile(null)
+        setPreviewUrl(null)
+        setUrlValidationStatus('idle')
+        setValidationError('')
+        if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+
     // Handle Create New
     const handleCreateClient = async () => {
         if (!newClientData.companyName || !newClientData.email || !newClientData.contactName) {
@@ -104,24 +193,63 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
         }
 
         setIsCreating(true)
-        const res = await createClient(newClientData)
-        setIsCreating(false)
+        try {
+            let finalLogoUrl = newClientData.clientLogoUrl
 
-        if (res.success && res.client) {
-            // Select the new client
-            onClientSelect(res.client, true) // isNew = true
-            setShowCreateModal(false)
-            setOpen(false)
-            setSearchQuery("") // Reset search
-            setNewClientData({ companyName: "", contactName: "", email: "" }) // Reset form
-        } else {
-            alert(res.error || "Error al crear cliente")
+            // Upload File logic
+            if (uploadMode === 'file' && selectedFile) {
+                setIsUploading(true)
+                const uploadFormData = new FormData()
+                uploadFormData.append('file', selectedFile)
+                const uploadResult = await uploadClientLogo(uploadFormData)
+                setIsUploading(false)
+
+                if (!uploadResult.success) {
+                    alert(uploadResult.error || "Error al subir logo")
+                    setIsCreating(false)
+                    return
+                }
+                finalLogoUrl = uploadResult.url || ""
+            }
+
+            // URL Validation check
+            if (uploadMode === 'url' && newClientData.clientLogoUrl && urlValidationStatus !== 'valid') {
+                alert("Por favor espera a que se valide la URL")
+                setIsCreating(false)
+                return
+            }
+
+            const res = await createClient({
+                ...newClientData,
+                clientLogoUrl: finalLogoUrl
+            })
+
+            if (res.success && res.client) {
+                onClientSelect(res.client, true)
+                setShowCreateModal(false)
+                setOpen(false)
+                setSearchQuery("")
+                setNewClientData({ companyName: "", contactName: "", email: "", clientLogoUrl: "" })
+                setPreviewUrl(null)
+                setSelectedFile(null)
+            } else {
+                alert(res.error || "Error al crear cliente")
+            }
+        } catch (e) {
+            console.error(e)
+            alert("Error de conexión")
+        } finally {
+            setIsCreating(false)
+            setIsUploading(false)
         }
     }
 
-    // Initialize "Create" form with search query if it looks like a name
+    // Initialize "Create" form
     const handleOpenCreate = () => {
-        setNewClientData(prev => ({ ...prev, companyName: searchQuery }))
+        setNewClientData({ companyName: searchQuery, contactName: "", email: "", clientLogoUrl: "" })
+        setPreviewUrl(null)
+        setSelectedFile(null)
+        setUploadMode('url')
         setShowCreateModal(true)
     }
 
@@ -209,11 +337,11 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
 
             {/* CREATE MODAL */}
             <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-                <DialogContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] sm:max-w-[425px]">
+                <DialogContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="text-[#F5CB5C]">Crear Nuevo Lead</DialogTitle>
                         <DialogDescription className="text-[#CFDBD5]">
-                            Ingrese los datos obligatorios para registrar el prospecto.
+                            Ingrese los datos para registrar el prospecto en el sistema.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -223,7 +351,7 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
                                 id="company"
                                 value={newClientData.companyName}
                                 onChange={(e) => setNewClientData({ ...newClientData, companyName: e.target.value })}
-                                className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"
+                                className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] focus:border-[#F5CB5C]"
                                 placeholder="Nombre de la empresa"
                             />
                         </div>
@@ -233,7 +361,7 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
                                 id="contact"
                                 value={newClientData.contactName}
                                 onChange={(e) => setNewClientData({ ...newClientData, contactName: e.target.value })}
-                                className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"
+                                className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] focus:border-[#F5CB5C]"
                                 placeholder="Nombre y Apellido"
                             />
                         </div>
@@ -244,20 +372,107 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
                                 type="email"
                                 value={newClientData.email}
                                 onChange={(e) => setNewClientData({ ...newClientData, email: e.target.value })}
-                                className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"
+                                className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] focus:border-[#F5CB5C]"
                                 placeholder="correo@empresa.com"
                             />
                         </div>
+
+                        {/* Logo Upload Section */}
+                        <div className="space-y-3 pt-4 border-t border-[#333533]">
+                            <Label className="text-[#CFDBD5] font-bold">Logo del Cliente (Opcional)</Label>
+
+                            <RadioGroup value={uploadMode} onValueChange={(v) => handleModeChange(v as 'url' | 'file')} className="flex gap-4">
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="url" id="mode-url" className="border-[#F5CB5C] text-[#F5CB5C]" />
+                                    <Label htmlFor="mode-url" className="text-sm cursor-pointer flex items-center gap-1 text-[#CFDBD5]">
+                                        <Link2 className="w-4 h-4" /> URL Externa
+                                    </Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="file" id="mode-file" className="border-[#F5CB5C] text-[#F5CB5C]" />
+                                    <Label htmlFor="mode-file" className="text-sm cursor-pointer flex items-center gap-1 text-[#CFDBD5]">
+                                        <Upload className="w-4 h-4" /> Subir Archivo
+                                    </Label>
+                                </div>
+                            </RadioGroup>
+
+                            {/* URL Input */}
+                            {uploadMode === 'url' && (
+                                <div className="space-y-2">
+                                    <div className="relative">
+                                        <Input
+                                            placeholder="https://ejemplo.com/logo.png"
+                                            className="bg-[#333533] border-transparent focus:border-[#F5CB5C] text-[#E8EDDF] pr-10"
+                                            value={newClientData.clientLogoUrl || ''}
+                                            onChange={(e) => handleUrlChange(e.target.value)}
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                            {urlValidationStatus === 'validating' && <Loader2 className="w-4 h-4 animate-spin text-[#CFDBD5]" />}
+                                            {urlValidationStatus === 'valid' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                                            {urlValidationStatus === 'invalid' && <XCircle className="w-4 h-4 text-red-500" />}
+                                        </div>
+                                    </div>
+                                    {validationError && (
+                                        <p className="text-xs text-red-400 flex items-center gap-1">
+                                            <AlertCircle className="w-3 h-3" /> {validationError}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* File Input */}
+                            {uploadMode === 'file' && (
+                                <div className="space-y-2">
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/png,image/jpeg,image/jpg"
+                                        onChange={handleFileSelect}
+                                        className="hidden"
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="w-full bg-[#333533] border-[#333533] hover:bg-[#3a3d3a] text-[#E8EDDF]"
+                                    >
+                                        <Upload className="w-4 h-4 mr-2" />
+                                        {selectedFile ? selectedFile.name : 'Seleccionar archivo PNG/JPG'}
+                                    </Button>
+                                    <p className="text-xs text-[#CFDBD5]/70">Máximo 2MB</p>
+                                </div>
+                            )}
+
+                            {/* Preview */}
+                            {previewUrl && (
+                                <div className="mt-3 p-3 bg-[#1a1a1a] rounded-lg border border-dashed border-[#333533]">
+                                    <p className="text-xs text-[#CFDBD5] mb-2">Vista Previa:</p>
+                                    <div className="flex justify-center items-center min-h-[80px] bg-white/5 rounded p-2">
+                                        <img
+                                            src={previewUrl}
+                                            alt="Preview"
+                                            className="max-h-20 max-w-full object-contain"
+                                            onError={() => {
+                                                setPreviewUrl(null)
+                                                setUrlValidationStatus('invalid')
+                                                setValidationError('Error al visualizar imagen')
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                     </div>
                     <DialogFooter>
                         <Button variant="ghost" onClick={() => setShowCreateModal(false)} className="text-[#CFDBD5] hover:text-[#E8EDDF]">Cancelar</Button>
                         <Button
                             onClick={handleCreateClient}
-                            disabled={isCreating}
+                            disabled={isCreating || isUploading || (uploadMode === 'url' && urlValidationStatus === 'validating')}
                             className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C]"
                         >
-                            {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Crear y Seleccionar
+                            {(isCreating || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isUploading ? 'Subiendo...' : 'Crear y Seleccionar'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
