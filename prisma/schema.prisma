@@ -41,6 +41,7 @@ model Quote {
 
   adminComment         String?  // Comment from admin upon approval/rejection
   pdfSnapshot          String?  @db.Text // Base64 Snapshot of the PDF for static viewing
+  quoteNumber          String?  // Incremental ID per client for UI display
 
   @@index([userId]) // Performance optimization
 }
