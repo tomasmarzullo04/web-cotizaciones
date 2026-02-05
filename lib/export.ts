@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf'
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, BorderStyle, WidthType, ImageRun, ShadingType, AlignmentType, Header, Footer, PageBreak, HorizontalPositionAlign, VerticalPositionAlign, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom, TextWrappingType, TextWrappingSide, HeightRule } from 'docx'
+// import { Document ... } from 'docx' - Removed for API generation
 import { saveAs } from 'file-saver'
 import { LOGO_NESTLE, LOGO_SI } from './logos'
 
@@ -614,32 +614,37 @@ function base64DataURLToUint8Array(dataURL: string): Uint8Array {
 }
 
 export async function exportToWord(data: any) {
-    // Safety Calcs (Direct Dashboard Sync)
-    const displayGross = data.grossTotal || data.finalTotal
-    let displayRetention = data.retentionAmount || 0
-    let displayNet = data.finalTotal
+    try {
+        const response = await fetch('/api/generate-word', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
 
-    if (data.retention?.enabled && (displayRetention === 0 || !displayRetention)) {
-        displayRetention = displayGross * (data.retention.percentage / 100)
-        displayNet = displayGross - displayRetention
+        if (!response.ok) {
+            throw new Error('Error al generar el documento')
+        }
+
+        const blob = await response.blob()
+
+        // Extract filename from header
+        const disposition = response.headers.get('Content-Disposition')
+        let filename = `cotizacion_${(data.clientName || 'proyecto').replace(/[^a-zA-Z0-9]/g, '_')}.docx`
+        if (disposition && disposition.includes('filename=')) {
+            const match = disposition.match(/filename="?([^"]+)"?/)
+            if (match && match[1]) filename = match[1]
+        }
+
+        saveAs(blob, filename)
+
+    } catch (e) {
+        console.error("Export failed", e)
+        alert("Hubo un error al generar el archivo Word. Por favor intente nuevamente.")
     }
-
-    const COLOR_PRIMARY = "004B8D" // Institutional Blue
-    const COLOR_TEXT = "333533"
-    // const COLOR_GOLD = "F5CB5C"
-
-    // Helper to format currency
-    const fmt = (val: number) => `$${val.toLocaleString('en-US')}`
-
-    // Prepare Images & Types
-    const clientLogoData = data.clientLogoBase64 ? base64DataURLToUint8Array(data.clientLogoBase64) : null
-    const clientType = data.clientLogoBase64 ? getDataURLType(data.clientLogoBase64) : 'png'
-
-    const siLogoData = LOGO_SI ? base64DataURLToUint8Array(LOGO_SI) : null
-    const siType = LOGO_SI ? getDataURLType(LOGO_SI) : 'png'
-
-    const diagramData = data.diagramImage ? base64DataURLToUint8Array(data.diagramImage) : null
-    const diagramType = data.diagramImage ? getDataURLType(data.diagramImage) : 'png'
+}
+/* REMOVED CLIENT-SIDE GENERATION
 
     const doc = new Document({
         sections: [{
@@ -918,6 +923,4 @@ export async function exportToWord(data: any) {
         }]
     })
 
-    const buffer = await Packer.toBlob(doc)
-    saveAs(buffer, `cotizacion_${(data.clientName || 'proyecto').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.docx`)
-}
+*/

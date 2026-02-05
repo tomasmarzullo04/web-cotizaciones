@@ -768,10 +768,27 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             const dbRate = findDynamicRate('Dashboard') || 5000
             const dsRate = findDynamicRate('Algoritmo') || findDynamicRate('DS') || 8000
 
-            if (state.pipelinesCount > 0) baseServices += state.pipelinesCount * pipeRate
-            if (state.notebooksCount > 0) baseServices += state.notebooksCount * nbRate
-            if (state.dashboardsCount > 0) baseServices += state.dashboardsCount * dbRate
-            if (state.dsModelsCount > 0) baseServices += state.dsModelsCount * dsRate
+            // Determine source of metrics
+            let pCount = state.pipelinesCount
+            let nCount = state.notebooksCount
+            let dCount = state.dashboardsCount // Currently mapped to dashboardsCount in state
+            let dsCount = state.dsModelsCount
+            let reportCount = state.reportsCount // Additional metric often used
+
+            if (state.serviceType === 'Sustain') {
+                // Map Sustain Specific Inputs
+                pCount = state.sustainDetails.metrics.pipelinesCount || 0
+                nCount = state.sustainDetails.metrics.notebooksCount || 0
+                reportCount = state.sustainDetails.metrics.reportsCount || 0
+                dsCount = state.sustainDetails.metrics.dsModelsCount || 0
+                // Note: Sustain metrics doesn't explicitly have 'dashboardsCount', it uses 'reportsCount' usually
+                dCount = reportCount
+            }
+
+            if (pCount > 0) baseServices += pCount * pipeRate
+            if (nCount > 0) baseServices += nCount * nbRate
+            if (dCount > 0) baseServices += dCount * dbRate
+            if (dsCount > 0) baseServices += dsCount * dsRate
         }
 
         // --- 3. Totals & Overhead ---
