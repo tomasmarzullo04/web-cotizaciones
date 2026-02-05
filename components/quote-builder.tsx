@@ -2513,21 +2513,21 @@ graph TD
 
 function generateSustainDiagram(stack: string[]): string {
     let code = `graph TD
-    %% Styles
-    classDef dark fill:#242423,stroke:#F5CB5C,stroke-width:2px,color:#E8EDDF,rx:5,ry:5;
-    classDef gold fill:#F5CB5C,stroke:#F5CB5C,stroke-width:2px,color:#242423,rx:5,ry:5,font-weight:bold;
+    %% Graphite Theme
+    classDef default fill:#242423,stroke:#CFDBD5,stroke-width:2px,color:#E8EDDF;
+    classDef highlight fill:#242423,stroke:#F5CB5C,stroke-width:2px,color:#F5CB5C;
     linkStyle default stroke:#CFDBD5,stroke-width:2px;
-
-    Fuentes[Fuentes]:::dark
-    Ingesta[Ingesta]:::gold
-    Lakehouse[Lakehouse]:::gold
-    PowerBI[Power BI]:::gold
-    Usuario((Usuario)):::dark
-
-    Fuentes --> Ingesta
-    Ingesta --> Lakehouse
-    Lakehouse --> PowerBI
-    PowerBI --> Usuario
+    
+    Source[Fuentes]
+    Pipe[Ingesta]
+    Store[Lakehouse]
+    Vis[Power BI]
+    User((Usuario))
+    
+    Source --> Pipe
+    Pipe --> Store
+    Store --> Vis
+    Vis --> User
 `
 
     // Tech Stack Overlay
@@ -2547,7 +2547,7 @@ function generateSustainDiagram(stack: string[]): string {
                 const option = (typeof SUSTAIN_TECH_OPTIONS !== 'undefined' ? SUSTAIN_TECH_OPTIONS : []).find((o: any) => o.id === t)
                 const name = option ? option.name : t
                 const cleanId = `Tech${t.replace(/[^a-zA-Z0-9]/g, '')}`
-                code += `\n        ${cleanId}[${name}]:::dark`
+                code += `\n        ${cleanId}[${name}]`
                 code += `\n        style ${cleanId} stroke-dasharray: 5 5`
             })
             code += `\n    end`
@@ -2555,9 +2555,13 @@ function generateSustainDiagram(stack: string[]): string {
         }
         code += `\n    end`
 
-        // Link Stack to Lakehouse
-        code += `\n    TechStack -.- Lakehouse`
+        // Link Stack to Lakehouse (Store)
+        code += `\n    TechStack -.- Store`
     }
+
+    // Apply Classes
+    code += `\n    class Source,User default`
+    code += `\n    class Pipe,Store,Vis highlight`
 
     return code
 }
