@@ -2443,7 +2443,7 @@ graph TD
                                 </div>
                             ) : (
                                 <div id="diagram-capture-target" className="rounded-[2rem] border border-[#CFDBD5]/20 bg-[#333533] p-4 min-h-[250px] flex items-center justify-center relative overflow-hidden bg-white group">
-                                    <MermaidDiagram chart={chartCode} />
+                                    <MermaidDiagram chart={chartCode} key={state.serviceType} />
                                     {manualDiagramCode && (
                                         <div className="absolute top-4 left-4 bg-[#F5CB5C] text-[#242423] text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider shadow-lg">
                                             Editado Manualmente
