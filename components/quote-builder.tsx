@@ -468,11 +468,16 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             else setWizardStep(1) // Project forms usually step 1
 
             // Attempt to restore diagram code if saved
-            if (params?.diagramCode) setChartCode(params.diagramCode)
+            const savedDiagram = initialData.diagramDefinition || params?.diagramCode
+            if (savedDiagram) {
+                setChartCode(savedDiagram)
+            } else {
+                setChartCode(DEFAULT_DIAGRAM)
+            }
 
         } else {
             setState(JSON.parse(JSON.stringify(INITIAL_STATE)))
-            setChartCode('')
+            setChartCode(DEFAULT_DIAGRAM)
             setWizardStep(0)
         }
     }, [initialData])
