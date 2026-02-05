@@ -73,6 +73,7 @@ interface QuoteState {
     // 1. General
     clientName: string
     clientId?: string // NEW: Linked Client ID
+    quoteNumber?: number // NEW: Incremental ID from DB
     isNewClient?: boolean // NEW: Flag
     newClientData?: ClientData // NEW: For Context
     description: string
@@ -447,6 +448,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                 clientName: initialData.clientName || '',
                 serviceType: initialData.serviceType || 'Proyecto',
                 clientId: initialData.linkedClientId || undefined,
+                quoteNumber: initialData.quoteNumber, // Load Global ID
 
                 // Spread params (description, counts, costs, etc)
                 ...params,
@@ -862,14 +864,12 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             const discountAmountVal = discountAmount
             const finalTotalUSD = finalTotal
 
-            // Convert using Global Hooks
-            const finalTotalConverted = convert(finalTotalUSD)
+            // 2. Prepare PDF Data (Deferred Generation strategy for New Quotes)
             const exchangeRate = exchangeRates[currency] || 1.0
 
-            // 2. Generate PDF Snapshot (For Audit & DB)
-            // We generate this BEFORE saving to persist the static view
-            let pdfBase64 = ""
-            try {
+            // Helper to generate PDF Base64
+            const generateSnapshot = async (idOverride?: number) => {
+                const logoB64 = state.clientLogoUrl ? await imageUrlToBase64(state.clientLogoUrl) : undefined
                 const pdfBlob = await generatePDFBlob({
                     ...state,
                     totalMonthlyCost: totalMonthlyCostVal,
@@ -884,21 +884,30 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     finalTotal: finalTotalUSD,
                     currency: currency,
                     exchangeRate: exchangeRate,
-                    durationMonths: getDurationInMonths()
+                    durationMonths: getDurationInMonths(),
+                    clientLogoBase64: logoB64,
+                    quoteNumber: idOverride || state.quoteNumber || initialData?.quoteNumber // Use Global ID
                 })
 
-                const reader = new FileReader()
-                reader.readAsDataURL(pdfBlob)
-                pdfBase64 = await new Promise<string>((resolve) => {
+                return new Promise<string>((resolve) => {
+                    const reader = new FileReader()
                     reader.onloadend = () => {
                         const res = (reader.result as string || "")
-                        // Handle data:application/pdf;base64, prefix
                         const clean = res.includes(',') ? res.split(',')[1] : res
                         resolve(clean)
                     }
+                    reader.readAsDataURL(pdfBlob)
                 })
-            } catch (pdfErr) {
-                console.error("PDF Snapshot generation failed:", pdfErr)
+            }
+
+            // If we have an ID (Update), generate snapshot immediately
+            let pdfBase64 = ""
+            if (state.quoteNumber || initialData?.quoteNumber) {
+                try {
+                    pdfBase64 = await generateSnapshot()
+                } catch (e) {
+                    console.error("PDF Snapshot generation failed:", e)
+                }
             }
 
             // 3. Save to DB (Create or Update)
@@ -912,7 +921,6 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     updateFrequency: state.updateFrequency === 'realtime' ? 'realtime' : 'daily',
                     usersCount: state.usersCount,
                     pipelinesCount: state.pipelinesCount,
-                    // Mandatory TechnicalParameters
                     databricksUsage: state.techStack.includes('databricks') ? 'high' : 'none',
                     criticality: state.criticitness.enabled ? 'high' : 'low',
                     dataVolume: 'GB',
@@ -927,12 +935,11 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                         : Object.entries(state.roles).map(([r, c]) => ({ role: r, count: c, cost: 0, hours: 0 }))) as any[],
                     totalMonthlyCost: totalMonthlyCostVal,
                     diagramCode: chartCode,
-                    // Store detailed amounts to avoid discrepancies
                     grossTotal: totalMonthlyCostVal,
                     discountAmount: discountAmountVal,
                     finalTotal: finalTotalUSD
                 },
-                estimatedCost: finalTotalConverted,
+                estimatedCost: convert(finalTotalUSD),
                 technicalParameters: JSON.stringify({
                     ...state,
                     grossTotal: totalMonthlyCostVal,
@@ -940,7 +947,8 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     finalTotal: finalTotalUSD,
                     currency: currency,
                     exchangeRate: exchangeRate,
-                    originalUSDAmount: finalTotalUSD
+                    originalUSDAmount: finalTotalUSD,
+                    quoteNumber: state.quoteNumber || initialData?.quoteNumber // Persist standard
                 }),
                 clientId: state.clientId,
                 isNewClient: state.isNewClient,
@@ -949,7 +957,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     contact: state.newClientData.contactName || '',
                     email: state.newClientData.email || ''
                 } : undefined,
-                pdfBase64: pdfBase64 // PASSING THE SNAPSHOT
+                pdfBase64: pdfBase64 || null
             }
 
             if (initialData && initialData.id) {
@@ -959,7 +967,22 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             } else {
                 // CREATE
                 result = await saveQuote(payload)
-                // toast is handled below? No, saveQuote doesn't toast, we verify success
+            }
+
+            // 4. Post-Save Logic (For New Quotes: Generate PDF with new ID)
+            if (result.success && result.quote && !pdfBase64) {
+                try {
+                    const newId = result.quote.quoteNumber
+                    // Generate PDF with the assigned ID
+                    pdfBase64 = await generateSnapshot(newId)
+
+                    // Update the DB record with this snapshot
+                    // We reuse the payload but update pdfBase64
+                    await updateQuote(result.quote.id, { ...payload, pdfBase64: pdfBase64 })
+
+                } catch (e) {
+                    console.error("Post-save PDF generation failed:", e)
+                }
             }
 
             if (!result.success || !result.quote) throw new Error(result.error || "Error desconocido al guardar")

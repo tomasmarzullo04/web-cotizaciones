@@ -16,6 +16,7 @@ const RATES: Record<string, number> = {
 
 interface QuoteState {
     clientName: string
+    quoteNumber?: number
     description: string
     complexity: string
     updateFrequency: string
@@ -262,7 +263,8 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     doc.setFont(FONT_REG, "normal")
     doc.setTextColor(COLOR_TEXT)
     doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, rightX, y)
-    doc.text(`ID: SI-${new Date().getTime().toString().substr(-6)}`, pageWidth - margin, y, { align: 'right' })
+    const idStr = data.quoteNumber ? data.quoteNumber.toString().padStart(6, '0') : "BORRADOR"
+    doc.text(`ID: SI-${idStr}`, pageWidth - margin, y, { align: 'right' })
 
     y += 5
     if (data.clientContact?.name) {
