@@ -1166,7 +1166,8 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     grossTotal,
                     retentionAmount,
                     finalTotal,
-                    durationMonths: getDurationInMonths()
+                    durationMonths: getDurationInMonths(),
+                    clientLogoBase64: clientLogoBase64
                 })
             }
         } catch (e) {

@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf'
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, BorderStyle, WidthType, ImageRun, ShadingType, AlignmentType, Header, Footer, PageBreak } from 'docx'
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, BorderStyle, WidthType, ImageRun, ShadingType, AlignmentType, Header, Footer, PageBreak, HorizontalPositionAlign, VerticalPositionAlign, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom, TextWrappingType, TextWrappingSide, HeightRule } from 'docx'
 import { saveAs } from 'file-saver'
 import { LOGO_NESTLE, LOGO_SI } from './logos'
 
@@ -574,6 +574,25 @@ export async function generatePDFBlob(data: any) {
     return doc.output('blob')
 }
 
+// Helper for Base64
+function base64DataURLToUint8Array(dataURL: string): Uint8Array {
+    if (!dataURL) return new Uint8Array(0)
+    // Handle optional data: prefix
+    const base64Only = dataURL.includes(',') ? dataURL.split(',')[1] : dataURL;
+    try {
+        const binaryString = atob(base64Only);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes;
+    } catch (e) {
+        console.error("Base64 conversion failed", e)
+        return new Uint8Array(0)
+    }
+}
+
 export async function exportToWord(data: any) {
     // Safety Calcs (Direct Dashboard Sync)
     const displayGross = data.grossTotal || data.finalTotal
@@ -587,30 +606,102 @@ export async function exportToWord(data: any) {
 
     const COLOR_PRIMARY = "004B8D" // Institutional Blue
     const COLOR_TEXT = "333533"
-    const COLOR_GOLD = "F5CB5C"
+    // const COLOR_GOLD = "F5CB5C"
 
     // Helper to format currency
     const fmt = (val: number) => `$${val.toLocaleString('en-US')}`
+
+    // Prepare Images
+    const clientLogoData = data.clientLogoBase64 ? base64DataURLToUint8Array(data.clientLogoBase64) : null
+    const siLogoData = LOGO_SI ? base64DataURLToUint8Array(LOGO_SI) : null
+    const diagramData = data.diagramImage ? base64DataURLToUint8Array(data.diagramImage) : null
 
     const doc = new Document({
         sections: [{
             properties: {
                 page: {
-                    margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } // 1 inch margins
+                    margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } // 1 inch
                 }
+            },
+            headers: {
+                default: new Header({
+                    children: [
+                        // Floating Client Logo (Top Left)
+                        ...(clientLogoData ? [
+                            new Paragraph({
+                                children: [
+                                    new ImageRun({
+                                        data: clientLogoData,
+                                        transformation: { width: 120, height: 60 }, // +25% size approx
+                                        type: 'png', // REQUIRED
+                                        floating: {
+                                            horizontalPosition: {
+                                                relative: HorizontalPositionRelativeFrom.PAGE,
+                                                align: HorizontalPositionAlign.LEFT,
+                                                offset: 1440 // Margin
+                                            },
+                                            verticalPosition: {
+                                                relative: VerticalPositionRelativeFrom.PAGE,
+                                                align: VerticalPositionAlign.TOP,
+                                                offset: 720 // 0.5 inch
+                                            },
+                                            wrap: { type: TextWrappingType.TIGHT },
+                                            behindDocument: false
+                                        }
+                                    })
+                                ]
+                            })
+                        ] : [])
+                    ]
+                })
+            },
+            footers: {
+                default: new Footer({
+                    children: [
+                        new Paragraph({
+                            children: [
+                                // Confidentiality Text
+                                new TextRun({
+                                    text: `Confidencial - Propiedad de Store Intelligence - ID Referencia: ${data.quoteNumber || 'BORRADOR'}`,
+                                    size: 16,
+                                    color: "999999"
+                                }),
+                                // SI Logo Right aligned (Floating for precision)
+                                ...(siLogoData ? [
+                                    new ImageRun({
+                                        data: siLogoData,
+                                        transformation: { width: 120, height: 40 },
+                                        type: 'png',
+                                        floating: {
+                                            horizontalPosition: {
+                                                relative: HorizontalPositionRelativeFrom.PAGE,
+                                                align: HorizontalPositionAlign.RIGHT,
+                                                offset: 1440
+                                            },
+                                            verticalPosition: {
+                                                relative: VerticalPositionRelativeFrom.PAGE,
+                                                align: VerticalPositionAlign.BOTTOM,
+                                                offset: 720
+                                            },
+                                            wrap: { type: TextWrappingType.NONE }, // Fix: Front
+                                            behindDocument: false
+                                        }
+                                    })
+                                ] : [])
+                            ],
+                            alignment: AlignmentType.LEFT
+                        })
+                    ]
+                })
             },
             children: [
                 // === HEADER SECTION ===
-                // Note: Client logo removed from Word export due to docx library TypeScript limitations
-                // The logo is still present in the PDF export
-
-                // "COTIZACIÓN" Header (Top Right)
                 new Paragraph({
                     children: [
                         new TextRun({
                             text: "COTIZACIÓN",
                             bold: true,
-                            size: 44, // 22pt
+                            size: 44,
                             color: "FFFFFF"
                         })
                     ],
@@ -619,14 +710,15 @@ export async function exportToWord(data: any) {
                     spacing: { before: 200, after: 400 }
                 }),
 
-                // === CLIENT INFO SECTION ===
+                // === CLIENT INFO ===
                 new Paragraph({
                     children: [new TextRun({ text: "COTIZADO A:", bold: true, size: 20, color: COLOR_PRIMARY })],
                     spacing: { before: 400, after: 200 }
                 }),
-                new Paragraph({ text: `Cliente: ${data.clientName}`, spacing: { after: 100 } }),
-                new Paragraph({ text: `Duración: ${data.durationMonths} meses`, spacing: { after: 100 } }),
-                new Paragraph({ text: `Tipo de Servicio: ${data.serviceType}`, spacing: { after: 300 } }),
+                new Paragraph({ children: [new TextRun({ text: `Cliente: ${data.clientName}` })], spacing: { after: 100 } }),
+                new Paragraph({ children: [new TextRun({ text: `Referencia Global: ${data.quoteNumber || 'N/A'}` })], spacing: { after: 100 }, style: "Heading2" }), // ID
+                new Paragraph({ children: [new TextRun({ text: `Duración: ${data.durationMonths} meses` })], spacing: { after: 100 } }),
+                new Paragraph({ children: [new TextRun({ text: `Tipo de Servicio: ${data.serviceType}` })], spacing: { after: 300 } }),
 
                 // === INVESTMENT TABLE ===
                 new Paragraph({
@@ -634,27 +726,36 @@ export async function exportToWord(data: any) {
                     spacing: { before: 400, after: 200 }
                 }),
 
-                // Table with institutional blue header
                 new Table({
                     rows: [
-                        // Header Row
                         new TableRow({
                             children: [
                                 new TableCell({
                                     children: [new Paragraph({ children: [new TextRun({ text: "Concepto", bold: true, color: "FFFFFF" })] })],
-                                    shading: { fill: COLOR_PRIMARY }
+                                    shading: { fill: COLOR_PRIMARY },
+                                    borders: {
+                                        top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL },
+                                        left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL }
+                                    }
                                 }),
                                 new TableCell({
                                     children: [new Paragraph({ children: [new TextRun({ text: "Mensual", bold: true, color: "FFFFFF" })] })],
-                                    shading: { fill: COLOR_PRIMARY }
+                                    shading: { fill: COLOR_PRIMARY },
+                                    borders: {
+                                        top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL },
+                                        left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL }
+                                    }
                                 }),
                                 new TableCell({
                                     children: [new Paragraph({ children: [new TextRun({ text: "Total", bold: true, color: "FFFFFF" })] })],
-                                    shading: { fill: COLOR_PRIMARY }
+                                    shading: { fill: COLOR_PRIMARY },
+                                    borders: {
+                                        top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL },
+                                        left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL }
+                                    }
                                 })
                             ]
                         }),
-                        // Data Rows - Staffing Profiles
                         ...(data.staffingDetails?.profiles || []).filter((p: any) => (p.count || 0) > 0).map((p: any) => {
                             const rate = p.price || p.cost || 0
                             const monthlySub = rate * (p.allocationPercentage || 100) / 100 * p.count
@@ -667,76 +768,110 @@ export async function exportToWord(data: any) {
                             })
                         })
                     ],
-                    width: { size: 100, type: 'pct' }
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    borders: {
+                        top: { style: BorderStyle.SINGLE, color: "CCCCCC" },
+                        bottom: { style: BorderStyle.SINGLE, color: "CCCCCC" },
+                        left: { style: BorderStyle.NIL },
+                        right: { style: BorderStyle.NIL },
+                        insideHorizontal: { style: BorderStyle.DOTTED, color: "EEEEEE" },
+                        insideVertical: { style: BorderStyle.NIL }
+                    }
                 }),
 
-                // === TOTALS BOX (Fit-to-content, Institutional Blue) ===
-                new Paragraph({ text: "", spacing: { after: 300 } }),
-                new Paragraph({
-                    children: [
-                        new TextRun({ text: "TOTAL ESTIMADO: ", bold: true, size: 22, color: "FFFFFF" }),
-                        new TextRun({ text: fmt(displayGross), bold: true, size: 22, color: "FFFFFF" })
+                // === TOTALS ===
+                new Paragraph({ children: [new TextRun({ text: "" })], spacing: { after: 300 } }),
+
+                // Tight Blue Box for Total
+                new Table({
+                    rows: [
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [new Paragraph({
+                                        children: [
+                                            new TextRun({ text: "TOTAL ESTIMADO: ", bold: true, size: 24, color: "FFFFFF" }),
+                                            new TextRun({ text: fmt(displayGross), bold: true, size: 24, color: "FFFFFF" })
+                                        ],
+                                        alignment: AlignmentType.RIGHT
+                                    })],
+                                    shading: { fill: COLOR_PRIMARY },
+                                    borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL } },
+                                    width: { size: 100, type: WidthType.PERCENTAGE } // Can be AUTO to be tight? AUTO works usually
+                                })
+                            ]
+                        })
                     ],
-                    alignment: AlignmentType.RIGHT,
-                    shading: { fill: COLOR_PRIMARY },
-                    spacing: { before: 200, after: 200 }
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    alignment: AlignmentType.RIGHT // Moves the whole table to right?
                 }),
 
                 ...(data.retention?.enabled ? [
                     new Paragraph({
-                        children: [
-                            new TextRun({ text: `Retención (${data.retention.percentage}%): `, bold: true, color: "FFFFFF" }),
-                            new TextRun({ text: `- ${fmt(displayRetention)}`, bold: true, color: "FFFFFF" })
-                        ],
+                        children: [new TextRun({ text: `Retención (-${data.retention.percentage}%): ${fmt(displayRetention)}` })],
                         alignment: AlignmentType.RIGHT,
-                        shading: { fill: COLOR_PRIMARY },
-                        spacing: { after: 200 }
+                        spacing: { before: 100 }
                     }),
                     new Paragraph({
-                        children: [
-                            new TextRun({ text: "INVERSIÓN NETA: ", bold: true, size: 24, color: "FFFFFF" }),
-                            new TextRun({ text: fmt(displayNet), bold: true, size: 24, color: "FFFFFF" })
-                        ],
+                        children: [new TextRun({ text: `INVERSIÓN NETA: ${fmt(displayNet)}`, bold: true, size: 28, color: COLOR_PRIMARY })],
                         alignment: AlignmentType.RIGHT,
-                        shading: { fill: COLOR_PRIMARY },
-                        spacing: { after: 300 }
+                        spacing: { before: 100 }
                     })
                 ] : []),
 
-                // === ARCHITECTURE DIAGRAM ===
-                // Note: Diagram removed from Word export due to docx library TypeScript limitations
-                // The diagram is still present in the PDF export
-                ...(data.diagramImage ? [
+
+                // === PAGE BREAK FOR DIAGRAM ===
+                new Paragraph({ children: [new PageBreak()] }),
+
+                // === DIAGRAM ===
+                ...(diagramData ? [
                     new Paragraph({
-                        children: [new TextRun({ text: "ARQUITECTURA DE LA SOLUCIÓN", bold: true, size: 20, color: COLOR_PRIMARY })],
-                        spacing: { before: 600, after: 200 }
+                        children: [new TextRun({ text: "ARQUITECTURA DE LA SOLUCIÓN", bold: true, size: 24, color: COLOR_PRIMARY })],
+                        spacing: { before: 200, after: 400 }
                     }),
                     new Paragraph({
-                        children: [new TextRun({ text: "[Ver diagrama en versión PDF]", italics: true, color: "666666" })],
-                        alignment: AlignmentType.CENTER,
-                        spacing: { after: 400 }
+                        children: [
+                            new ImageRun({
+                                data: diagramData,
+                                transformation: { width: 600, height: 400 }, // Scaled
+                                type: 'png' // REQUIRED
+                            })
+                        ],
+                        alignment: AlignmentType.CENTER
                     })
-                ] : []),
+                ] : [
+                    new Paragraph({
+                        children: [new TextRun({ text: "[Diagrama no disponible]", italics: true })]
+                    })
+                ]),
 
-                // === AI SUMMARY (Centered) ===
+                // === TECH STACK ===
+                new Paragraph({
+                    children: [new TextRun({ text: "Stack Tecnológico:", bold: true })],
+                    spacing: { before: 400, after: 100 }
+                }),
+                new Paragraph({
+                    children: (data.techStack || []).map((t: string) => new TextRun({ text: `• ${t}  `, size: 20, color: "555555" })),
+                    spacing: { after: 400 }
+                }),
+
+                // === AI SUMMARY ===
                 ...(data.aiSummary ? [
-                    new Paragraph({ text: "", spacing: { after: 400 } }),
                     new Paragraph({
                         children: [new TextRun({ text: "RESUMEN EJECUTIVO", bold: true, size: 20, color: COLOR_PRIMARY })],
                         alignment: AlignmentType.CENTER,
                         spacing: { before: 400, after: 200 }
                     }),
                     new Paragraph({
-                        children: [new TextRun({ text: data.aiSummary, size: 22 })],
-                        alignment: AlignmentType.CENTER,
+                        children: [new TextRun({ text: data.aiSummary })], // Paragraph wrapper
+                        alignment: AlignmentType.JUSTIFIED,
                         spacing: { after: 400 }
                     })
                 ] : []),
 
-                // === PAGE BREAK ===
-                new Paragraph({ children: [new PageBreak()] }),
 
-                // === TERMS AND CONDITIONS (Single Column) ===
+                // === TERMS AND CONDITIONS ===
+                new Paragraph({ children: [new PageBreak()] }),
                 new Paragraph({
                     children: [new TextRun({ text: "TÉRMINOS Y CONDICIONES", bold: true, color: COLOR_PRIMARY, size: 24 })],
                     spacing: { before: 400, after: 300 }
@@ -751,31 +886,13 @@ export async function exportToWord(data: any) {
                     "Sprints de Pago acordados al inicio del proyecto.",
                     "Acuerdo de confidencialidad absoluto sobre datos compartidos."
                 ].map(term => new Paragraph({
-                    children: [new TextRun({ text: term, size: 20 })],
-                    bullet: { level: 0 },
-                    spacing: { after: 150 }
-                })),
-
-                // === FOOTER (SI Logo - Absolute Positioning) ===
-                new Paragraph({ text: "", spacing: { after: 800 } }),
-                new Paragraph({
-                    children: [
-                        new TextRun({ text: "The Store Intelligence | Confidencial", size: 16, color: "999999" })
-                    ],
-                    alignment: AlignmentType.LEFT
-                }),
-                new Paragraph({
-                    children: [
-                        new TextRun({ text: "Propuesta Comercial SI", size: 16, color: "999999" })
-                    ],
-                    alignment: AlignmentType.LEFT
-                })
+                    children: [new TextRun({ text: `• ${term}`, size: 20 })],
+                    spacing: { after: 120 }
+                }))
             ]
         }]
     })
 
-    Packer.toBlob(doc).then(blob => {
-        saveAs(blob, `cotizacion_${(data.clientName || 'proyecto').replace(/\s+/g, '_')}.docx`)
-
-    })
+    const buffer = await Packer.toBlob(doc)
+    saveAs(buffer, `cotizacion_${(data.clientName || 'proyecto').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.docx`)
 }
