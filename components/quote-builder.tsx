@@ -2490,6 +2490,17 @@ function generateSustainDiagram(stack: string[]): string {
     classDef dark fill:#242423,stroke:#F5CB5C,stroke-width:2px,color:#E8EDDF,rx:5,ry:5;
     classDef gold fill:#F5CB5C,stroke:#F5CB5C,stroke-width:2px,color:#242423,rx:5,ry:5,font-weight:bold;
 
+    Fuentes[Fuentes]:::dark
+    Ingesta[Ingesta]:::gold
+    Lakehouse[Lakehouse]:::gold
+    PowerBI[Power BI]:::gold
+    Usuario((Usuario)):::dark
+
+    Fuentes --> Ingesta
+    Ingesta --> Lakehouse
+    Lakehouse --> PowerBI
+    PowerBI --> Usuario
+
 `
 
     // SOURCES
