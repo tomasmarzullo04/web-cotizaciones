@@ -645,7 +645,7 @@ export async function exportToWord(data: any) {
                 default: new Header({
                     children: [
                         // Floating Client Logo (Top Left)
-                        ...(clientLogoData ? [
+                        ...(clientLogoData && clientLogoData.length > 0 ? [
                             new Paragraph({
                                 children: [
                                     new ImageRun({
@@ -685,7 +685,7 @@ export async function exportToWord(data: any) {
                                     color: "999999"
                                 }),
                                 // SI Logo Right aligned (Floating for precision)
-                                ...(siLogoData ? [
+                                ...(siLogoData && siLogoData.length > 0 ? [
                                     new ImageRun({
                                         data: siLogoData,
                                         transformation: { width: 120, height: 40 },
@@ -842,7 +842,7 @@ export async function exportToWord(data: any) {
                 new Paragraph({ children: [new PageBreak()] }),
 
                 // === DIAGRAM ===
-                ...(diagramData ? [
+                ...(diagramData && diagramData.length > 0 ? [
                     new Paragraph({
                         children: [new TextRun({ text: "ARQUITECTURA DE LA SOLUCIÓN", bold: true, size: 24, color: COLOR_PRIMARY })],
                         spacing: { before: 200, after: 400 }
