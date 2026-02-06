@@ -129,17 +129,17 @@ export function QuoteDetailsSheet({ quote, onQuoteUpdated }: QuoteDetailsSheetPr
             <SheetContent className="bg-[#171717] border-l-[#2D2D2D] w-[400px] sm:w-[600px] md:w-[800px] overflow-y-auto overflow-x-hidden">
                 <SheetHeader className="mb-8 border-b border-[#2D2D2D] pb-6">
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-                        <div className="space-y-1.5 pt-1">
+                        <div className="space-y-2 pt-1 flex-1">
                             <SheetTitle className="text-3xl font-black text-[#E8EDDF] tracking-tight">
                                 Detalle de Cotización
                             </SheetTitle>
-                            <SheetDescription className="text-[#CFDBD5] text-base leading-relaxed max-w-md">
+                            <SheetDescription className="text-[#CFDBD5]/80 text-[15px] leading-relaxed max-w-[90%] md:max-w-[420px]">
                                 Información completa del proyecto, parámetros técnicos y administrativos.
                             </SheetDescription>
                         </div>
 
-                        <div className="w-full md:w-[240px] bg-[#1F1F1F] p-1 rounded-xl border border-[#2D2D2D]">
-                            <label className="text-[10px] text-[#CFDBD5]/60 font-bold uppercase tracking-widest px-3 py-1.5 block">
+                        <div className="w-full md:w-[260px] bg-[#1F1F1F] p-1.5 rounded-xl border border-[#2D2D2D] self-start shrink-0">
+                            <label className="text-[10px] text-[#CFDBD5]/60 font-bold uppercase tracking-widest px-3 py-1 block mb-1">
                                 Cambio de Estado
                             </label>
                             <Select
@@ -147,26 +147,30 @@ export function QuoteDetailsSheet({ quote, onQuoteUpdated }: QuoteDetailsSheetPr
                                 onValueChange={handleStatusChange}
                                 disabled={isUpdatingStatus}
                             >
-                                <SelectTrigger className="w-full bg-[#171717] border-[#2D2D2D] text-[#E8EDDF] font-bold h-10 shadow-sm focus:ring-[#F5CB5C]/20">
+                                <SelectTrigger className="w-full bg-[#171717] border-[#2D2D2D] text-[#E8EDDF] font-bold h-10 shadow-sm focus:ring-[#F5CB5C]/20 focus:ring-1">
                                     <SelectValue placeholder="Seleccionar Estado" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#1F1F1F] border-[#2D2D2D] text-[#E8EDDF]">
-                                    <SelectItem value="BORRADOR" className="focus:bg-[#333533] focus:text-[#E8EDDF]">
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-2 h-2 rounded-full bg-slate-500"></span>
-                                            BORRADOR
+                                <SelectContent
+                                    className="bg-[#1F1F1F] border-[#2D2D2D] text-[#E8EDDF] max-h-[300px] overflow-visible"
+                                    position="popper"
+                                    sideOffset={5}
+                                >
+                                    <SelectItem value="BORRADOR" className="focus:bg-[#333533] focus:text-[#E8EDDF] cursor-pointer py-3">
+                                        <div className="flex items-center gap-2.5">
+                                            <span className="w-2.5 h-2.5 rounded-full bg-slate-500 shadow-[0_0_8px_rgba(100,116,139,0.5)]"></span>
+                                            <span className="font-medium">BORRADOR</span>
                                         </div>
                                     </SelectItem>
-                                    <SelectItem value="APROBADA" className="focus:bg-[#333533] focus:text-[#E8EDDF]">
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                            APROBADA
+                                    <SelectItem value="APROBADA" className="focus:bg-[#333533] focus:text-[#E8EDDF] cursor-pointer py-3">
+                                        <div className="flex items-center gap-2.5">
+                                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                                            <span className="font-medium">APROBADA</span>
                                         </div>
                                     </SelectItem>
-                                    <SelectItem value="RECHAZADA" className="focus:bg-[#333533] focus:text-[#E8EDDF]">
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                            RECHAZADA
+                                    <SelectItem value="RECHAZADA" className="focus:bg-[#333533] focus:text-[#E8EDDF] cursor-pointer py-3">
+                                        <div className="flex items-center gap-2.5">
+                                            <span className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]"></span>
+                                            <span className="font-medium">RECHAZADA</span>
                                         </div>
                                     </SelectItem>
                                 </SelectContent>
