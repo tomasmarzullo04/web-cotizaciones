@@ -529,7 +529,8 @@ export async function saveQuote(data: {
     clientId?: string, // NEW: Linked Client ID
     isNewClient?: boolean, // NEW: Flag for n8n
     clientData?: { name: string, contact: string, email: string }, // NEW: For creating in Monday
-    pdfBase64?: string // NEW: Snapshot
+    pdfBase64?: string, // NEW: Snapshot
+    status?: string // NEW: Allow overriding status
 }) {
     const cookieStore = await cookies()
     const userId = cookieStore.get('session_user_id')?.value
@@ -567,7 +568,7 @@ export async function saveQuote(data: {
                 staffingRequirements: JSON.stringify(data.breakdown.roles),
                 diagramDefinition: data.breakdown.diagramCode,
                 user: { connect: { id: userId } },
-                status: 'NUEVA',
+                status: data.status || 'BORRADOR', // Default to BORRADOR
                 client: data.clientId ? { connect: { id: data.clientId } } : undefined, // Link to DB Client
                 pdfSnapshot: data.pdfBase64 || null, // Store Snapshot
 

@@ -941,6 +941,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                 clientName: state.clientName,
                 projectType: state.complexity,
                 serviceType: state.serviceType,
+                status: 'BORRADOR', // FORCE STATUS TO BORRADOR ON SAVE (Actions will use this for Create)
                 params: {
                     projectDescription: state.description,
                     updateFrequency: state.updateFrequency === 'realtime' ? 'realtime' : 'daily',
