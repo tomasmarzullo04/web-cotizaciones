@@ -128,21 +128,22 @@ export function QuoteDetailsSheet({ quote, onQuoteUpdated }: QuoteDetailsSheetPr
             </SheetTrigger>
             <SheetContent className="bg-[#171717] border-l-[#2D2D2D] w-[400px] sm:w-[600px] md:w-[800px] overflow-y-auto overflow-x-hidden">
                 <SheetHeader className="mb-8 border-b border-[#2D2D2D] pb-6">
-                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+                    {/* Parent Container with pr-6 (24px) to force right spacing */}
+                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 pr-6">
                         <div className="space-y-3 pt-1 flex-1 flex flex-col justify-center">
-                            <SheetTitle className="text-3xl font-black text-[#E8EDDF] tracking-tight">
+                            <SheetTitle className="text-3xl font-black text-[#E8EDDF] tracking-tight text-center md:text-left">
                                 Detalle de Cotización
                             </SheetTitle>
-                            {/* Description Box Centered */}
-                            <div className="max-w-[300px] mx-0 md:mx-0">
-                                <SheetDescription className="text-[#CFDBD5]/80 text-[15px] leading-relaxed text-left md:text-justify">
+                            {/* Description Box Centered with max-w-[280px] */}
+                            <div className="max-w-[280px] mx-auto md:mx-0">
+                                <SheetDescription className="text-[#CFDBD5]/80 text-[15px] leading-relaxed text-center">
                                     Información completa del proyecto, parámetros técnicos y administrativos.
                                 </SheetDescription>
                             </div>
                         </div>
 
-                        {/* Selector Container with mr-6 (24px) */}
-                        <div className="w-full md:w-[260px] bg-[#1F1F1F] p-1.5 rounded-xl border border-[#2D2D2D] self-start shrink-0 mr-6">
+                        {/* Selector Container - Removed mr-6 as padding is on parent now */}
+                        <div className="w-full md:w-[260px] bg-[#1F1F1F] p-1.5 rounded-xl border border-[#2D2D2D] self-start shrink-0">
                             <label className="text-[10px] text-[#CFDBD5]/60 font-bold uppercase tracking-widest px-3 py-1 block mb-1">
                                 Cambio de Estado
                             </label>
