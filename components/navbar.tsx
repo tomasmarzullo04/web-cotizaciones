@@ -14,7 +14,7 @@ export default function Navbar({ userRole, userName }: { userRole?: string | nul
                     href={userRole === 'ADMIN' ? '/admin/dashboard' : (userRole === 'USER' || userRole === 'CONSULTOR') ? '/dashboard' : '/'}
                     className="flex items-center gap-4 group cursor-pointer"
                 >
-                    <img src="/logo-store.png" alt="Store Intelligence" className="h-6 w-auto object-contain" />
+                    <img src="/logo-store.png" alt="Store Intelligence" className="h-5 w-auto object-contain" />
                     <span className="font-bold text-lg text-[#E8EDDF] tracking-tight group-hover:text-yellow-500 transition-colors duration-200">Mi Cotizador</span>
                 </Link>
 
