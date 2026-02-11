@@ -14,8 +14,8 @@ export default function Navbar({ userRole, userName }: { userRole?: string | nul
                     href={userRole === 'ADMIN' ? '/admin/dashboard' : (userRole === 'USER' || userRole === 'CONSULTOR') ? '/dashboard' : '/'}
                     className="flex items-center gap-4 group cursor-pointer"
                 >
-                    <Store className="w-8 h-8 text-[#F5CB5C]" />
-                    <span className="font-bold text-lg text-[#E8EDDF] tracking-tight group-hover:text-[#F5CB5C] transition-colors duration-200">Mi Cotizador</span>
+                    <Store className="w-8 h-8 text-yellow-500" />
+                    <span className="font-bold text-lg text-[#E8EDDF] tracking-tight group-hover:text-yellow-500 transition-colors duration-200">Mi Cotizador</span>
                 </Link>
 
                 {/* DYNAMIC LINKS */}
