@@ -179,6 +179,12 @@ interface QuoteState {
             countryCoverage: number
             technicalMaturity: number
             dependencies: number
+            // New Fields
+            frequencyOfUse: string
+            hasCriticalDates: boolean
+            criticalDatesDescription: string
+            marketsImpacted: number
+            usersImpacted: number
         }
     }
 
@@ -283,7 +289,12 @@ const INITIAL_STATE: QuoteState = {
             userCoverage: 1,
             countryCoverage: 1,
             technicalMaturity: 1,
-            dependencies: 1
+            dependencies: 1,
+            frequencyOfUse: 'daily',
+            hasCriticalDates: false,
+            criticalDatesDescription: '',
+            marketsImpacted: 1,
+            usersImpacted: 1
         }
     },
     commercialDiscount: 0,
@@ -1145,7 +1156,12 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     userCoverage: 1,
                     countryCoverage: 1,
                     technicalMaturity: 1,
-                    dependencies: 1
+                    dependencies: 1,
+                    frequencyOfUse: 'daily',
+                    hasCriticalDates: false,
+                    criticalDatesDescription: '',
+                    marketsImpacted: 1,
+                    usersImpacted: 1
                 }
             },
             commercialDiscount: 0,
@@ -1641,29 +1657,15 @@ graph TD
                                                             </div>
                                                             <div className="space-y-1">
                                                                 <Label className="text-[#7C7F7C] text-[10px] uppercase">¿Procesos Manuales?</Label>
-                                                                <div className="flex items-center h-9 gap-1 bg-[#333533] p-1 rounded-lg border border-[#4A4D4A]">
-                                                                    <button
-                                                                        onClick={() => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, manualProcess: true } })}
-                                                                        className={cn(
-                                                                            "flex-1 text-[10px] font-bold uppercase py-1.5 px-3 rounded-md transition-all duration-200",
-                                                                            state.sustainDetails.metrics.manualProcess
-                                                                                ? "bg-[#F5CB5C] text-[#242423] shadow-sm transform scale-105"
-                                                                                : "text-[#7C7F7C] hover:text-[#CFDBD5]"
-                                                                        )}
-                                                                    >
-                                                                        SÍ
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, manualProcess: false } })}
-                                                                        className={cn(
-                                                                            "flex-1 text-[10px] font-bold uppercase py-1.5 px-3 rounded-md transition-all duration-200",
-                                                                            !state.sustainDetails.metrics.manualProcess
-                                                                                ? "bg-[#4A4D4A] text-[#CFDBD5] shadow-sm"
-                                                                                : "text-[#7C7F7C] hover:text-[#CFDBD5]"
-                                                                        )}
-                                                                    >
-                                                                        NO
-                                                                    </button>
+                                                                <div className="flex items-center gap-2 h-9 p-1">
+                                                                    <Switch
+                                                                        checked={state.sustainDetails.metrics.manualProcess}
+                                                                        onCheckedChange={(c) => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, manualProcess: c } })}
+                                                                        className="data-[state=checked]:bg-[#F5CB5C]"
+                                                                    />
+                                                                    <span className="text-xs text-[#E8EDDF] font-bold">
+                                                                        {state.sustainDetails.metrics.manualProcess ? "SÍ" : "NO"}
+                                                                    </span>
                                                                 </div>
                                                             </div>
                                                             <div className="col-span-2 relative space-y-2">
@@ -1717,17 +1719,19 @@ graph TD
                                                         />
                                                     </div>
                                                     <div>
-                                                        <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Duración Proceso (Hs)</Label>
-                                                        <Input
-                                                            type="number"
-                                                            value={state.sustainDetails.updateDuration}
-                                                            onChange={e => updateState('sustainDetails', { ...state.sustainDetails, updateDuration: e.target.value })}
-                                                            placeholder="Horas"
-                                                            className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"
-                                                        />
+                                                        <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Duración Proceso</Label>
+                                                        <div className="relative">
+                                                            <Input
+                                                                value={state.sustainDetails.updateDuration}
+                                                                onChange={e => updateState('sustainDetails', { ...state.sustainDetails, updateDuration: e.target.value })}
+                                                                placeholder="Ej. 2 horas"
+                                                                className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] pr-12"
+                                                            />
+                                                            <span className="absolute right-3 top-2.5 text-[#7C7F7C] text-xs">min/hs</span>
+                                                        </div>
                                                     </div>
                                                     <div>
-                                                        <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Frecuencia Actualización</Label>
+                                                        <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Frecuencia Actualización Datos</Label>
                                                         <Select value={state.sustainDetails.metrics.updateFrequency} onValueChange={v => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, updateFrequency: v } })}>
                                                             <SelectTrigger className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
                                                             <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
@@ -1741,9 +1745,9 @@ graph TD
                                                     <div>
                                                         <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Horario Actualización</Label>
                                                         <Input
+                                                            type="time"
                                                             value={state.sustainDetails.updateSchedule}
                                                             onChange={e => updateState('sustainDetails', { ...state.sustainDetails, updateSchedule: e.target.value })}
-                                                            placeholder="Ej. 08:00 AM"
                                                             className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"
                                                         />
                                                     </div>
@@ -1849,7 +1853,87 @@ graph TD
                                                     />
                                                 </div>
 
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+
+                                                    {/* NEW FIELD: Frequency of Use */}
+                                                    <div className="space-y-2">
+                                                        <Label className="text-[#CFDBD5] text-xs uppercase font-bold">Frecuencia de Uso</Label>
+                                                        <Select
+                                                            value={state.sustainDetails.criticalityMatrix.frequencyOfUse}
+                                                            onValueChange={(v) => updateState('sustainDetails', {
+                                                                ...state.sustainDetails,
+                                                                criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, frequencyOfUse: v }
+                                                            })}
+                                                        >
+                                                            <SelectTrigger className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
+                                                            <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                                                <SelectItem value="daily">Diario</SelectItem>
+                                                                <SelectItem value="weekly">Semanal</SelectItem>
+                                                                <SelectItem value="monthly">Mensual</SelectItem>
+                                                                <SelectItem value="monthend">Cierre de Mes</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+
+                                                    {/* NEW FIELD: Critical Dates */}
+                                                    <div className="space-y-2">
+                                                        <div className="flex items-center justify-between">
+                                                            <Label className="text-[#CFDBD5] text-xs uppercase font-bold">¿Fechas Críticas?</Label>
+                                                            <Switch
+                                                                checked={state.sustainDetails.criticalityMatrix.hasCriticalDates}
+                                                                onCheckedChange={(c) => updateState('sustainDetails', {
+                                                                    ...state.sustainDetails,
+                                                                    criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, hasCriticalDates: c }
+                                                                })}
+                                                                className="data-[state=checked]:bg-[#F5CB5C]"
+                                                            />
+                                                        </div>
+                                                        {state.sustainDetails.criticalityMatrix.hasCriticalDates && (
+                                                            <Input
+                                                                placeholder="Describir fechas (ej. día 5, 20...)"
+                                                                value={state.sustainDetails.criticalityMatrix.criticalDatesDescription}
+                                                                onChange={(e) => updateState('sustainDetails', {
+                                                                    ...state.sustainDetails,
+                                                                    criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, criticalDatesDescription: e.target.value }
+                                                                })}
+                                                                className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] animate-in fade-in slide-in-from-top-1"
+                                                            />
+                                                        )}
+                                                    </div>
+
+                                                    {/* NEW FIELD: Scope (Markets & Users) */}
+                                                    <div className="space-y-2">
+                                                        <Label className="text-[#CFDBD5] text-xs uppercase font-bold">Alcance (Mercados / Usuarios)</Label>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <div className="relative">
+                                                                <Input
+                                                                    type="number"
+                                                                    placeholder="Mercados"
+                                                                    value={state.sustainDetails.criticalityMatrix.marketsImpacted}
+                                                                    onChange={(e) => updateState('sustainDetails', {
+                                                                        ...state.sustainDetails,
+                                                                        criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, marketsImpacted: parseInt(e.target.value) || 0 }
+                                                                    })}
+                                                                    className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] pr-8"
+                                                                />
+                                                                <span className="absolute right-2 top-2.5 text-[#7C7F7C] text-[10px] font-bold">MKTS</span>
+                                                            </div>
+                                                            <div className="relative">
+                                                                <Input
+                                                                    type="number"
+                                                                    placeholder="Usuarios"
+                                                                    value={state.sustainDetails.criticalityMatrix.usersImpacted}
+                                                                    onChange={(e) => updateState('sustainDetails', {
+                                                                        ...state.sustainDetails,
+                                                                        criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, usersImpacted: parseInt(e.target.value) || 0 }
+                                                                    })}
+                                                                    className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] pr-8"
+                                                                />
+                                                                <span className="absolute right-2 top-2.5 text-[#7C7F7C] text-[10px] font-bold">USRS</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
                                                     {/* 1. Impacto Operativo */}
                                                     <div className="space-y-2">
                                                         <div className="flex justify-between">
