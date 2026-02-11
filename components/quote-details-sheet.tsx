@@ -126,7 +126,7 @@ export function QuoteDetailsSheet({ quote, onQuoteUpdated }: QuoteDetailsSheetPr
                     Ver Detalle <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
             </SheetTrigger>
-            <SheetContent className="bg-[#171717] border-l-[#2D2D2D] w-[400px] sm:w-[600px] md:w-[800px] overflow-y-auto overflow-x-hidden [&>button]:!fixed [&>button]:!top-4 [&>button]:!right-4 [&>button]:z-50 [&>button]:bg-black/20 [&>button]:backdrop-blur-sm [&>button]:rounded-full [&>button]:p-2 [&>button]:text-[#E8EDDF] [&>button]:hover:bg-black/40 [&>button]:transition-all">
+            <SheetContent className="bg-[#171717] border-l-[#2D2D2D] w-[400px] sm:w-[600px] md:w-[800px] overflow-y-auto overflow-x-hidden [&>button]:!sticky [&>button]:!top-4 [&>button]:!right-4 [&>button]:ml-auto [&>button]:z-50 [&>button]:bg-black/20 [&>button]:backdrop-blur-sm [&>button]:rounded-full [&>button]:p-2 [&>button]:text-[#E8EDDF] [&>button]:hover:bg-black/40 [&>button]:transition-all">
                 <SheetHeader className="mb-8 border-b border-[#2D2D2D] pb-6">
                     {/* Parent Container with pr-6 (24px) to force right spacing */}
                     {/* Parent Container - pl-5 (shift left) and pr-24 (large right gap) */}
