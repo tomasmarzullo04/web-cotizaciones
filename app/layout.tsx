@@ -8,7 +8,7 @@ import { Toaster } from 'sonner'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Cotizador B2B',
+  title: 'Mi Cotizador',
   description: 'Sistema de cotización de proyectos de datos',
 }
 

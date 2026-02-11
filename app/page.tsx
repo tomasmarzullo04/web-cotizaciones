@@ -23,9 +23,9 @@ export default function Home() {
                     </div>
 
                     <h1 className="text-7xl md:text-8xl font-black tracking-tighter text-[#E8EDDF] leading-[0.9] relative z-10">
-                        Cotizador <br />
+                        Store <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5CB5C] to-[#E0B84C] drop-shadow-[0_0_30px_rgba(245,203,92,0.2)]">
-                            Solutions
+                            Intelligence
                         </span>
                     </h1>
 
@@ -106,7 +106,7 @@ export default function Home() {
 
                 <section className="text-center border-t border-[#2D2D2D] pt-12 pb-8">
                     <p className="text-[#CFDBD5]/40 text-sm font-medium tracking-widest uppercase">
-                        Powered by Advanced Agentic Coding
+                        Powered by Hazu
                     </p>
                 </section>
 

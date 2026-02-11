@@ -254,7 +254,7 @@ export default function LoginPage() {
 
                     <div className="pt-6 border-t border-[#2D2D2D]/50 text-center space-y-4">
                         <p className="text-xs text-[#CFDBD5]/30 uppercase tracking-widest font-medium pt-4">
-                            Cotizador Solutions &copy; 2026
+                            Store Intelligence &copy; 2026
                         </p>
                     </div>
                 </CardContent>
