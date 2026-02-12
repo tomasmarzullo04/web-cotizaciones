@@ -2364,19 +2364,18 @@ graph TD
                                             const monthlyPrice = (profile.price || 0) * profile.count
                                             const displayPrice = viewMode === 'annual' ? monthlyPrice * 12 : monthlyPrice
 
-                                            // 1. Resolve Human Readable Name
+                                            // Resolve Display Name
                                             let displayName = profile.role;
                                             if (ROLE_CONFIG[profile.role as keyof typeof ROLE_CONFIG]) {
                                                 displayName = ROLE_CONFIG[profile.role as keyof typeof ROLE_CONFIG].label;
                                             } else {
-                                                // Fallback: format key (e.g., 'power_app_streamlit_developer' to 'Power App Streamlit Developer')
                                                 displayName = profile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                                             }
 
                                             return (
-                                                <div key={profile.id || idx} className="flex items-center justify-between p-3 bg-zinc-900/40 border border-zinc-800 rounded-xl w-full gap-4 group hover:border-zinc-700/50 transition-all">
-                                                    {/* LEFT: Avatar + Name + Seniority */}
-                                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                <div key={profile.id || idx} className="grid grid-cols-[40%_30%_30%] items-center gap-4 p-4 bg-zinc-900/40 border border-zinc-800 rounded-xl w-full group hover:border-zinc-700/50 transition-all">
+                                                    {/* COL 1 (40%): Avatar + Full Name + Seniority */}
+                                                    <div className="flex items-center gap-3 min-w-0">
                                                         <div className={cn(
                                                             "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border shrink-0",
                                                             profile.seniority === 'Expert' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
@@ -2386,62 +2385,58 @@ graph TD
                                                         )}>
                                                             {profile.seniority.substring(0, 2)}
                                                         </div>
-
-                                                        <div className="flex flex-col justify-center min-w-0">
-                                                            <span className="text-[#E8EDDF] font-bold text-sm leading-tight truncate" title={displayName}>
+                                                        <div className="flex flex-col justify-center min-w-0 pr-2">
+                                                            <span className="text-[#E8EDDF] font-bold text-sm leading-tight whitespace-normal break-words">
                                                                 {displayName}
                                                             </span>
-                                                            <span className="text-[10px] text-zinc-500 font-medium uppercase tracking-wide">
+                                                            <span className="text-[10px] text-zinc-500 font-medium uppercase tracking-wide mt-0.5">
                                                                 {profile.seniority}
                                                             </span>
                                                         </div>
                                                     </div>
 
-                                                    {/* RIGHT: Quantity + Price + Trash */}
-                                                    <div className="flex items-center gap-6 flex-shrink-0">
-                                                        {/* Quantity: Text-only look */}
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">CANT:</span>
-                                                            <Input
-                                                                type="number"
-                                                                min={1}
-                                                                value={profile.count}
-                                                                onChange={(e) => {
-                                                                    const val = parseInt(e.target.value) || 1
-                                                                    const diff = val - profile.count
+                                                    {/* COL 2 (30%): Quantity (Centered) */}
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">CANT:</span>
+                                                        <Input
+                                                            type="number"
+                                                            min={1}
+                                                            value={profile.count}
+                                                            onChange={(e) => {
+                                                                const val = parseInt(e.target.value) || 1
+                                                                const diff = val - profile.count
 
-                                                                    // Update profile count
-                                                                    const newProfiles = [...state.staffingDetails.profiles]
-                                                                    newProfiles[idx].count = val
+                                                                // Update profile count
+                                                                const newProfiles = [...state.staffingDetails.profiles]
+                                                                newProfiles[idx].count = val
 
-                                                                    // Update Role Total Global
-                                                                    const keyEntry = Object.entries(ROLE_CONFIG).find(([k, v]) => v.label === profile.role) || Object.entries(ROLE_CONFIG).find(([k, v]) => k === profile.role)
-                                                                    const roleKey = keyEntry ? keyEntry[0] as RoleKey : null
+                                                                // Update Role Total Global
+                                                                const keyEntry = Object.entries(ROLE_CONFIG).find(([k, v]) => v.label === profile.role) || Object.entries(ROLE_CONFIG).find(([k, v]) => k === profile.role)
+                                                                const roleKey = keyEntry ? keyEntry[0] as RoleKey : null
 
-                                                                    if (roleKey) {
-                                                                        setState(prev => ({
-                                                                            ...prev,
-                                                                            roles: { ...prev.roles, [roleKey]: Math.max(0, (prev.roles[roleKey] || 0) + diff) },
-                                                                            staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
-                                                                        }))
-                                                                    }
-                                                                }}
-                                                                className="w-8 h-auto p-0 bg-transparent border-none text-[#E8EDDF] font-bold text-base text-center shadow-none focus-visible:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:text-[#F5CB5C] transition-colors"
-                                                            />
-                                                        </div>
+                                                                if (roleKey) {
+                                                                    setState(prev => ({
+                                                                        ...prev,
+                                                                        roles: { ...prev.roles, [roleKey]: Math.max(0, (prev.roles[roleKey] || 0) + diff) },
+                                                                        staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
+                                                                    }))
+                                                                }
+                                                            }}
+                                                            className="w-10 h-auto p-0 bg-transparent border-none text-[#F5CB5C] font-bold text-lg text-center shadow-none focus-visible:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:text-[#E8EDDF] transition-colors"
+                                                        />
+                                                    </div>
 
-                                                        {/* Price */}
-                                                        <div className="text-right min-w-[80px]">
-                                                            <div className="text-yellow-500 font-mono font-bold text-base">
+                                                    {/* COL 3 (30%): Price + Trash (Right Aligned) */}
+                                                    <div className="flex items-center justify-end gap-4">
+                                                        <div className="text-right">
+                                                            <div className="text-yellow-500 font-mono font-bold text-lg leading-none">
                                                                 ${displayPrice.toLocaleString()}
                                                             </div>
                                                         </div>
-
-                                                        {/* Trash Action */}
                                                         <Button
                                                             size="icon"
                                                             variant="ghost"
-                                                            className="h-7 w-7 text-zinc-600 hover:bg-red-500/10 hover:text-red-500/80 rounded-full transition-colors flex-shrink-0"
+                                                            className="h-8 w-8 text-zinc-600 hover:bg-red-500/10 hover:text-red-500/80 rounded-full transition-colors flex-shrink-0"
                                                             onClick={() => {
                                                                 const countToRemove = profile.count
                                                                 // Remove logic
