@@ -14,6 +14,36 @@ const RATES: Record<string, number> = {
     power_automate: 4000
 }
 
+const ROLE_CONFIG: Record<string, { label: string }> = {
+    bi_visualization_developer: { label: "BI Visualization Developer" },
+    azure_developer: { label: "Azure Developer" },
+    solution_architect: { label: "Solution Architect" },
+    bi_data_architect: { label: "BI Data Architect" },
+    data_engineer: { label: "Data Engineer" },
+    data_scientist: { label: "Data Scientist" },
+    data_operations_analyst: { label: "Data / Operations Analyst" },
+    project_product_manager: { label: "Project / Product Manager" },
+    business_analyst: { label: "Business Analyst" },
+    low_code_developer: { label: "Low Code Developer" },
+    power_app_streamlit_developer: { label: "Power App / Streamlit Developer" }
+}
+
+const SUSTAIN_TECH_OPTIONS = [
+    { id: 'azure_df', name: 'Azure Data Factory' },
+    { id: 'databricks', name: 'Azure Databricks' },
+    { id: 'synapse', name: 'Azure Synapse' },
+    { id: 'snowflake', name: 'Snowflake' },
+    { id: 'powerbi', name: 'Power BI' },
+    { id: 'sqlserver', name: 'SQL Server' },
+    { id: 'logicapps', name: 'Azure Logic Apps' },
+    { id: 'tableau', name: 'Tableau' },
+    { id: 'python', name: 'Python/Airflow' },
+    { id: 'n8n', name: 'n8n' },
+    { id: 'antigravity', name: 'G. Antigravity' },
+    { id: 'lovable', name: 'Lovable' },
+    { id: 'powerapps', name: 'Power Apps' }
+]
+
 interface QuoteState {
     clientName: string
     quoteNumber?: number
@@ -66,8 +96,12 @@ interface QuoteState {
             pipelinesCount: number
             notebooksCount: number
             reportsCount: number
+            dashboardsCount: number
             dsModelsCount: number
+            dataSourcesCount: number
             automationLevel: number
+            manualProcess: boolean
+            systemDependencies: string
             updateFrequency: string
         }
         businessOwner: string
@@ -76,6 +110,13 @@ interface QuoteState {
         supportWindow: string
         criticalHours: string
         criticalDays: string
+        updateDuration: string
+        updateSchedule: string
+        secondaryUpdateSchedule: string
+        weekendUsage: boolean
+        weekendDays: string[]
+        weekendSupportHours: string
+        hypercarePeriod: string
         criticalityMatrix: {
             impactOperative: number
             impactFinancial: number
@@ -83,6 +124,11 @@ interface QuoteState {
             countryCoverage: number
             technicalMaturity: number
             dependencies: number
+            frequencyOfUse: string
+            hasCriticalDates: boolean
+            criticalDatesDescription: string
+            marketsImpacted: number
+            usersImpacted: number
         }
     }
     retention?: {
@@ -117,7 +163,22 @@ export function downloadCSV(data: any[], filename: string) {
 }
 
 // -- Final Design PDF --
-function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2SupportCost: number, riskCost: number, totalWithRisk: number, discountAmount: number, finalTotal: number, criticitnessLevel: any, diagramImage?: string, currency?: string, exchangeRate?: number, durationMonths: number, grossTotal?: number, retentionAmount?: number }) {
+function createPDFDocument(data: QuoteState & {
+    totalMonthlyCost: number,
+    l2SupportCost: number,
+    riskCost: number,
+    totalWithRisk: number,
+    discountAmount: number,
+    finalTotal: number,
+    criticitnessLevel: any,
+    diagramImage?: string,
+    currency?: string,
+    exchangeRate?: number,
+    durationMonths: number,
+    grossTotal?: number,
+    retentionAmount?: number,
+    viewMode?: 'monthly' | 'annual'
+}) {
     const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true })
 
     const pageWidth = doc.internal.pageSize.width
@@ -343,8 +404,8 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     doc.setTextColor(255)
     doc.text("CONCEPTO / PERFIL", margin + 4, y + 5.5) // Increased padding
     doc.text("CANT.", pageWidth - margin - 75, y + 5.5, { align: 'center' })
-    doc.text("MENSUAL", pageWidth - margin - 40, y + 5.5, { align: 'right' })
-    doc.text("TOTAL", pageWidth - margin - 5, y + 5.5, { align: 'right' })
+    doc.text(data.viewMode === 'annual' ? "MENSUAL" : "MENSUAL", pageWidth - margin - 40, y + 5.5, { align: 'right' })
+    doc.text(data.viewMode === 'annual' ? "TOTAL ANUAL" : "TOTAL PROYECTO", pageWidth - margin - 5, y + 5.5, { align: 'right' })
     y += 8
 
     let isReview = true
@@ -381,13 +442,32 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
             if ((p.count || 0) <= 0) return
             const rate = p.price || p.cost || 0
             const monthlySub = rate * (p.allocationPercentage || 100) / 100 * p.count
-            drawRow(`${p.role} (${p.seniority || 'Ssr'})`, `${p.count} Rec.`, fmt(monthlySub), fmt(monthlySub * data.durationMonths))
+
+            // Resolve Display Name
+            let displayName = ROLE_CONFIG[p.role]?.label || p.role.replace(/_/g, ' ').toUpperCase()
+
+            // Adjust totals for viewMode
+            const displayMonthly = fmt(monthlySub)
+            const displayPeriodTotal = data.viewMode === 'annual'
+                ? fmt(monthlySub * 12)
+                : fmt(monthlySub * data.durationMonths)
+
+            drawRow(`${displayName} (${p.seniority || 'Ssr'})`, `${p.count} Rec.`, displayMonthly, displayPeriodTotal)
         })
     } else {
         Object.entries(data.roles || {}).forEach(([role, count]) => {
             if (count > 0) {
                 const rate = RATES[role] || 0
-                if (rate > 0) drawRow(role.replace(/_/g, ' ').toUpperCase(), `${count} Rec.`, fmt(rate * count), fmt(rate * count * data.durationMonths))
+                if (rate > 0) {
+                    const monthlySub = rate * count
+                    const displayMonthly = fmt(monthlySub)
+                    const displayPeriodTotal = data.viewMode === 'annual'
+                        ? fmt(monthlySub * 12)
+                        : fmt(monthlySub * data.durationMonths)
+
+                    let displayName = ROLE_CONFIG[role]?.label || role.replace(/_/g, ' ').toUpperCase()
+                    drawRow(displayName, `${count} Rec.`, displayMonthly, displayPeriodTotal)
+                }
             }
         })
     }
@@ -398,9 +478,14 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
     // Totals Box
     y += 10
-    const displayGross = data.grossTotal || data.finalTotal
-    let displayRetention = data.retentionAmount || 0
-    let displayNet = data.finalTotal
+    const isAnnual = data.viewMode === 'annual'
+    const multiplier = isAnnual ? 12 : 1
+    const periodLabel = isAnnual ? "ANUALIZADO" : "TOTAL ESTIMADO"
+    const netLabel = isAnnual ? "INVERSIÓN ANUAL PROYECTADA" : "INVERSIÓN NETA ESTIMADA"
+
+    const displayGross = (data.grossTotal || data.finalTotal) * multiplier
+    let displayRetention = (data.retentionAmount || 0) * multiplier
+    let displayNet = data.finalTotal * multiplier
 
     if (data.retention?.enabled && (displayRetention === 0 || !displayRetention)) {
         displayRetention = displayGross * (data.retention.percentage / 100)
@@ -409,29 +494,40 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
 
     // Fit-to-content totals box - optimized sizing
     const boxPadding = 5
-    const boxWidth = data.retention?.enabled ? 75 : 65  // Reduced from 90
-    const boxH = data.retention?.enabled ? 28 : 18  // Reduced from 35/25
+    const boxWidth = 90 // Increased for longer labels
+    const boxH = data.retention?.enabled ? 28 : 18
     if (y + boxH > pageHeight - 30) { doc.addPage(); drawHeader(); y = 45; }
 
     // Professional Dark Blue Box (fit-to-content)
     doc.setFillColor(0, 75, 141) // #004B8D - Professional Blue
     doc.rect(pageWidth - margin - boxWidth, y, boxWidth, boxH, 'F')
 
-    let ty = y + 6  // Reduced from 7
-    doc.setTextColor(255, 255, 255) // White text for contrast
-    doc.setFontSize(9)  // Reduced from 10
-    doc.text("TOTAL ESTIMADO:", pageWidth - margin - boxWidth + boxPadding, ty)
-    doc.text(fmt(displayGross), pageWidth - margin - boxPadding, ty, { align: 'right' })
+    let ty = y + 6
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(8)
+    doc.text(periodLabel + ":", pageWidth - margin - boxWidth + boxPadding, ty)
+    doc.setFontSize(9)
+    doc.text(fmt(displayGross / multiplier * multiplier), pageWidth - margin - boxPadding, ty, { align: 'right' })
 
     if (data.retention?.enabled) {
-        ty += 7  // Reduced from 8
+        ty += 7
         doc.setTextColor(255, 255, 255)
+        doc.setFontSize(8)
         doc.text(`Retención (${data.retention.percentage}%):`, pageWidth - margin - boxWidth + boxPadding, ty)
+        doc.setFontSize(9)
         doc.text(`- ${fmt(displayRetention)}`, pageWidth - margin - boxPadding, ty, { align: 'right' })
-        ty += 8  // Reduced from 10
-        doc.setFontSize(10)  // Reduced from 12
+        ty += 8
+        doc.setFontSize(9)
         doc.setTextColor(255, 255, 255)
-        doc.text("INVERSIÓN NETA:", pageWidth - margin - boxWidth + boxPadding, ty)
+        doc.setFont(FONT_BOLD, "bold")
+        doc.text(netLabel + ":", pageWidth - margin - boxWidth + boxPadding, ty)
+        doc.text(fmt(displayNet), pageWidth - margin - boxPadding, ty, { align: 'right' })
+    } else {
+        ty += 8
+        doc.setFontSize(9)
+        doc.setTextColor(255, 255, 255)
+        doc.setFont(FONT_BOLD, "bold")
+        doc.text(netLabel + ":", pageWidth - margin - boxWidth + boxPadding, ty)
         doc.text(fmt(displayNet), pageWidth - margin - boxPadding, ty, { align: 'right' })
     }
     y += boxH + 15
@@ -447,7 +543,130 @@ function createPDFDocument(data: QuoteState & { totalMonthlyCost: number, l2Supp
     }
     y += 10
 
-    // 4. ARCHITECTURE DIAGRAM
+    // 4. SUSTAIN SPECIFIC DETAILS (Operational & Criticality)
+    if (data.serviceType === 'Sustain' && data.sustainDetails) {
+        if (y > pageHeight - 60) { doc.addPage(); drawHeader(); y = 45; }
+
+        doc.setFont(FONT_BOLD, "bold")
+        doc.setFontSize(11)
+        doc.setTextColor(COLOR_PRIMARY)
+        doc.text("DEFINICIÓN OPERACIONAL DEL SERVICIO", margin, y)
+        y += 6
+
+        // Sustain Info Grid
+        doc.setFillColor(COLOR_ROW_ALT)
+        doc.rect(margin, y, contentWidth, 35, 'F')
+
+        let sy = y + 6
+        doc.setFontSize(8)
+        doc.setFont(FONT_BOLD, "bold")
+        doc.setTextColor(COLOR_PRIMARY)
+        doc.text("SOLUCIÓN:", margin + 5, sy)
+        doc.text("OWNER:", margin + contentWidth / 2, sy)
+
+        sy += 5
+        doc.setFont(FONT_REG, "normal")
+        doc.setTextColor(COLOR_CHARCOAL)
+        doc.text(cleanText(data.sustainDetails.solutionName || "N/A"), margin + 5, sy)
+        doc.text(cleanText(data.sustainDetails.businessOwner || "Pendiente"), margin + contentWidth / 2, sy)
+
+        sy += 8
+        doc.setFont(FONT_BOLD, "bold")
+        doc.setTextColor(COLOR_PRIMARY)
+        doc.text("HORARIO PRINCIPAL:", margin + 5, sy)
+        doc.text("HORARIO SECUNDARIO:", margin + contentWidth / 4 + 15, sy)
+        doc.text("FRECUENCIA / DURACIÓN:", margin + contentWidth / 2, sy)
+
+        sy += 5
+        doc.setFont(FONT_REG, "normal")
+        doc.setTextColor(COLOR_CHARCOAL)
+        doc.text(data.sustainDetails.updateSchedule || "No definido", margin + 5, sy)
+        doc.text(data.sustainDetails.secondaryUpdateSchedule || "N/A", margin + contentWidth / 4 + 15, sy)
+        doc.text(`${(data.sustainDetails.metrics.updateFrequency || 'daily').toUpperCase()} / ${data.sustainDetails.updateDuration || 'N/A'}`, margin + contentWidth / 2, sy)
+
+        sy += 8
+        doc.setFont(FONT_BOLD, "bold")
+        doc.setTextColor(COLOR_PRIMARY)
+        doc.text("SOPORTE FINES DE SEMANA:", margin + 5, sy)
+        doc.text("PERIODO HYPERCARE:", margin + contentWidth / 2, sy)
+
+        sy += 5
+        doc.setFont(FONT_REG, "normal")
+        doc.setTextColor(COLOR_CHARCOAL)
+        const weekendText = data.sustainDetails.weekendUsage
+            ? `SÍ (${(data.sustainDetails.weekendDays || []).join(', ')}) - ${data.sustainDetails.weekendSupportHours || 'Horario Flexible'}`
+            : "NO"
+        doc.text(weekendText, margin + 5, sy)
+        doc.text(data.sustainDetails.hypercarePeriod?.replace('_', ' ').toUpperCase() || "30 DÍAS", margin + contentWidth / 2, sy)
+
+        y += 45
+
+        // CRITICALITY MATRIX
+        if (y > pageHeight - 60) { doc.addPage(); drawHeader(); y = 45; }
+
+        doc.setFont(FONT_BOLD, "bold")
+        doc.setFontSize(11)
+        doc.setTextColor(COLOR_PRIMARY)
+        doc.text("MATRIZ DE CRITICIDAD Y MÉTRICAS", margin, y)
+        y += 6
+
+        const matrix = data.sustainDetails.criticalityMatrix
+        const level = data.criticitnessLevel?.label || "MEDIA"
+        const levelColor = level === 'ALTA' ? [190, 50, 50] : level === 'BAJA' ? [50, 150, 50] : [220, 180, 0]
+
+        doc.setFillColor(levelColor[0], levelColor[1], levelColor[2])
+        doc.rect(margin, y, 40, 10, 'F')
+        doc.setTextColor(255)
+        doc.setFontSize(12)
+        doc.text(`NIVEL ${level}`, margin + 20, y + 6.5, { align: 'center' })
+
+        doc.setTextColor(COLOR_TEXT)
+        doc.setFontSize(9)
+        doc.setFont(FONT_BOLD, "bold")
+        doc.text("Impacto Operativo:", margin + 45, y + 4)
+        doc.text("Impacto Financiero:", margin + 45, y + 9)
+
+        doc.setFont(FONT_REG, "normal")
+        const impactText = (val: number) => val >= 4 ? "Alto" : val >= 2 ? "Medio" : "Bajo"
+        doc.text(impactText(matrix.impactOperative), margin + 80, y + 4)
+        doc.text(impactText(matrix.impactFinancial), margin + 80, y + 9)
+
+        doc.setFont(FONT_BOLD, "bold")
+        doc.text("Uso Crítico:", margin + 110, y + 4)
+        doc.text("Cierre Financiero:", margin + 110, y + 9)
+
+        doc.setFont(FONT_REG, "normal")
+        doc.text((matrix.frequencyOfUse || 'Diario').toUpperCase(), margin + 140, y + 4)
+        doc.text(data.isFinancialOrSales ? "SÍ" : "NO", margin + 140, y + 9)
+
+        y += 18
+
+        // DEPENDENCIES TAGS
+        if (data.sustainDetails.metrics.systemDependencies) {
+            doc.setFont(FONT_BOLD, "bold")
+            doc.setFontSize(9)
+            doc.setTextColor(COLOR_PRIMARY)
+            doc.text("DEPENDENCIAS EXTERNAS:", margin, y)
+            y += 5
+
+            const deps = data.sustainDetails.metrics.systemDependencies.split(',').filter((d: string) => d.trim())
+            if (deps.length > 0) {
+                doc.setFont(FONT_REG, "normal")
+                doc.setFontSize(8.5)
+                doc.setTextColor(COLOR_TEXT)
+                const depText = deps.join(' • ')
+                const depLines = doc.splitTextToSize(depText, contentWidth)
+                doc.text(depLines, margin, y)
+                y += (depLines.length * 4) + 8
+            } else {
+                y += 5
+            }
+        } else {
+            y += 5
+        }
+    }
+
+    // 5. ARCHITECTURE DIAGRAM
     if (data.diagramImage) {
         const imgProps = doc.getImageProperties(data.diagramImage)
         const imgW = contentWidth

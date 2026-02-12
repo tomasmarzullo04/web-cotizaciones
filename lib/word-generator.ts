@@ -12,6 +12,20 @@ const RATES: Record<string, number> = {
     power_automate: 4000
 }
 
+const ROLE_CONFIG: Record<string, { label: string }> = {
+    bi_visualization_developer: { label: "BI Visualization Developer" },
+    azure_developer: { label: "Azure Developer" },
+    solution_architect: { label: "Solution Architect" },
+    bi_data_architect: { label: "BI Data Architect" },
+    data_engineer: { label: "Data Engineer" },
+    data_scientist: { label: "Data Scientist" },
+    data_operations_analyst: { label: "Data / Operations Analyst" },
+    project_product_manager: { label: "Project / Product Manager" },
+    business_analyst: { label: "Business Analyst" },
+    low_code_developer: { label: "Low Code Developer" },
+    power_app_streamlit_developer: { label: "Power App / Streamlit Developer" }
+}
+
 // Helper for Base64 Type Detection
 export function getDataURLType(dataURL: string): 'png' | 'jpg' | 'gif' {
     const match = dataURL.match(/^data:image\/(\w+);base64,/)
@@ -46,9 +60,11 @@ export function base64DataURLToUint8Array(dataURL: string): Uint8Array {
 
 export function createQuoteWordDoc(data: any): Document {
     // Safety Calcs (Direct Dashboard Sync)
-    const displayGross = data.grossTotal || data.finalTotal
-    let displayRetention = data.retentionAmount || 0
-    let displayNet = data.finalTotal
+    const isAnnual = data.viewMode === 'annual'
+    const multiplier = isAnnual ? 12 : 1
+    const displayGross = (data.grossTotal || data.finalTotal) * multiplier
+    let displayRetention = (data.retentionAmount || 0) * multiplier
+    let displayNet = data.finalTotal * multiplier
 
     if (data.retention?.enabled && (displayRetention === 0 || !displayRetention)) {
         displayRetention = displayGross * (data.retention.percentage / 100)
@@ -212,7 +228,7 @@ export function createQuoteWordDoc(data: any): Document {
                                     }
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: "Total", bold: true, color: "FFFFFF" })] })],
+                                    children: [new Paragraph({ children: [new TextRun({ text: data.viewMode === 'annual' ? "Anualizado" : "Total", bold: true, color: "FFFFFF" })] })],
                                     shading: { fill: COLOR_PRIMARY },
                                     borders: {
                                         top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL },
@@ -224,11 +240,13 @@ export function createQuoteWordDoc(data: any): Document {
                         ...(data.staffingDetails?.profiles || []).filter((p: any) => (p.count || 0) > 0).map((p: any) => {
                             const rate = p.price || p.cost || 0
                             const monthlySub = rate * (p.allocationPercentage || 100) / 100 * p.count
+                            const displayName = ROLE_CONFIG[p.role]?.label || p.role.replace(/_/g, ' ').toUpperCase()
+                            const rowTotal = data.viewMode === 'annual' ? monthlySub * 12 : monthlySub * data.durationMonths
                             return new TableRow({
                                 children: [
-                                    new TableCell({ children: [new Paragraph(`${p.role} (${p.seniority || 'Ssr'})`)] }),
+                                    new TableCell({ children: [new Paragraph(`${displayName} (${p.seniority || 'Ssr'})`)] }),
                                     new TableCell({ children: [new Paragraph(fmt(monthlySub))] }),
-                                    new TableCell({ children: [new Paragraph(fmt(monthlySub * data.durationMonths))] })
+                                    new TableCell({ children: [new Paragraph(fmt(rowTotal))] })
                                 ]
                             })
                         }),
@@ -240,11 +258,14 @@ export function createQuoteWordDoc(data: any): Document {
                                     if (c > 0) {
                                         const rate = RATES[role] || 0
                                         if (rate > 0) {
+                                            const monthlySub = rate * c
+                                            const rowTotal = data.viewMode === 'annual' ? monthlySub * 12 : monthlySub * data.durationMonths
+                                            const displayName = ROLE_CONFIG[role]?.label || role.replace(/_/g, ' ').toUpperCase()
                                             return new TableRow({
                                                 children: [
-                                                    new TableCell({ children: [new Paragraph(role.replace(/_/g, ' ').toUpperCase())] }),
-                                                    new TableCell({ children: [new Paragraph(fmt(rate * c))] }),
-                                                    new TableCell({ children: [new Paragraph(fmt(rate * c * data.durationMonths))] })
+                                                    new TableCell({ children: [new Paragraph(displayName)] }),
+                                                    new TableCell({ children: [new Paragraph(fmt(monthlySub))] }),
+                                                    new TableCell({ children: [new Paragraph(fmt(rowTotal))] })
                                                 ]
                                             })
                                         }
@@ -254,9 +275,9 @@ export function createQuoteWordDoc(data: any): Document {
                         ) as TableRow[],
 
                         // Services
-                        ...(data.l2SupportCost > 0 ? [new TableRow({ children: [new TableCell({ children: [new Paragraph("Soporte L2")] }), new TableCell({ children: [new Paragraph("10%")] }), new TableCell({ children: [new Paragraph(fmt(data.l2SupportCost * data.durationMonths))] })] })] : []),
-                        ...(data.riskCost > 0 ? [new TableRow({ children: [new TableCell({ children: [new Paragraph("Fee de Gestión y Riesgo")] }), new TableCell({ children: [new Paragraph(`${((data.criticitnessLevel?.margin || 0) * 100).toFixed(0)}%`)] }), new TableCell({ children: [new Paragraph(fmt(data.riskCost * data.durationMonths))] })] })] : []),
-                        ...(data.discountAmount > 0 ? [new TableRow({ children: [new TableCell({ children: [new Paragraph("Descuento Comercial")] }), new TableCell({ children: [new Paragraph(`${data.commercialDiscount || 0}%`)] }), new TableCell({ children: [new Paragraph(`-${fmt(data.discountAmount * data.durationMonths)}`)] })] })] : [])
+                        ...(data.l2SupportCost > 0 ? [new TableRow({ children: [new TableCell({ children: [new Paragraph("Soporte L2")] }), new TableCell({ children: [new Paragraph("10%")] }), new TableCell({ children: [new Paragraph(fmt(data.l2SupportCost * (data.viewMode === 'annual' ? 12 : data.durationMonths)))] })] })] : []),
+                        ...(data.riskCost > 0 ? [new TableRow({ children: [new TableCell({ children: [new Paragraph("Fee de Gestión y Riesgo")] }), new TableCell({ children: [new Paragraph(`${((data.criticitnessLevel?.margin || 0) * 100).toFixed(0)}%`)] }), new TableCell({ children: [new Paragraph(fmt(data.riskCost * (data.viewMode === 'annual' ? 12 : data.durationMonths)))] })] })] : []),
+                        ...(data.discountAmount > 0 ? [new TableRow({ children: [new TableCell({ children: [new Paragraph("Descuento Comercial")] }), new TableCell({ children: [new Paragraph(`${data.commercialDiscount || 0}%`)] }), new TableCell({ children: [new Paragraph(`-${fmt(data.discountAmount * (data.viewMode === 'annual' ? 12 : data.durationMonths))}`)] })] })] : [])
                     ],
                     width: { size: 100, type: WidthType.PERCENTAGE },
                     borders: {
@@ -280,7 +301,7 @@ export function createQuoteWordDoc(data: any): Document {
                                 new TableCell({
                                     children: [
                                         new Paragraph({
-                                            children: [new TextRun({ text: "TOTAL ESTIMADO: ", bold: true, color: "FFFFFF", size: 18 })],
+                                            children: [new TextRun({ text: data.viewMode === 'annual' ? "ANUALIZADO: " : "TOTAL ESTIMADO: ", bold: true, color: "FFFFFF", size: 18 })],
                                             alignment: AlignmentType.RIGHT
                                         }),
                                         new Paragraph({
@@ -293,7 +314,7 @@ export function createQuoteWordDoc(data: any): Document {
                                                 alignment: AlignmentType.RIGHT
                                             }),
                                             new Paragraph({
-                                                children: [new TextRun({ text: `INVERSIÓN NETA: ${fmt(displayNet)}`, bold: true, color: "FFFFFF", size: 20 })],
+                                                children: [new TextRun({ text: data.viewMode === 'annual' ? `INVERSIÓN ANUAL PROYECTADA: ${fmt(displayNet)}` : `INVERSIÓN NETA: ${fmt(displayNet)}`, bold: true, color: "FFFFFF", size: 20 })],
                                                 alignment: AlignmentType.RIGHT
                                             })
                                         ] : [])
@@ -316,6 +337,55 @@ export function createQuoteWordDoc(data: any): Document {
                 new Paragraph({ children: [new TextRun({ text: "* Valores no incluyen impuestos aplicables.", size: 16 })], spacing: { before: 200 } }),
                 ...(data.retention?.enabled ? [new Paragraph({ children: [new TextRun({ text: `* Retención financiera interna del ${data.retention.percentage}% aplicada pro-forma.`, size: 16 })] })] : []),
 
+                // === SUSTAIN DETAILS ===
+                ...(data.serviceType === 'Sustain' && data.sustainDetails ? [
+                    new Paragraph({
+                        children: [new TextRun({ text: "DEFINICIÓN OPERACIONAL DEL SERVICIO", bold: true, size: 20, color: COLOR_PRIMARY })],
+                        spacing: { before: 400, after: 200 }
+                    }),
+                    new Table({
+                        rows: [
+                            new TableRow({
+                                children: [
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Solución:", bold: true })] }), new Paragraph(cleanText(data.sustainDetails.solutionName))] }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Business Owner:", bold: true })] }), new Paragraph(cleanText(data.sustainDetails.businessOwner))] })
+                                ]
+                            }),
+                            new TableRow({
+                                children: [
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Horario Principal:", bold: true })] }), new Paragraph(data.sustainDetails.updateSchedule || "No definido")] }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Horario Secundario:", bold: true })] }), new Paragraph(data.sustainDetails.secondaryUpdateSchedule || "N/A")] })
+                                ]
+                            }),
+                            new TableRow({
+                                children: [
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Soporte Fines de Semana:", bold: true })] }), new Paragraph(data.sustainDetails.weekendUsage ? `SÍ (${(data.sustainDetails.weekendDays || []).join(', ')})` : "NO")] }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Ventana / Hypercare:", bold: true })] }), new Paragraph(`${data.sustainDetails.updateDuration || 'N/A'} / ${data.sustainDetails.hypercarePeriod?.replace('_', ' ').toUpperCase() || '30 DÍAS'}`)] })
+                                ]
+                            })
+                        ],
+                        width: { size: 100, type: WidthType.PERCENTAGE }
+                    }),
+
+                    new Paragraph({
+                        children: [new TextRun({ text: "MATRIZ DE CRITICIDAD Y MÉTRICAS", bold: true, size: 20, color: COLOR_PRIMARY })],
+                        spacing: { before: 400, after: 200 }
+                    }),
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: `NIVEL DE SERVICIO: ${data.criticitnessLevel?.label || 'MEDIA'}`, bold: true }),
+                            new TextRun({ text: `  • Impacto Financiero: ${data.isFinancialOrSales ? "Crítico" : "Estándar"}`, size: 18 }),
+                            new TextRun({ text: `  • Frecuencia: ${(data.sustainDetails.criticalityMatrix?.frequencyOfUse || 'Diario').toUpperCase()}`, size: 18 })
+                        ]
+                    }),
+                    ...(data.sustainDetails.metrics?.systemDependencies ? [
+                        new Paragraph({
+                            children: [new TextRun({ text: "DEPENDENCIAS EXTERNAS:", bold: true, size: 18, color: COLOR_PRIMARY })],
+                            spacing: { before: 200 }
+                        }),
+                        new Paragraph({ children: [new TextRun({ text: data.sustainDetails.metrics.systemDependencies.split(',').join(' • '), size: 16 })] })
+                    ] : [])
+                ] : []),
 
                 // === ARCHITECTURE DIAGRAM ===
                 new Paragraph({ children: [new PageBreak()] }),
