@@ -347,20 +347,28 @@ export function createQuoteWordDoc(data: any): Document {
                         rows: [
                             new TableRow({
                                 children: [
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Solución:", bold: true })] }), new Paragraph(cleanText(data.sustainDetails.solutionName))] }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Business Owner:", bold: true })] }), new Paragraph(cleanText(data.sustainDetails.businessOwner))] })
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Solución:", bold: true, color: COLOR_PRIMARY })] }), new Paragraph(cleanText(data.sustainDetails.solutionName))] }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Business Owner:", bold: true, color: COLOR_PRIMARY })] }), new Paragraph(cleanText(data.sustainDetails.businessOwner))] })
                                 ]
                             }),
                             new TableRow({
                                 children: [
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Horario Principal:", bold: true })] }), new Paragraph(data.sustainDetails.updateSchedule || "No definido")] }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Horario Secundario:", bold: true })] }), new Paragraph(data.sustainDetails.secondaryUpdateSchedule || "N/A")] })
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Horario Principal:", bold: true, color: COLOR_PRIMARY })] }), new Paragraph(data.sustainDetails.updateSchedule || "No definido")] }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Horario Secundario:", bold: true, color: COLOR_PRIMARY })] }), new Paragraph(data.sustainDetails.secondaryUpdateSchedule || "N/A")] })
                                 ]
                             }),
                             new TableRow({
                                 children: [
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Soporte Fines de Semana:", bold: true })] }), new Paragraph(data.sustainDetails.weekendUsage ? `SÍ (${(data.sustainDetails.weekendDays || []).join(', ')})` : "NO")] }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Ventana / Hypercare:", bold: true })] }), new Paragraph(`${data.sustainDetails.updateDuration || 'N/A'} / ${data.sustainDetails.hypercarePeriod?.replace('_', ' ').toUpperCase() || '30 DÍAS'}`)] })
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Frecuencia / Duración:", bold: true, color: COLOR_PRIMARY })] }), new Paragraph(`${(data.sustainDetails.metrics?.updateFrequency || 'daily').toUpperCase()} / ${data.sustainDetails.updateDuration || 'N/A'}`)] }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Periodo Hypercare:", bold: true, color: COLOR_PRIMARY })] }), new Paragraph(data.sustainDetails.hypercarePeriod?.replace('_', ' ').toUpperCase() || '30 DÍAS')] })
+                                ]
+                            }),
+                            new TableRow({
+                                children: [
+                                    new TableCell({
+                                        children: [new Paragraph({ children: [new TextRun({ text: "Soporte Fines de Semana / Horario:", bold: true, color: COLOR_PRIMARY })] }), new Paragraph(data.sustainDetails.weekendUsage ? `SÍ (${(data.sustainDetails.weekendDays || []).join(', ')}) - ${data.sustainDetails.weekendSupportHours || 'Flexible'}` : "NO")],
+                                        columnSpan: 2
+                                    })
                                 ]
                             })
                         ],
