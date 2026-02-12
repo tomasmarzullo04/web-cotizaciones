@@ -2291,26 +2291,53 @@ graph TD
                                                     capabilities={capabilities}
                                                     serviceRates={serviceRates}
                                                     onSelect={(level, price) => {
-                                                        const newProfile = {
-                                                            id: crypto.randomUUID(),
-                                                            role: roleName,
-                                                            seniority: level,
-                                                            count: 1,
-                                                            price: price,
-                                                            skills: '',
-                                                            startDate: new Date().toISOString(),
-                                                            endDate: new Date().toISOString()
-                                                        }
-                                                        const currentCount = state.roles[roleKey as RoleKey] || 0
-                                                        setState(prev => ({
-                                                            ...prev,
-                                                            roles: { ...prev.roles, [roleKey]: currentCount + 1 },
-                                                            staffingDetails: {
-                                                                ...prev.staffingDetails,
-                                                                profiles: [...prev.staffingDetails.profiles, newProfile]
+                                                        const roleName = roleKey === 'data_engineer' ? 'Data Engineer' :
+                                                            roleKey === 'ml_engineer' ? 'ML Engineer' :
+                                                                roleKey === 'cloud_architect' ? 'Cloud Architect' :
+                                                                    roleKey === 'consultant' ? 'Consultor' : roleKey
+
+                                                        // AGGREGATION LOGIC: Check if profile exists
+                                                        const existingProfileIndex = state.staffingDetails.profiles.findIndex(
+                                                            prof => prof.role === roleName && prof.seniority === level
+                                                        )
+
+                                                        if (existingProfileIndex >= 0) {
+                                                            // Update Existing
+                                                            const newProfiles = [...state.staffingDetails.profiles]
+                                                            newProfiles[existingProfileIndex].count += 1
+
+                                                            setState(prev => ({
+                                                                ...prev,
+                                                                roles: { ...prev.roles, [roleKey]: (prev.roles[roleKey as RoleKey] || 0) + 1 },
+                                                                staffingDetails: {
+                                                                    ...prev.staffingDetails,
+                                                                    profiles: newProfiles
+                                                                }
+                                                            }))
+                                                            toast.success(`${roleName} (${level}) actualizado (+1)`)
+                                                        } else {
+                                                            // Create New
+                                                            const newProfile = {
+                                                                id: crypto.randomUUID(),
+                                                                role: roleName,
+                                                                seniority: level,
+                                                                count: 1,
+                                                                price: price,
+                                                                skills: '',
+                                                                startDate: new Date().toISOString(),
+                                                                endDate: new Date().toISOString()
                                                             }
-                                                        }))
-                                                        toast.success(`${roleName} (${level}) agregado`)
+
+                                                            setState(prev => ({
+                                                                ...prev,
+                                                                roles: { ...prev.roles, [roleKey]: (prev.roles[roleKey as RoleKey] || 0) + 1 },
+                                                                staffingDetails: {
+                                                                    ...prev.staffingDetails,
+                                                                    profiles: [...prev.staffingDetails.profiles, newProfile]
+                                                                }
+                                                            }))
+                                                            toast.success(`${roleName} (${level}) agregado`)
+                                                        }
                                                     }}
                                                 />
                                             </div>
@@ -2334,7 +2361,7 @@ graph TD
                                     <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                                         {state.staffingDetails.profiles.map((profile, idx) => {
                                             return (
-                                                <div key={profile.id || idx} className="flex items-center justify-between p-3 bg-[#242423] border border-[#333533] rounded-xl group hover:border-[#4A4D4A] transition-all">
+                                                <div key={profile.id || idx} className="flex items-center justify-between p-3 bg-zinc-900/50 border border-zinc-800 rounded-xl group hover:border-zinc-700 transition-all">
                                                     <div className="flex items-center gap-3">
                                                         <div className={cn(
                                                             "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border",
@@ -2355,47 +2382,52 @@ graph TD
                                                             </div>
                                                         </div>
                                                     </div>
+                                                    {/* CENTER: QUANTITY */}
+                                                    {/* CENTER: QUANTITY */}
+                                                    <div className="flex flex-col items-center">
+                                                        <Label className="text-[9px] text-[#7C7F7C] uppercase font-bold mb-1">CANT.</Label>
+                                                        <Input
+                                                            type="number"
+                                                            min={1}
+                                                            value={profile.count}
+                                                            onChange={(e) => {
+                                                                const val = parseInt(e.target.value) || 1
+                                                                const diff = val - profile.count
+
+                                                                // Update profile count
+                                                                const newProfiles = [...state.staffingDetails.profiles]
+                                                                newProfiles[idx].count = val
+
+                                                                // Update Role Total Global
+                                                                const keyEntry = Object.entries(ROLE_CONFIG).find(([k, v]) => v.label === profile.role)
+                                                                const roleKey = keyEntry ? keyEntry[0] as RoleKey : null
+
+                                                                if (roleKey) {
+                                                                    setState(prev => ({
+                                                                        ...prev,
+                                                                        roles: { ...prev.roles, [roleKey]: Math.max(0, (prev.roles[roleKey] || 0) + diff) },
+                                                                        staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
+                                                                    }))
+                                                                }
+                                                            }}
+                                                            className="w-12 h-8 bg-zinc-800/50 border-zinc-700 text-[#E8EDDF] text-center text-sm p-0 focus:border-[#F5CB5C] rounded-lg"
+                                                        />
+                                                    </div>
+
+                                                    {/* RIGHT: PRICE & ACTIONS */}
                                                     <div className="flex items-center gap-4">
-                                                        <div className="text-right flex items-center gap-3">
-                                                            <div className="flex flex-col items-end">
-                                                                <Label className="text-[10px] text-[#7C7F7C] uppercase font-bold mb-0.5">Cant.</Label>
-                                                                <Input
-                                                                    type="number"
-                                                                    min={1}
-                                                                    value={profile.count}
-                                                                    onChange={(e) => {
-                                                                        const val = parseInt(e.target.value) || 1
-                                                                        // Update profile count
-                                                                        const newProfiles = [...state.staffingDetails.profiles]
-                                                                        newProfiles[idx].count = val
-
-                                                                        // Update Role Total (Complex because one role key can have multiple seniority entries)
-                                                                        // Ideally we recalculate total from profiles list
-                                                                        const keyEntry = Object.entries(ROLE_CONFIG).find(([k, v]) => v.label === profile.role)
-                                                                        const roleKey = keyEntry ? keyEntry[0] as RoleKey : null
-
-                                                                        if (roleKey) {
-                                                                            const totalForRole = newProfiles.filter(p => p.role === profile.role).reduce((acc, p) => acc + p.count, 0)
-
-                                                                            setState(prev => ({
-                                                                                ...prev,
-                                                                                roles: { ...prev.roles, [roleKey]: totalForRole },
-                                                                                staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
-                                                                            }))
-                                                                        }
-                                                                    }}
-                                                                    className="w-16 h-7 bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] text-right text-xs p-1"
-                                                                />
-                                                            </div>
-                                                            <div className="text-[#F5CB5C] font-mono font-bold text-sm min-w-[80px] text-right">
+                                                        <div className="text-right">
+                                                            <div className="text-[#F5CB5C] font-mono font-bold text-sm">
                                                                 ${((profile.price || 0) * profile.count).toLocaleString()}
                                                             </div>
+                                                            <div className="text-[10px] text-[#7C7F7C] uppercase">Mensual</div>
                                                         </div>
                                                         <Button
                                                             size="icon"
                                                             variant="ghost"
-                                                            className="h-8 w-8 text-red-400 hover:bg-red-500/10 hover:text-red-500 rounded-full"
+                                                            className="h-8 w-8 text-zinc-500 hover:bg-red-500/10 hover:text-red-500 rounded-full transition-colors"
                                                             onClick={() => {
+                                                                const countToRemove = profile.count
                                                                 // Remove logic
                                                                 const newProfiles = [...state.staffingDetails.profiles]
                                                                 newProfiles.splice(idx, 1)
@@ -2404,14 +2436,16 @@ graph TD
                                                                 const keyEntry = Object.entries(ROLE_CONFIG).find(([k, v]) => v.label === profile.role)
                                                                 const roleKey = keyEntry ? keyEntry[0] as RoleKey : null
 
-                                                                setState(prev => ({
-                                                                    ...prev,
-                                                                    roles: roleKey ? { ...prev.roles, [roleKey]: Math.max(0, (prev.roles[roleKey as RoleKey] || 0) - 1) } : prev.roles,
-                                                                    staffingDetails: {
-                                                                        ...prev.staffingDetails,
-                                                                        profiles: newProfiles
-                                                                    }
-                                                                }))
+                                                                if (roleKey) {
+                                                                    setState(prev => ({
+                                                                        ...prev,
+                                                                        roles: { ...prev.roles, [roleKey]: Math.max(0, (prev.roles[roleKey as RoleKey] || 0) - countToRemove) },
+                                                                        staffingDetails: {
+                                                                            ...prev.staffingDetails,
+                                                                            profiles: newProfiles
+                                                                        }
+                                                                    }))
+                                                                }
                                                             }}
                                                         >
                                                             <Trash2 className="w-4 h-4" />
