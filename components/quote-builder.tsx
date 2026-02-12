@@ -2070,9 +2070,9 @@ graph TD
                                                                         ...state.sustainDetails,
                                                                         criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, marketsImpacted: parseInt(e.target.value) || 0 }
                                                                     })}
-                                                                    className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF] pr-[4.5rem] focus:border-[#F5CB5C]"
+                                                                    className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF] pr-24 focus:border-[#F5CB5C]"
                                                                 />
-                                                                <span className="absolute right-10 top-2.5 text-[#F5CB5C] text-[10px] font-bold">MKTS</span>
+                                                                <span className="absolute right-14 top-2.5 text-[#F5CB5C] text-[10px] font-bold">MKTS</span>
                                                             </div>
                                                             <div className="relative">
                                                                 <Input
@@ -2083,9 +2083,9 @@ graph TD
                                                                         ...state.sustainDetails,
                                                                         criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, usersImpacted: parseInt(e.target.value) || 0 }
                                                                     })}
-                                                                    className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF] pr-[4.5rem] focus:border-[#F5CB5C]"
+                                                                    className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF] pr-24 focus:border-[#F5CB5C]"
                                                                 />
-                                                                <span className="absolute right-10 top-2.5 text-[#F5CB5C] text-[10px] font-bold">USRS</span>
+                                                                <span className="absolute right-14 top-2.5 text-[#F5CB5C] text-[10px] font-bold">USRS</span>
                                                             </div>
                                                         </div>
                                                     </div>
