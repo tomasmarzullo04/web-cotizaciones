@@ -555,57 +555,58 @@ function createPDFDocument(data: QuoteState & {
         y += 6
 
         // Sustain Info Grid
-        const boxHeight = 50 // Increased to cover all rows including Hypercare
+        const boxHeight = 55 // Further increased for more bottom breathing room
         doc.setFillColor(COLOR_ROW_ALT)
         doc.rect(margin, y, contentWidth, boxHeight, 'F')
 
-        let sy = y + 6
-        const col2 = margin + contentWidth / 2 + 5
+        let sy = y + 7 // Increased top padding
+        const paddingX = 8 // Increased horizontal padding
+        const col2 = margin + contentWidth / 2 + paddingX
 
         // Row 1: Solution & Owner
         doc.setFontSize(8)
         doc.setFont(FONT_BOLD, "bold")
         doc.setTextColor(COLOR_PRIMARY)
-        doc.text("SOLUCIÓN:", margin + 5, sy)
+        doc.text("SOLUCIÓN:", margin + paddingX, sy)
         doc.text("OWNER:", col2, sy)
 
         sy += 5
         doc.setFont(FONT_REG, "normal")
         doc.setTextColor(COLOR_CHARCOAL)
-        doc.text(cleanText(data.sustainDetails.solutionName || "N/A"), margin + 5, sy)
+        doc.text(cleanText(data.sustainDetails.solutionName || "N/A"), margin + paddingX, sy)
         doc.text(cleanText(data.sustainDetails.businessOwner || "Pendiente"), col2, sy)
 
         // Row 2: Schedules
         sy += 8
         doc.setFont(FONT_BOLD, "bold")
         doc.setTextColor(COLOR_PRIMARY)
-        doc.text("HORARIO PRINCIPAL:", margin + 5, sy)
+        doc.text("HORARIO PRINCIPAL:", margin + paddingX, sy)
         doc.text("HORARIO SECUNDARIO:", col2, sy)
 
         sy += 5
         doc.setFont(FONT_REG, "normal")
         doc.setTextColor(COLOR_CHARCOAL)
-        doc.text(data.sustainDetails.updateSchedule || "No definido", margin + 5, sy)
+        doc.text(data.sustainDetails.updateSchedule || "No definido", margin + paddingX, sy)
         doc.text(data.sustainDetails.secondaryUpdateSchedule || "N/A", col2, sy)
 
         // Row 3: Freq & Hypercare
         sy += 8
         doc.setFont(FONT_BOLD, "bold")
         doc.setTextColor(COLOR_PRIMARY)
-        doc.text("FRECUENCIA / DURACIÓN:", margin + 5, sy)
+        doc.text("FRECUENCIA / DURACIÓN:", margin + paddingX, sy)
         doc.text("PERIODO HYPERCARE:", col2, sy)
 
         sy += 5
         doc.setFont(FONT_REG, "normal")
         doc.setTextColor(COLOR_CHARCOAL)
-        doc.text(`${(data.sustainDetails.metrics.updateFrequency || 'daily').toUpperCase()} / ${data.sustainDetails.updateDuration || 'N/A'}`, margin + 5, sy)
+        doc.text(`${(data.sustainDetails.metrics.updateFrequency || 'daily').toUpperCase()} / ${data.sustainDetails.updateDuration || 'N/A'}`, margin + paddingX, sy)
         doc.text(data.sustainDetails.hypercarePeriod?.replace('_', ' ').toUpperCase() || "30 DÍAS", col2, sy)
 
         // Row 4: Weekend Support
         sy += 8
         doc.setFont(FONT_BOLD, "bold")
         doc.setTextColor(COLOR_PRIMARY)
-        doc.text("SOPORTE FINES DE SEMANA / HORARIO:", margin + 5, sy)
+        doc.text("SOPORTE FINES DE SEMANA / HORARIO:", margin + paddingX, sy)
 
         sy += 5
         doc.setFont(FONT_REG, "normal")
@@ -613,7 +614,7 @@ function createPDFDocument(data: QuoteState & {
         const weekendText = data.sustainDetails.weekendUsage
             ? `SÍ (${(data.sustainDetails.weekendDays || []).join(', ')}) - ${data.sustainDetails.weekendSupportHours || 'Horario Flexible'}`
             : "NO"
-        doc.text(weekendText, margin + 5, sy)
+        doc.text(weekendText, margin + paddingX, sy)
 
         y += boxHeight + 10
 
