@@ -2366,9 +2366,9 @@ graph TD
                                             const periodLabel = viewMode === 'annual' ? 'Anual' : 'Mensual'
 
                                             return (
-                                                <div key={profile.id || idx} className="flex items-center gap-4 p-3 bg-zinc-900/60 border border-zinc-800/50 rounded-xl group hover:border-zinc-700/50 transition-all">
-                                                    {/* 1. INFO BLOCK (Left) - Fixed Width for Alignment */}
-                                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                <div key={profile.id || idx} className="flex items-center justify-between gap-6 p-4 bg-zinc-900/40 border border-zinc-800 rounded-xl group hover:border-zinc-700/50 transition-all">
+                                                    {/* 1. INFO BLOCK (Left) - Grows to fill space, text wraps if needed */}
+                                                    <div className="flex items-center gap-4 flex-grow">
                                                         <div className={cn(
                                                             "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border shrink-0",
                                                             profile.seniority === 'Expert' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
@@ -2378,15 +2378,15 @@ graph TD
                                                         )}>
                                                             {profile.seniority.substring(0, 2)}
                                                         </div>
-                                                        <div className="flex flex-col truncate">
-                                                            <span className="text-[#E8EDDF] font-bold text-sm capitalize truncate">{profile.role}</span>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[#E8EDDF] font-bold text-sm capitalize">{profile.role}</span>
                                                             <span className="text-[10px] text-zinc-500 font-medium uppercase tracking-wide">{profile.seniority}</span>
                                                         </div>
                                                     </div>
 
-                                                    {/* 2. QUANTITY BLOCK (Center) */}
-                                                    <div className="flex flex-col items-center gap-1 shrink-0">
-                                                        <Label className="text-[9px] text-[#7C7F7C] uppercase font-bold">CANT.</Label>
+                                                    {/* 2. QUANTITY BLOCK (Center) - Clean Number, No Box */}
+                                                    <div className="flex items-center gap-3 shrink-0">
+                                                        <Label className="text-[10px] text-[#7C7F7C] uppercase font-bold">CANT:</Label>
                                                         <Input
                                                             type="number"
                                                             min={1}
@@ -2411,17 +2411,16 @@ graph TD
                                                                     }))
                                                                 }
                                                             }}
-                                                            className="w-12 h-8 bg-zinc-800/50 border-zinc-700 text-[#E8EDDF] text-center text-sm p-0 focus:border-[#F5CB5C] rounded-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            className="w-10 bg-transparent border-none shadow-none text-[#E8EDDF] text-lg font-bold p-0 text-center focus-visible:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:text-[#F5CB5C] transition-colors"
                                                         />
                                                     </div>
 
                                                     {/* 3. PRICE BLOCK (Right) */}
-                                                    <div className="flex items-center gap-4 shrink-0">
+                                                    <div className="flex items-center gap-6 shrink-0">
                                                         <div className="text-right min-w-[80px]">
-                                                            <div className="text-yellow-500 font-mono font-bold text-sm">
+                                                            <div className="text-yellow-500 font-mono font-bold text-base">
                                                                 ${displayPrice.toLocaleString()}
                                                             </div>
-                                                            <div className="text-[9px] text-zinc-500 uppercase font-medium">{periodLabel}</div>
                                                         </div>
                                                         <Button
                                                             size="icon"
