@@ -882,9 +882,15 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
 
 
 
+
     // --- Save Quote ---
-    const handleSaveQuote = async (redirect: boolean = true) => {
-        if (!state.clientName) {
+    // Refactored to support Partial Saves (Dependencies)
+    const handleSaveQuote = (redirect: boolean = true) => {
+        return performSave({ redirect, validate: true })
+    }
+
+    const performSave = async ({ redirect = true, validate = true }: { redirect?: boolean, validate?: boolean }) => {
+        if (validate && !state.clientName) {
             alert("Por favor ingrese un nombre de cliente.")
             return
         }
@@ -976,7 +982,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             // 3. Save to DB (Create or Update)
             let result;
             const payload = {
-                clientName: state.clientName,
+                clientName: state.clientName || (validate ? '' : 'Borrador (Sin Cliente)'), // FALLBACK FOR PARTIAL SAVE
                 projectType: state.complexity,
                 serviceType: state.serviceType,
                 status: 'BORRADOR', // FORCE STATUS TO BORRADOR ON SAVE (Actions will use this for Create)
@@ -1027,7 +1033,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             if (initialData && initialData.id) {
                 // UPDATE
                 result = await updateQuote(initialData.id, payload)
-                toast.success("Cotización actualizada correctamente")
+                if (validate) toast.success("Cotización actualizada correctamente")
             } else {
                 // CREATE
                 result = await saveQuote(payload)
@@ -1075,8 +1081,10 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                 updateState('quoteNumber', result.quote.quoteNumber)
             }
 
-            toast.success(redirect ? "Cotización guardada exitosamente." : "Cambios guardados correctamente.")
+            // Only show main toast if validating (Full Save)
+            if (validate) toast.success(redirect ? "Cotización guardada exitosamente." : "Cambios guardados correctamente.")
 
+            // Only redirect if requested (Full Save typically)
             if (redirect) {
                 // Redirect to Dashboard (Mis Cotizaciones) after 1s delay
                 setTimeout(() => {
@@ -1087,6 +1095,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         } catch (e: any) {
             console.error("Failed to save quote (DB Error):", e)
             toast.error(`Error al guardar: ${e.message}`)
+            throw e // Re-throw for caller handling
         } finally {
             setIsSaving(false)
         }
@@ -1373,7 +1382,10 @@ graph TD
         await new Promise(resolve => setTimeout(resolve, 1000))
 
         try {
-            await handleSaveQuote(false) // false = no redirect
+            await performSave({
+                redirect: false,
+                validate: false // Bypass validation for partial save
+            })
             toast.success("Dependencias actualizadas correctamente")
         } catch (error) {
             console.error(error)
