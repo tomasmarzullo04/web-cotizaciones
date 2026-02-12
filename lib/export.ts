@@ -201,6 +201,7 @@ function createPDFDocument(data: QuoteState & {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: currencyCode,
+            currencyDisplay: 'code', // Show "USD", "MXN", etc.
             minimumFractionDigits: 2
         }).format(amount * rateMultiplier)
     }
@@ -403,8 +404,8 @@ function createPDFDocument(data: QuoteState & {
     doc.setFontSize(9)
     doc.setTextColor(255)
     doc.text("CONCEPTO / PERFIL", margin + 4, y + 5.5) // Increased padding
-    doc.text("CANT.", pageWidth - margin - 75, y + 5.5, { align: 'center' })
-    doc.text(data.viewMode === 'annual' ? "MENSUAL" : "MENSUAL", pageWidth - margin - 40, y + 5.5, { align: 'right' })
+    doc.text("CANT.", pageWidth - margin - 85, y + 5.5, { align: 'right' })
+    doc.text(data.viewMode === 'annual' ? "MENSUAL" : "MENSUAL", pageWidth - margin - 45, y + 5.5, { align: 'right' })
     doc.text(data.viewMode === 'annual' ? "TOTAL ANUAL" : "TOTAL PROYECTO", pageWidth - margin - 5, y + 5.5, { align: 'right' })
     y += 8
 
@@ -428,10 +429,10 @@ function createPDFDocument(data: QuoteState & {
         doc.text(cleanText(label), margin + 4, y + 4.5)
 
         doc.setFont(FONT_REG, "normal")
-        doc.text(cleanText(meta), pageWidth - margin - 75, y + 4.5, { align: 'center' })
+        doc.text(cleanText(meta), pageWidth - margin - 85, y + 4.5, { align: 'right' })
 
         doc.setFont(FONT_BOLD, "bold")
-        doc.text(monthly, pageWidth - margin - 40, y + 4.5, { align: 'right' })
+        doc.text(monthly, pageWidth - margin - 45, y + 4.5, { align: 'right' })
         doc.text(total, pageWidth - margin - 5, y + 4.5, { align: 'right' })
         y += 7
     }

@@ -1259,7 +1259,9 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     finalTotal,
                     durationMonths: getDurationInMonths(),
                     clientLogoBase64,
-                    viewMode // CRITICAL: Pass viewMode for annual vs monthly projection
+                    viewMode,
+                    currency, // Passed correctly
+                    exchangeRate: exchangeRates[currency] || 1.0
                 })
             } else {
                 await exportToWord({
@@ -1278,7 +1280,9 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     finalTotal,
                     durationMonths: getDurationInMonths(),
                     clientLogoBase64: clientLogoBase64,
-                    viewMode // CRITICAL: Pass viewMode
+                    viewMode,
+                    currency,
+                    exchangeRate: exchangeRates[currency] || 1.0
                 })
             }
         } catch (e) {
