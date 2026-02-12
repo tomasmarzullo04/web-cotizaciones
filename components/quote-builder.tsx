@@ -2363,12 +2363,11 @@ graph TD
                                         {state.staffingDetails.profiles.map((profile, idx) => {
                                             const monthlyPrice = (profile.price || 0) * profile.count
                                             const displayPrice = viewMode === 'annual' ? monthlyPrice * 12 : monthlyPrice
-                                            const periodLabel = viewMode === 'annual' ? 'Anual' : 'Mensual'
 
                                             return (
-                                                <div key={profile.id || idx} className="flex items-center justify-between gap-6 p-4 bg-zinc-900/40 border border-zinc-800 rounded-xl group hover:border-zinc-700/50 transition-all">
-                                                    {/* 1. INFO BLOCK (Left) - Grows to fill space, text wraps if needed */}
-                                                    <div className="flex items-center gap-4 flex-grow">
+                                                <div key={profile.id || idx} className="flex items-center justify-between p-3 bg-zinc-900/40 border border-zinc-800 rounded-xl w-full gap-4 group hover:border-zinc-700/50 transition-all">
+                                                    {/* LEFT BLOCK: Info */}
+                                                    <div className="flex items-center gap-3 min-w-0 flex-1">
                                                         <div className={cn(
                                                             "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border shrink-0",
                                                             profile.seniority === 'Expert' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
@@ -2378,54 +2377,57 @@ graph TD
                                                         )}>
                                                             {profile.seniority.substring(0, 2)}
                                                         </div>
-                                                        <div className="flex flex-col">
-                                                            <span className="text-[#E8EDDF] font-bold text-sm capitalize">{profile.role}</span>
+                                                        <div className="flex flex-col justify-center">
+                                                            <span className="text-[#E8EDDF] font-bold text-sm leading-tight whitespace-normal">{profile.role}</span>
                                                             <span className="text-[10px] text-zinc-500 font-medium uppercase tracking-wide">{profile.seniority}</span>
                                                         </div>
                                                     </div>
 
-                                                    {/* 2. QUANTITY BLOCK (Center) - Clean Number, No Box */}
-                                                    <div className="flex items-center gap-3 shrink-0">
-                                                        <Label className="text-[10px] text-[#7C7F7C] uppercase font-bold">CANT:</Label>
-                                                        <Input
-                                                            type="number"
-                                                            min={1}
-                                                            value={profile.count}
-                                                            onChange={(e) => {
-                                                                const val = parseInt(e.target.value) || 1
-                                                                const diff = val - profile.count
+                                                    {/* RIGHT BLOCK: Metrics & Actions */}
+                                                    <div className="flex items-center gap-4 flex-shrink-0">
+                                                        {/* Quantity */}
+                                                        <div className="flex items-center gap-1.5 bg-zinc-900/30 px-2 py-1 rounded-md border border-zinc-800/50">
+                                                            <span className="text-[10px] text-[#7C7F7C] font-bold uppercase tracking-wider">CANT:</span>
+                                                            <Input
+                                                                type="number"
+                                                                min={1}
+                                                                value={profile.count}
+                                                                onChange={(e) => {
+                                                                    const val = parseInt(e.target.value) || 1
+                                                                    const diff = val - profile.count
 
-                                                                // Update profile count
-                                                                const newProfiles = [...state.staffingDetails.profiles]
-                                                                newProfiles[idx].count = val
+                                                                    // Update profile count
+                                                                    const newProfiles = [...state.staffingDetails.profiles]
+                                                                    newProfiles[idx].count = val
 
-                                                                // Update Role Total Global
-                                                                const keyEntry = Object.entries(ROLE_CONFIG).find(([k, v]) => v.label === profile.role)
-                                                                const roleKey = keyEntry ? keyEntry[0] as RoleKey : null
+                                                                    // Update Role Total Global
+                                                                    const keyEntry = Object.entries(ROLE_CONFIG).find(([k, v]) => v.label === profile.role)
+                                                                    const roleKey = keyEntry ? keyEntry[0] as RoleKey : null
 
-                                                                if (roleKey) {
-                                                                    setState(prev => ({
-                                                                        ...prev,
-                                                                        roles: { ...prev.roles, [roleKey]: Math.max(0, (prev.roles[roleKey] || 0) + diff) },
-                                                                        staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
-                                                                    }))
-                                                                }
-                                                            }}
-                                                            className="w-10 bg-transparent border-none shadow-none text-[#E8EDDF] text-lg font-bold p-0 text-center focus-visible:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:text-[#F5CB5C] transition-colors"
-                                                        />
-                                                    </div>
+                                                                    if (roleKey) {
+                                                                        setState(prev => ({
+                                                                            ...prev,
+                                                                            roles: { ...prev.roles, [roleKey]: Math.max(0, (prev.roles[roleKey] || 0) + diff) },
+                                                                            staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
+                                                                        }))
+                                                                    }
+                                                                }}
+                                                                className="w-6 h-auto p-0 border-none bg-transparent text-[#E8EDDF] font-bold text-sm text-center focus-visible:ring-0 shadow-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:text-[#F5CB5C] transition-colors"
+                                                            />
+                                                        </div>
 
-                                                    {/* 3. PRICE BLOCK (Right) */}
-                                                    <div className="flex items-center gap-6 shrink-0">
-                                                        <div className="text-right min-w-[80px]">
-                                                            <div className="text-yellow-500 font-mono font-bold text-base">
+                                                        {/* Price */}
+                                                        <div className="text-right min-w-[70px]">
+                                                            <div className="text-yellow-500 font-mono font-bold text-sm">
                                                                 ${displayPrice.toLocaleString()}
                                                             </div>
                                                         </div>
+
+                                                        {/* Trash Action */}
                                                         <Button
                                                             size="icon"
                                                             variant="ghost"
-                                                            className="h-8 w-8 text-zinc-600 hover:bg-red-500/10 hover:text-red-500/80 rounded-full transition-colors"
+                                                            className="h-7 w-7 text-zinc-600 hover:bg-red-500/10 hover:text-red-500/80 rounded-full transition-colors flex-shrink-0"
                                                             onClick={() => {
                                                                 const countToRemove = profile.count
                                                                 // Remove logic
