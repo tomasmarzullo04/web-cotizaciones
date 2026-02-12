@@ -1364,6 +1364,25 @@ graph TD
         }
     }, [state, manualDiagramCode])
 
+    // --- Manual Process & Dependencies Logic ---
+    const [isDependencySaving, setIsDependencySaving] = useState(false)
+
+    const handleSaveDependencies = async () => {
+        setIsDependencySaving(true)
+        // Artificial delay for UX
+        await new Promise(resolve => setTimeout(resolve, 1000))
+
+        try {
+            await handleSaveQuote(false) // false = no redirect
+            toast.success("Dependencias actualizadas correctamente")
+        } catch (error) {
+            console.error(error)
+            toast.error("Error al guardar dependencias")
+        } finally {
+            setIsDependencySaving(false)
+        }
+    }
+
     // Intelligent Logic for Sustain (Auto-Staffing)
     useEffect(() => {
         if (state.serviceType === 'Sustain') {
@@ -1636,69 +1655,77 @@ graph TD
                                                     {/* Metrics Grid - FIXED VOLUMETRICS */}
                                                     <div>
                                                         <Label className="text-[#CFDBD5] mb-3 block text-xs uppercase font-bold">Métricas Volumetría (Mensual)</Label>
-                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                                            <div className="space-y-1">
-                                                                <Label className="text-[#7C7F7C] text-[10px] uppercase">Nº Pipelines</Label>
-                                                                <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-9"
+                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-8 items-start">
+                                                            <div className="space-y-0 text-left">
+                                                                <Label className="text-[#7C7F7C] text-[10px] uppercase block mb-2">Nº Pipelines</Label>
+                                                                <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-10 w-full"
                                                                     value={state.sustainDetails.metrics.pipelinesCount} onChange={e => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, pipelinesCount: parseInt(e.target.value) || 0 } })} />
                                                             </div>
-                                                            <div className="space-y-1">
-                                                                <Label className="text-[#7C7F7C] text-[10px] uppercase">Nº Fuentes Datos</Label>
-                                                                <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-9"
+                                                            <div className="space-y-0 text-left">
+                                                                <Label className="text-[#7C7F7C] text-[10px] uppercase block mb-2">Nº Fuentes Datos</Label>
+                                                                <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-10 w-full"
                                                                     value={state.sustainDetails.metrics.dataSourcesCount} onChange={e => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dataSourcesCount: parseInt(e.target.value) || 0 } })} />
                                                             </div>
-                                                            <div className="space-y-1">
-                                                                <Label className="text-[#7C7F7C] text-[10px] uppercase">Nº Notebooks</Label>
-                                                                <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-9"
+                                                            <div className="space-y-0 text-left">
+                                                                <Label className="text-[#7C7F7C] text-[10px] uppercase block mb-2">Nº Notebooks</Label>
+                                                                <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-10 w-full"
                                                                     value={state.sustainDetails.metrics.notebooksCount} onChange={e => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, notebooksCount: parseInt(e.target.value) || 0 } })} />
                                                             </div>
-                                                            <div className="space-y-1">
-                                                                <Label className="text-[#7C7F7C] text-[10px] uppercase">Nº Dashboards</Label>
-                                                                <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-9"
+                                                            <div className="space-y-0 text-left">
+                                                                <Label className="text-[#7C7F7C] text-[10px] uppercase block mb-2">Nº Dashboards</Label>
+                                                                <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-10 w-full"
                                                                     value={state.sustainDetails.metrics.dashboardsCount} onChange={e => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dashboardsCount: parseInt(e.target.value) || 0 } })} />
                                                             </div>
-                                                            <div className="space-y-1">
-                                                                <Label className="text-[#7C7F7C] text-[10px] uppercase">Nº Modelos DS</Label>
-                                                                <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-9"
+                                                            <div className="space-y-0 text-left">
+                                                                <Label className="text-[#7C7F7C] text-[10px] uppercase block mb-2">Nº Modelos DS</Label>
+                                                                <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-10 w-full"
                                                                     value={state.sustainDetails.metrics.dsModelsCount} onChange={e => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dsModelsCount: parseInt(e.target.value) || 0 } })} />
                                                             </div>
-                                                            <div className="space-y-1">
-                                                                <Label className="text-[#7C7F7C] text-[10px] uppercase">¿Procesos Manuales?</Label>
-                                                                <div className="flex items-center gap-2 h-9">
-                                                                    <Switch
-                                                                        checked={state.sustainDetails.metrics.manualProcess}
-                                                                        onCheckedChange={(c) => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, manualProcess: c } })}
-                                                                        className="data-[state=checked]:bg-[#F5CB5C] data-[state=checked]:border-[#F5CB5C] data-[state=unchecked]:bg-zinc-700 border-transparent"
-                                                                    />
-                                                                    <span className={cn(
-                                                                        "text-xs font-bold transition-colors uppercase",
-                                                                        state.sustainDetails.metrics.manualProcess ? "text-[#F5CB5C]" : "text-zinc-500"
-                                                                    )}>
-                                                                        {state.sustainDetails.metrics.manualProcess ? "SÍ" : "NO"}
-                                                                    </span>
-                                                                </div>
+                                                            <div className="space-y-0 text-left">
+                                                                <Label className="text-[#7C7F7C] text-[10px] uppercase block mb-2">¿Procesos Manuales?</Label>
+                                                                <ToggleGroup
+                                                                    type="single"
+                                                                    value={state.sustainDetails.metrics.manualProcess ? 'yes' : 'no'}
+                                                                    onValueChange={(val) => {
+                                                                        if (val) updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, manualProcess: val === 'yes' } })
+                                                                    }}
+                                                                    className="justify-start gap-0 h-10"
+                                                                >
+                                                                    <ToggleGroupItem
+                                                                        value="yes"
+                                                                        className="w-20 rounded-l-lg rounded-r-none border border-r-0 border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-transparent data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-bold text-xs"
+                                                                    >
+                                                                        SÍ
+                                                                    </ToggleGroupItem>
+                                                                    <ToggleGroupItem
+                                                                        value="no"
+                                                                        className="w-20 rounded-r-lg rounded-l-none border border-l-0 border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-transparent data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-bold text-xs"
+                                                                    >
+                                                                        NO
+                                                                    </ToggleGroupItem>
+                                                                </ToggleGroup>
                                                             </div>
                                                         </div>
-                                                        <div className="col-span-2 relative space-y-2">
-                                                            <Label className="text-[#7C7F7C] text-[10px] uppercase flex justify-between items-center">
+                                                        <div className="col-span-2 relative space-y-0 text-left mt-8">
+                                                            <Label className="text-[#7C7F7C] text-[10px] uppercase flex justify-between items-center mb-2">
                                                                 Dependencias Externas
                                                             </Label>
                                                             <Textarea
-                                                                className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] min-h-[80px] focus:border-[#F5CB5C] transition-colors"
+                                                                className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-10 min-h-[40px] focus:border-[#F5CB5C] transition-colors resize-y overflow-hidden"
                                                                 placeholder="Ej. API Salesforce, FTP Cliente..."
                                                                 value={state.sustainDetails.metrics.systemDependencies}
                                                                 onChange={e => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, systemDependencies: e.target.value } })}
                                                             />
-                                                            <div className="flex justify-end">
+                                                            <div className="flex justify-start mt-2">
                                                                 <Button
                                                                     size="sm"
-                                                                    onClick={() => handleSaveQuote(false)}
-                                                                    className="bg-[#F5CB5C] text-[#242423] hover:bg-[#F5CB5C]/90 text-xs h-7 px-3 font-bold uppercase tracking-wider"
-                                                                    disabled={isSaving}
+                                                                    onClick={handleSaveDependencies}
+                                                                    className="bg-[#F5CB5C] text-[#242423] hover:bg-[#F5CB5C]/90 text-xs h-8 px-4 font-bold uppercase tracking-wider rounded-lg"
+                                                                    disabled={isDependencySaving}
                                                                 >
-                                                                    {isSaving ? (
+                                                                    {isDependencySaving ? (
                                                                         <>
-                                                                            <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Guardando...
+                                                                            <Loader2 className="w-3 h-3 mr-2 animate-spin" /> Cargando...
                                                                         </>
                                                                     ) : (
                                                                         "Guardar Dependencias"
