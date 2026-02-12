@@ -2362,9 +2362,10 @@ graph TD
                                         {state.staffingDetails.profiles.map((profile, idx) => {
                                             return (
                                                 <div key={profile.id || idx} className="flex items-center justify-between p-3 bg-zinc-900/50 border border-zinc-800 rounded-xl group hover:border-zinc-700 transition-all">
-                                                    <div className="flex items-center gap-3">
+                                                    {/* 1. INFO BLOCK (Left) */}
+                                                    <div className="flex items-center gap-3 min-w-0">
                                                         <div className={cn(
-                                                            "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border",
+                                                            "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border shrink-0",
                                                             profile.seniority === 'Expert' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
                                                                 profile.seniority === 'Sr' ? "bg-purple-500/10 text-purple-500 border-purple-500/20" :
                                                                     profile.seniority === 'Ssr' ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
@@ -2372,20 +2373,14 @@ graph TD
                                                         )}>
                                                             {profile.seniority.substring(0, 2)}
                                                         </div>
-                                                        <div>
-                                                            <div className="text-[#E8EDDF] font-bold text-sm capitalize">{profile.role}</div>
-                                                            <div className="text-xs text-[#CFDBD5] flex items-center gap-2">
-                                                                <span className={cn(
-                                                                    "px-1.5 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wide",
-                                                                    profile.seniority === 'Expert' ? "bg-amber-500/20 text-amber-400" : "bg-[#333533] text-[#CFDBD5]"
-                                                                )}>{profile.seniority}</span>
-                                                            </div>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[#E8EDDF] font-bold text-sm capitalize truncate">{profile.role}</span>
+                                                            <span className="text-[10px] text-zinc-500 font-medium uppercase tracking-wide">{profile.seniority}</span>
                                                         </div>
                                                     </div>
-                                                    {/* CENTER: QUANTITY */}
-                                                    {/* CENTER: QUANTITY */}
-                                                    <div className="flex flex-col items-center">
-                                                        <Label className="text-[9px] text-[#7C7F7C] uppercase font-bold mb-1">CANT.</Label>
+                                                    {/* 2. QUANTITY BLOCK (Center) */}
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        <Label className="text-[9px] text-[#7C7F7C] uppercase font-bold">CANT.</Label>
                                                         <Input
                                                             type="number"
                                                             min={1}
@@ -2414,18 +2409,18 @@ graph TD
                                                         />
                                                     </div>
 
-                                                    {/* RIGHT: PRICE & ACTIONS */}
+                                                    {/* 3. PRICE BLOCK (Right) */}
                                                     <div className="flex items-center gap-4">
                                                         <div className="text-right">
-                                                            <div className="text-[#F5CB5C] font-mono font-bold text-sm">
+                                                            <div className="text-yellow-500 font-mono font-bold text-sm">
                                                                 ${((profile.price || 0) * profile.count).toLocaleString()}
                                                             </div>
-                                                            <div className="text-[10px] text-[#7C7F7C] uppercase">Mensual</div>
+                                                            <div className="text-[9px] text-zinc-500 uppercase font-medium">Mensual</div>
                                                         </div>
                                                         <Button
                                                             size="icon"
                                                             variant="ghost"
-                                                            className="h-8 w-8 text-zinc-500 hover:bg-red-500/10 hover:text-red-500 rounded-full transition-colors"
+                                                            className="h-8 w-8 text-zinc-600 hover:bg-red-500/10 hover:text-red-500/80 rounded-full transition-colors"
                                                             onClick={() => {
                                                                 const countToRemove = profile.count
                                                                 // Remove logic
