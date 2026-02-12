@@ -1661,7 +1661,7 @@ graph TD
                                                                     <Switch
                                                                         checked={state.sustainDetails.metrics.manualProcess}
                                                                         onCheckedChange={(c) => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, manualProcess: c } })}
-                                                                        className="data-[state=checked]:bg-[#F5CB5C] data-[state=checked]:border-[#F5CB5C]"
+                                                                        className="data-[state=checked]:bg-[#F5CB5C] data-[state=checked]:border-[#F5CB5C] data-[state=unchecked]:bg-zinc-600 border-transparent"
                                                                     />
                                                                     {state.sustainDetails.metrics.manualProcess && (
                                                                         <span className="text-xs text-[#F5CB5C] font-bold animate-in fade-in zoom-in">SÍ</span>
@@ -1687,7 +1687,7 @@ graph TD
                                                                     >
                                                                         {isSaving ? (
                                                                             <>
-                                                                                <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Cargando...
+                                                                                <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Guardando...
                                                                             </>
                                                                         ) : (
                                                                             "Guardar Dependencias"
@@ -1770,7 +1770,7 @@ graph TD
                                                             <Switch
                                                                 checked={state.sustainDetails.weekendUsage}
                                                                 onCheckedChange={v => updateState('sustainDetails', { ...state.sustainDetails, weekendUsage: v })}
-                                                                className="data-[state=checked]:bg-[#F5CB5C] data-[state=checked]:border-[#F5CB5C]"
+                                                                className="data-[state=checked]:bg-[#F5CB5C] data-[state=checked]:border-[#F5CB5C] data-[state=unchecked]:bg-zinc-600 border-transparent"
                                                             />
                                                         </div>
                                                     </div>
@@ -1853,7 +1853,8 @@ graph TD
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
 
                                                     {/* NEW FIELD: Frequency of Use */}
-                                                    <div className="space-y-2">
+                                                    {/* NEW FIELD: Frequency of Use */}
+                                                    <div className="bg-[#333533]/50 border border-[#4A4D4A] p-4 rounded-xl space-y-2">
                                                         <Label className="text-[#CFDBD5] text-xs uppercase font-bold">Frecuencia de Uso</Label>
                                                         <Select
                                                             value={state.sustainDetails.criticalityMatrix.frequencyOfUse}
@@ -1862,7 +1863,7 @@ graph TD
                                                                 criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, frequencyOfUse: v }
                                                             })}
                                                         >
-                                                            <SelectTrigger className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
+                                                            <SelectTrigger className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF] focus:border-[#F5CB5C]"><SelectValue /></SelectTrigger>
                                                             <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
                                                                 <SelectItem value="daily">Diario</SelectItem>
                                                                 <SelectItem value="weekly">Semanal</SelectItem>
@@ -1873,7 +1874,8 @@ graph TD
                                                     </div>
 
                                                     {/* NEW FIELD: Critical Dates */}
-                                                    <div className="space-y-2">
+                                                    {/* NEW FIELD: Critical Dates */}
+                                                    <div className="bg-[#333533]/50 border border-[#4A4D4A] p-4 rounded-xl space-y-3">
                                                         <div className="flex items-center justify-between">
                                                             <Label className="text-[#CFDBD5] text-xs uppercase font-bold">¿Fechas Críticas?</Label>
                                                             <div className="flex items-center gap-2">
@@ -1886,7 +1888,7 @@ graph TD
                                                                         ...state.sustainDetails,
                                                                         criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, hasCriticalDates: c }
                                                                     })}
-                                                                    className="data-[state=checked]:bg-[#F5CB5C] data-[state=checked]:border-[#F5CB5C]"
+                                                                    className="data-[state=checked]:bg-[#F5CB5C] data-[state=checked]:border-[#F5CB5C] data-[state=unchecked]:bg-zinc-600 border-transparent"
                                                                 />
                                                             </div>
                                                         </div>
@@ -1904,9 +1906,10 @@ graph TD
                                                     </div>
 
                                                     {/* NEW FIELD: Scope (Markets & Users) */}
-                                                    <div className="space-y-2">
+                                                    {/* NEW FIELD: Scope (Markets & Users) */}
+                                                    <div className="bg-[#333533]/50 border border-[#4A4D4A] p-4 rounded-xl space-y-3 col-span-1 md:col-span-2">
                                                         <Label className="text-[#CFDBD5] text-xs uppercase font-bold">Alcance (Mercados / Usuarios)</Label>
-                                                        <div className="grid grid-cols-2 gap-2">
+                                                        <div className="grid grid-cols-2 gap-4">
                                                             <div className="relative">
                                                                 <Input
                                                                     type="number"
