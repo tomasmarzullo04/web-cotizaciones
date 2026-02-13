@@ -7,7 +7,7 @@ import { Store } from 'lucide-react'
 export default function Navbar({ userRole, userName }: { userRole?: string | null, userName?: string | null }) {
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-[#242423]/80 backdrop-blur-md border-b border-[#333533] shadow-sm">
-            <div className="container mx-auto px-12 h-16 flex items-center justify-between">
+            <div className="container mx-auto px-4 sm:px-8 lg:px-16 h-16 flex items-center justify-between">
 
                 {/* LOGO */}
                 <Link

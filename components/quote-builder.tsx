@@ -1505,7 +1505,7 @@ graph TD
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl w-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-6xl w-full">
                     {[
                         { id: 'Proyecto', icon: Network, title: 'Proyecto', desc: 'Estimación basada en entregables, arquitectura de datos y roadmap de implementación.' },
                         { id: 'Staffing', icon: Briefcase, title: 'Staffing', desc: 'Solicitud de perfiles IT especializados. Defina seniority, skills y duración.' },
@@ -1534,7 +1534,7 @@ graph TD
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="flex flex-col lg:flex-row h-screen overflow-hidden bg-[#333533] font-sans pt-24 md:pt-32 relative"
+            className="flex flex-col lg:flex-row h-screen overflow-hidden bg-[#333533] font-sans pt-28 lg:pt-36 relative"
         >
             {/* ADMIN READ-ONLY BANNER */}
             {readOnly && (
@@ -1545,7 +1545,7 @@ graph TD
             )}
 
             {/* ================= LEFT COLUMN: FORM SCROLL ================= */}
-            <div className="w-full lg:w-2/3 h-full overflow-y-auto scrollbar-custom p-4 md:p-8 lg:p-12">
+            <div className="w-full lg:w-2/3 h-full overflow-y-auto scrollbar-custom px-4 sm:px-8 lg:px-16 py-8">
                 <div className="space-y-12 max-w-4xl mx-auto pb-32">
 
                     {/* Header */}
@@ -1554,7 +1554,7 @@ graph TD
                             <ArrowRight className="w-6 h-6 rotate-180" />
                         </Button>
                         <div className="flex-1">
-                            <h1 className="text-3xl lg:text-5xl font-black text-[#E8EDDF] tracking-tighter mb-1">
+                            <h1 className="text-2xl md:text-3xl lg:text-5xl font-black text-[#E8EDDF] tracking-tighter mb-1">
                                 {state.serviceType === 'Staffing' ? 'Levantamiento de Perfiles' :
                                     state.serviceType === 'Sustain' ? 'Levantamiento de Servicio' :
                                         'Arquitectura de Proyecto'}
@@ -1659,7 +1659,7 @@ graph TD
                                                         <Textarea
                                                             value={state.sustainDetails.technicalDescription}
                                                             onChange={e => updateState('sustainDetails', { ...state.sustainDetails, technicalDescription: e.target.value })}
-                                                            className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] min-h-[100px]"
+                                                            className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] min-h-[100px] w-full"
                                                             placeholder="Describe qué hace la solución, usuarios clave y flujo de datos..."
                                                         />
                                                     </div>
@@ -1696,7 +1696,7 @@ graph TD
                                                     {/* Metrics Grid - FIXED VOLUMETRICS */}
                                                     <div>
                                                         <Label className="text-[#CFDBD5] mb-3 block text-xs uppercase font-bold">Métricas Volumetría (Mensual)</Label>
-                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-8 items-start">
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-8 items-start">
                                                             <div className="space-y-0 text-left">
                                                                 <Label className="text-[#7C7F7C] text-[10px] uppercase block mb-2">Nº Pipelines</Label>
                                                                 <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-10 w-full"
@@ -2048,7 +2048,7 @@ graph TD
                                                                                 ...state.sustainDetails,
                                                                                 criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, criticalDatesDescription: e.target.value }
                                                                             })}
-                                                                            className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF] focus:border-[#F5CB5C]"
+                                                                            className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF] focus:border-[#F5CB5C] w-full"
                                                                         />
                                                                     </div>
                                                                 </motion.div>
@@ -2060,7 +2060,7 @@ graph TD
                                                     {/* NEW FIELD: Scope (Markets & Users) */}
                                                     <div className="bg-[#333533]/50 border border-[#4A4D4A] p-4 rounded-xl space-y-3 col-span-1 md:col-span-2">
                                                         <Label className="text-[#CFDBD5] text-xs uppercase font-bold">Alcance (Mercados / Usuarios)</Label>
-                                                        <div className="grid grid-cols-2 gap-4">
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                             <div className="relative">
                                                                 <Input
                                                                     type="number"
@@ -2210,7 +2210,7 @@ graph TD
                                         }
                                         value={state.description}
                                         onChange={e => updateState('description', e.target.value)}
-                                        className="min-h-[120px] resize-none text-base leading-relaxed bg-[#333533] border-[#4A4D4A] text-[#E8EDDF]"
+                                        className="min-h-[120px] resize-none text-base leading-relaxed bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] w-full"
                                     />
                                     <Button
                                         size="sm"
@@ -2271,7 +2271,7 @@ graph TD
                     {state.serviceType !== 'Staffing' && state.serviceType !== 'Sustain' && (
                         <>
                             <SectionCard number="02" title="Volumetría y Técnica" icon={Database}>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-10">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                                     <CountInput label="Pipelines" value={state.pipelinesCount} onChange={(v: number) => updateState('pipelinesCount', v)} />
                                     <CountInput label="Notebooks" value={state.notebooksCount} onChange={(v: number) => updateState('notebooksCount', v)} />
                                     <CountInput label="Ejecuciones/Mes" value={state.pipelineExecutions} onChange={(v: number) => updateState('pipelineExecutions', v)} />
@@ -2403,7 +2403,7 @@ graph TD
                                             }
 
                                             return (
-                                                <div key={profile.id || idx} className="flex items-center justify-between p-2.5 bg-zinc-900/40 border border-zinc-800 rounded-lg w-full gap-3 group hover:border-zinc-700/50 transition-all">
+                                                <div key={profile.id || idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 bg-zinc-900/40 border border-zinc-800 rounded-lg w-full gap-3 group hover:border-zinc-700/50 transition-all">
                                                     {/* LEFT: Avatar + Name + Seniority */}
                                                     <div className="flex items-center gap-3 flex-1 min-w-0">
                                                         <div className={cn(
@@ -2769,7 +2769,7 @@ graph TD
             </div >
 
             {/* ================= RIGHT COLUMN: INDEPENDENT SCROLL SUMMARY ================= */}
-            < div className="w-full lg:w-1/3 h-full overflow-y-auto scrollbar-custom bg-[#242423] border-l border-[#CFDBD5]/10 p-8 lg:p-10 space-y-10 relative" >
+            < div className="w-full lg:w-1/3 h-full overflow-y-auto scrollbar-custom bg-[#242423] border-l border-[#CFDBD5]/10 p-8 lg:p-10 space-y-10 relative order-last lg:order-none" >
                 {/* Cost Summary */}
                 < div className="space-y-6" >
                     <div>
