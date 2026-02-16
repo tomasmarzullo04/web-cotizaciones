@@ -295,7 +295,7 @@ export async function syncSessionAction() {
         cookieStore.set('session_user', dbUser.name, cookieOptions)
         cookieStore.set('session_user_id', dbUser.id, cookieOptions)
 
-        return { success: true }
+        return { success: true, role: dbUser.role }
     } catch (e) {
         console.error("Sync Error:", e)
         return { error: "DB Sync Failed" }

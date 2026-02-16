@@ -81,7 +81,6 @@ export async function GET(request: Request) {
         cookieStore.set('session_user_id', dbUser.id, cookieOptions)
     }
 
-    // FORCE REDIRECT TO PORTAL BASED ON ROLE FROM DB (Hardcoded Production Targets)
     const role = dbUser?.role || 'CONSULTOR'
     const productionDomain = 'https://cotizador.thestoreintelligence.com'
     const targetPath = role === 'ADMIN' ? '/admin/dashboard' : '/quote/new'
