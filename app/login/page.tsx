@@ -185,7 +185,7 @@ export default function LoginPage() {
     }
 
     return (
-        <main className="min-h-screen w-full bg-[#171717] flex items-center justify-center p-6 relative overflow-hidden">
+        <main className="min-h-screen w-full bg-red-600 flex items-center justify-center p-6 relative overflow-hidden">
 
             {/* Ambient Background Effects */}
             <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#F5CB5C] rounded-full blur-[120px] opacity-[0.03] pointer-events-none" />
@@ -308,7 +308,7 @@ export default function LoginPage() {
                                     />
                                 </svg>
                             )}
-                            Continuar con Google
+                            PRUEBA DE CONEXIÓN
                         </Button>
                     </form>
 
