@@ -54,13 +54,14 @@ export default function LoginPage() {
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (event === 'SIGNED_IN' && session) {
+                alert('Sesión detectada en Cliente. Iniciando sincronización...');
                 setRedirecting(true)
                 try {
                     // EMERGENCY FIX: Redirección Forzada con Log
                     const email = session.user?.email
                     const role = await getUserRole(email)
 
-                    console.log('USUARIO LOGUEADO:', email, 'ROL DETECTADO:', role)
+                    alert('USUARIO: ' + email + ' | ROL: ' + role + '. Redirigiendo...');
 
                     const productionDomain = 'https://cotizador.thestoreintelligence.com'
                     if (role === 'ADMIN') {
@@ -71,7 +72,7 @@ export default function LoginPage() {
                         window.location.href = `${productionDomain}/quote/new`;
                     }
                 } catch (err) {
-                    console.error("Client-side sync/redirect failed", err)
+                    alert('ERROR EN SINCRONIZACIÓN: ' + (err as any).message);
                     // EMERGENCY BYPASS: Redirigir por defecto
                     console.log('EMERGENCY BYPASS: Redirigiendo a /quote/new por error');
                     window.location.href = 'https://cotizador.thestoreintelligence.com/quote/new';
