@@ -197,7 +197,7 @@ export default function LoginPage() {
                         <Lock className="w-8 h-8 text-[#F5CB5C]" />
                     </div>
                     <CardTitle className="text-3xl font-black text-[#E8EDDF] tracking-tight mb-2">
-                        {isRegistering ? 'Crear Cuenta' : 'Ingreso al Portal'}
+                        ### DESPLIEGUE VERIFICADO ###
                     </CardTitle>
                     <CardDescription className="text-[#CFDBD5] text-base">
                         {isRegistering ? 'Únete al equipo de Consultores' : 'Sistema Corporativo de Cotizaciones'}
