@@ -58,17 +58,22 @@ export default function LoginPage() {
             if (event === 'SIGNED_IN' && session) {
                 setRedirecting(true)
                 try {
-                    // INSTRUCCIÓN TÉCNICA NIVEL 1: Redirección Forzada
-                    const role = await getUserRole()
+                    // EMERGENCY FIX: Redirección Forzada con Log
+                    const email = session.user?.email
+                    const role = await getUserRole(email)
 
                     if (role === 'ADMIN') {
+                        console.log('REDIRIGIENDO A ADMIN');
                         window.location.href = '/admin/dashboard';
                     } else {
+                        console.log('REDIRIGIENDO A CONSULTOR');
                         window.location.href = '/quote/new';
                     }
                 } catch (err) {
                     console.error("Client-side sync/redirect failed", err)
-                    setRedirecting(false)
+                    // EMERGENCY BYPASS: Redirigir por defecto
+                    console.log('EMERGENCY BYPASS: Redirigiendo a /quote/new por error');
+                    window.location.href = '/quote/new';
                 }
             }
         })
