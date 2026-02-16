@@ -12,7 +12,7 @@ import { Loader2, ArrowRight, Lock, CheckCircle2 } from 'lucide-react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { syncSessionAction } from '@/lib/auth'
-
+import Link from 'next/link'
 import { createBrowserClient } from '@supabase/ssr'
 
 const getSupabaseClient = () => {
