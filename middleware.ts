@@ -25,12 +25,14 @@ export function middleware(request: NextRequest) {
     const isProtected = protectedPaths.some(p => path.startsWith(p))
 
     if (isProtected && !authRole) {
+        // Only redirect to login if explicitly accessing a protected route without a session
         return NextResponse.redirect(new URL('/login', request.url))
     }
 
     // 5. Admin Only Route
     if (path.startsWith('/admin') && authRole?.toLowerCase() !== 'admin') {
-        return NextResponse.redirect(new URL('/quote/new', request.url))
+        const productionDomain = 'https://cotizador.thestoreintelligence.com'
+        return NextResponse.redirect(new URL('/quote/new', productionDomain))
     }
 
     return NextResponse.next()

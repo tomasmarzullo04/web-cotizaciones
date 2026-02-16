@@ -93,12 +93,11 @@ export default function LoginPage() {
         }
 
         try {
+            const productionDomain = 'https://cotizador.thestoreintelligence.com'
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: process.env.NODE_ENV === 'production'
-                        ? 'https://web-cotizaciones.vercel.app/auth/v1/callback'
-                        : `${window.location.origin}/auth/v1/callback`,
+                    redirectTo: `${productionDomain}/auth/v1/callback`,
                     queryParams: {
                         access_type: 'offline',
                         prompt: 'consent',
@@ -106,7 +105,6 @@ export default function LoginPage() {
                 },
             });
             if (error) throw error
-            // Redirect is automatic
         } catch (err) {
             console.error("Google Login failed", err)
             setError(err instanceof Error ? err.message : "Error iniciando sesión con Google")
