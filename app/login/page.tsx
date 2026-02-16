@@ -58,20 +58,22 @@ export default function LoginPage() {
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (session) {
-                setRedirecting(true)
-                try {
-                    // Detectar rol desde metadata o fallback a syncSessionAction
-                    const role = session.user.user_metadata?.role || await getUserRole(session.user.email)
+                // Pequeño delay de seguridad para asegurar persistencia de cookies
+                setTimeout(async () => {
+                    setRedirecting(true)
+                    try {
+                        // Detectar rol desde metadata o fallback a syncSessionAction
+                        const role = session.user.user_metadata?.role || await getUserRole(session.user.email)
 
-                    const target = role === 'ADMIN'
-                        ? 'https://cotizador.thestoreintelligence.com/admin/dashboard'
-                        : 'https://cotizador.thestoreintelligence.com/quote/new';
+                        const target = role === 'ADMIN'
+                            ? 'https://cotizador.thestoreintelligence.com/admin/dashboard'
+                            : 'https://cotizador.thestoreintelligence.com/quote/new';
 
-                    console.log(`Sesión detectada (Event: ${event}). Redirigiendo a: ${target}`);
-                    window.location.assign(target);
-                } catch (err) {
-                    window.location.assign('https://cotizador.thestoreintelligence.com/quote/new');
-                }
+                        window.location.assign(target);
+                    } catch (err) {
+                        window.location.assign('https://cotizador.thestoreintelligence.com/quote/new');
+                    }
+                }, 500);
             }
         })
 
@@ -93,7 +95,7 @@ export default function LoginPage() {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: 'https://cotizador.thestoreintelligence.com/quote/new',
+                    redirectTo: 'https://cotizador.thestoreintelligence.com/auth/callback',
                     queryParams: {
                         access_type: 'offline',
                         prompt: 'consent',
