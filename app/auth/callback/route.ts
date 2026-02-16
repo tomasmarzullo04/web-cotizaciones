@@ -1,10 +1,13 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 export async function GET(request: Request) {
-    const { searchParams, origin } = new URL(request.url)
+    const { searchParams } = new URL(request.url)
     const code = searchParams.get('code')
+
+    const productionOrigin = 'https://cotizador.thestoreintelligence.com'
 
     if (code) {
         const cookieStore = await cookies()
@@ -30,16 +33,40 @@ export async function GET(request: Request) {
 
         if (!error) {
             const { data: { user } } = await supabase.auth.getUser()
-            const role = user?.user_metadata?.role
 
-            const target = role === 'ADMIN' ? '/admin/dashboard' : '/quote/new'
+            if (user) {
+                // Sync with DB to get/set Role
+                const fullName = user.user_metadata?.full_name || user.email?.split('@')[0]
+                const dbUser = await prisma.user.upsert({
+                    where: { email: user.email! },
+                    update: {},
+                    create: {
+                        id: user.id,
+                        name: fullName,
+                        email: user.email!,
+                        password: '',
+                        role: 'CONSULTOR',
+                    }
+                })
 
-            // Force absolute URL to standardized production domain
-            const productionOrigin = 'https://cotizador.thestoreintelligence.com'
-            return NextResponse.redirect(`${productionOrigin}${target}`)
+                // Set App Session Cookies for UI logic
+                const cookieOptions = {
+                    path: '/',
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'lax' as const
+                }
+
+                cookieStore.set('session_role', dbUser.role, cookieOptions)
+                cookieStore.set('session_user', dbUser.name, cookieOptions)
+                cookieStore.set('session_user_id', dbUser.id, cookieOptions)
+
+                const target = dbUser.role === 'ADMIN' ? '/admin/dashboard' : '/quote/new'
+                return NextResponse.redirect(`${productionOrigin}${target}`)
+            }
         }
     }
 
     // Fallback if there's an error or no code
-    return NextResponse.redirect(`https://cotizador.thestoreintelligence.com/login?error=auth_callback_failed`)
+    return NextResponse.redirect(`${productionOrigin}/login?error=auth_callback_failed`)
 }

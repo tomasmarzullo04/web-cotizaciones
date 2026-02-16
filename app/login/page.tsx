@@ -95,7 +95,7 @@ export default function LoginPage() {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: 'https://gcajouecfyhcpbazxjhy.supabase.co/auth/v1/callback',
+                    redirectTo: 'https://cotizador.thestoreintelligence.com/auth/callback',
                     queryParams: {
                         access_type: 'offline',
                         prompt: 'consent',
