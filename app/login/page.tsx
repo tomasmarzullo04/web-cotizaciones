@@ -51,27 +51,26 @@ export default function LoginPage() {
     const [redirecting, setRedirecting] = useState(false)
     const [error, setError] = useState<string | null>(searchParams.get('error'))
 
-    // Client-side fail-safe for Google Login
+    // Fix de Supabase Auth (Listener): Manejo de sesión cross-domain
     useEffect(() => {
         const supabase = getSupabaseClient()
         if (!supabase) return
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (event === 'SIGNED_IN' && session) {
+            if (session) {
                 setRedirecting(true)
                 try {
-                    const email = session.user?.email
-                    const role = await getUserRole(email)
+                    // Detectar rol desde metadata o fallback a syncSessionAction
+                    const role = session.user.user_metadata?.role || await getUserRole(session.user.email)
 
-                    const productionDomain = 'https://cotizador.thestoreintelligence.com'
-                    if (role === 'ADMIN') {
-                        window.location.href = `${productionDomain}/admin/dashboard`;
-                    } else {
-                        window.location.href = `${productionDomain}/quote/new`;
-                    }
+                    const target = role === 'ADMIN'
+                        ? 'https://cotizador.thestoreintelligence.com/admin/dashboard'
+                        : 'https://cotizador.thestoreintelligence.com/quote/new';
+
+                    console.log(`Sesión detectada (Event: ${event}). Redirigiendo a: ${target}`);
+                    window.location.assign(target);
                 } catch (err) {
-                    // EMERGENCY BYPASS: Redirigir por defecto
-                    window.location.href = 'https://cotizador.thestoreintelligence.com/quote/new';
+                    window.location.assign('https://cotizador.thestoreintelligence.com/quote/new');
                 }
             }
         })
@@ -153,9 +152,13 @@ export default function LoginPage() {
                     // Wait for server to set cookies properly
                     await new Promise(resolve => setTimeout(resolve, 300))
 
-                    // Use the validated redirect URL from server
-                    const target = (result as any).redirectUrl || '/quote/new'
-                    window.location.href = target
+                    // Use the validated redirect URL from server but forced to absolute domain
+                    const targetSubPath = (result as any).redirectUrl || '/quote/new'
+                    const target = targetSubPath.startsWith('http')
+                        ? targetSubPath
+                        : `https://cotizador.thestoreintelligence.com${targetSubPath}`
+
+                    window.location.assign(target)
                     return
                 }
             }
