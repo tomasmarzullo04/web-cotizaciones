@@ -81,13 +81,12 @@ export async function GET(request: Request) {
         cookieStore.set('session_user_id', dbUser.id, cookieOptions)
     }
 
-    // FORCE REDIRECT TO PORTAL BASED ON ROLE FROM DB
+    // FORCE REDIRECT TO PORTAL BASED ON ROLE FROM DB (Hardcoded Production Targets)
     const role = dbUser?.role || 'CONSULTOR'
-    const targetPath = role === 'ADMIN' ? '/admin' : '/quote/new'
+    const productionDomain = 'https://cotizador.thestoreintelligence.com'
+    const targetPath = role === 'ADMIN' ? '/admin/dashboard' : '/quote/new'
 
-    console.log(`[AUTH CALLBACK] Success. Email: ${email}, Role: ${role}, Redirecting to: ${targetPath}`)
+    console.log(`[AUTH CALLBACK] Success. Email: ${email}, Role: ${role}, Redirecting to: ${productionDomain}${targetPath}`)
 
-    // Use absolute URL for the redirect to avoid relative path issues in some environments
-    const finalUrl = new URL(targetPath, origin).toString()
-    return NextResponse.redirect(finalUrl)
+    return NextResponse.redirect(`${productionDomain}${targetPath}`)
 }
