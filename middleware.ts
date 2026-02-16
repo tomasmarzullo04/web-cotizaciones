@@ -13,10 +13,14 @@ export function middleware(request: NextRequest) {
     // Mapped to 'session_role' from lib/auth.ts
     const authRole = request.cookies.get('session_role')?.value
 
-    // 1. Root is Public. No redirect needed.
+    // 1. Redirect authenticated users away from Public Landing (/) or Login if they already have a session
+    if ((path === '/' || path === '/login') && authRole) {
+        const targetPath = authRole.toLowerCase() === 'admin' ? '/admin' : '/quote/new'
+        return NextResponse.redirect(new URL(targetPath, request.url))
+    }
 
     // 2. Protected Routes
-    const protectedPaths = ['/quote', '/admin', '/dashboard'] // Add others if needed
+    const protectedPaths = ['/quote', '/admin', '/dashboard', '/clients'] // Added /clients based on file search
     const isProtected = protectedPaths.some(p => path.startsWith(p))
 
     if (isProtected && !authRole) {
@@ -25,9 +29,6 @@ export function middleware(request: NextRequest) {
 
     // 3. Admin Only Route
     if (path.startsWith('/admin') && authRole?.toLowerCase() !== 'admin') {
-        // Decide: Redirect to login or to dashboard (if user)? 
-        // For security, maybe just login, or show 403 (but middleware can just redirect)
-        // Let's redirect to login for simplicity or /quote if user
         return NextResponse.redirect(new URL('/quote/new', request.url))
     }
 

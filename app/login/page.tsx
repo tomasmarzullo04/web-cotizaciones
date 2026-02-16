@@ -26,6 +26,7 @@ export default function LoginPage() {
     // State
     const [loading, setLoading] = useState(false)
     const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+    const [isTransitioning, setIsTransitioning] = useState(false)
     const [error, setError] = useState<string | null>(searchParams.get('error'))
 
     const handleGoogleLogin = async () => {
@@ -102,6 +103,7 @@ export default function LoginPage() {
                 // ONLY redirect after successful server validation
                 if (result.success) {
                     setSuccessMessage("Acceso concedido. Entrando...")
+                    setIsTransitioning(true)
 
                     // Wait for server to set cookies properly
                     await new Promise(resolve => setTimeout(resolve, 300))
@@ -259,6 +261,25 @@ export default function LoginPage() {
                     </div>
                 </CardContent>
             </Card>
+            {/* Full Screen Loading Overlay */}
+            {(loading || isGoogleLoading || isTransitioning) && (
+                <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#171717]/90 backdrop-blur-md transition-all animate-in fade-in duration-300">
+                    <div className="relative">
+                        <div className="w-24 h-24 rounded-full border-4 border-[#2D2D2D] border-t-[#F5CB5C] animate-spin" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <Lock className="w-8 h-8 text-[#F5CB5C]/50" />
+                        </div>
+                    </div>
+                    <div className="mt-8 space-y-2 text-center">
+                        <h2 className="text-[#E8EDDF] text-xl font-bold tracking-tight">
+                            Validando credenciales...
+                        </h2>
+                        <p className="text-[#CFDBD5]/60 text-sm font-medium animate-pulse">
+                            Preparando tu espacio de trabajo
+                        </p>
+                    </div>
+                </div>
+            )}
         </main >
     )
 }

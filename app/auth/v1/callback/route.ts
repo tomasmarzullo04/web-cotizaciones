@@ -83,6 +83,8 @@ export async function GET(request: Request) {
         cookieStore.set('session_user_id', dbUser.id, cookieOptions)
     }
 
-    // FORCE REDIRECT TO PORTAL
-    return NextResponse.redirect(`${origin}/quote/new`)
+    // FORCE REDIRECT TO PORTAL BASED ON ROLE
+    const role = dbUser?.role || 'CONSULTOR'
+    const targetPath = role === 'ADMIN' ? '/admin' : '/quote/new'
+    return NextResponse.redirect(`${origin}${targetPath}`)
 }
