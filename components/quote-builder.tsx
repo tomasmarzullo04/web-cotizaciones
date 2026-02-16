@@ -2313,7 +2313,7 @@ graph TD
 
                                         return (
                                             <div key={roleKey} className="flex items-center justify-between p-3 bg-[#333533] border border-[#4A4D4A] rounded-xl hover:border-[#F5CB5C] transition-colors group gap-3">
-                                                <div className="font-bold capitalize text-[#E8EDDF] text-sm flex-1 min-w-0 leading-snug">{roleName}</div>
+                                                <div className="font-bold capitalize text-[#E8EDDF] text-sm flex-1 min-w-0 leading-snug whitespace-normal break-words">{roleName}</div>
 
                                                 <SenioritySelector
                                                     roleName={roleName}
@@ -2417,7 +2417,7 @@ graph TD
                                                         </div>
 
                                                         <div className="flex flex-col justify-center min-w-0 flex-1">
-                                                            <span className="text-[#E8EDDF] font-bold text-xs leading-snug whitespace-normal break-words">
+                                                            <span className="text-[#E8EDDF] font-bold text-xs leading-snug whitespace-normal break-words overflow-visible">
                                                                 {displayName}
                                                             </span>
                                                             <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wide mt-0.5">
