@@ -57,6 +57,10 @@ export default function LoginPage() {
         if (!supabase) return
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            // Log técnico detallado para el equipo
+            console.log("--- AUTH STATE CHANGE ---");
+            console.table({ event, user: session?.user?.email || 'No session' });
+
             if (session) {
                 // Pequeño delay de seguridad para asegurar persistencia de cookies
                 setTimeout(async () => {
@@ -104,6 +108,9 @@ export default function LoginPage() {
             });
             if (error) throw error
         } catch (err) {
+            console.error("Critical Google Login Failure:", err)
+            // Persistencia para visualización en Landing Page
+            localStorage.setItem('supabase_auth_error', err instanceof Error ? err.message : JSON.stringify(err))
             setIsGoogleLoading(false)
         }
     }

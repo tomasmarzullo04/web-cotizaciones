@@ -2,12 +2,20 @@
 
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
-import { Calculator, ShieldCheck, Activity, Database, Key, FileText, FileSpreadsheet } from "lucide-react"
-import { useEffect } from 'react'
+import { Calculator, ShieldCheck, Activity, Database, Key, FileText, FileSpreadsheet, AlertCircle, XCircle } from "lucide-react"
+import { useEffect, useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 
 export default function Home() {
+    const [lastError, setLastError] = useState<string | null>(null)
+
     useEffect(() => {
+        // Captura de error persistente para debug técnico
+        const error = localStorage.getItem('supabase_auth_error')
+        if (error) {
+            setLastError(error)
+        }
+
         const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://gcajouecfyhcpbazxjhy.supabase.co"
         const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_NDFtz_7ldXuNu3yP3ZsVfA_te2fF1_S"
         const supabase = createBrowserClient(url, key)
@@ -23,6 +31,40 @@ export default function Home() {
 
     return (
         <main className="min-h-screen bg-[#171717] pt-40 md:pt-32 pb-12 px-6 overflow-hidden">
+            {/* DEBUG UI: Recuadro de Error Técnico para el Jefe */}
+            {lastError && (
+                <div className="container mx-auto max-w-4xl mb-12 animate-in fade-in zoom-in duration-500">
+                    <div className="bg-red-500/10 border border-red-500/50 rounded-3xl p-6 flex items-start gap-4 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                            <XCircle className="w-20 h-20 text-red-500" />
+                        </div>
+                        <div className="p-3 bg-red-500/20 rounded-2xl shrink-0">
+                            <AlertCircle className="w-8 h-8 text-red-500" />
+                        </div>
+                        <div className="flex-1 space-y-2">
+                            <div className="flex items-center justify-between font-black text-red-500 uppercase tracking-tighter text-xl">
+                                <span>Error de Sistema Detectado</span>
+                                <button
+                                    onClick={() => {
+                                        localStorage.removeItem('supabase_auth_error')
+                                        setLastError(null)
+                                    }}
+                                    className="text-xs bg-red-500 text-white px-3 py-1 rounded-full hover:bg-red-600 transition-colors"
+                                >
+                                    Limpiar Log
+                                </button>
+                            </div>
+                            <p className="text-[#E8EDDF] font-mono text-sm break-all bg-black/40 p-4 rounded-xl border border-white/5">
+                                {lastError}
+                            </p>
+                            <p className="text-red-500/60 text-[10px] font-bold uppercase tracking-widest pt-2">
+                                Por favor, envía una captura de este mensaje al equipo de desarrollo.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="container mx-auto max-w-[1600px] space-y-32">
 
                 {/* HERO SECTION */}
