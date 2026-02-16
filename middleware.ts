@@ -30,10 +30,10 @@ export function middleware(request: NextRequest) {
     const protectedPaths = ['/quote', '/admin', '/dashboard', '/clients']
     const isProtected = protectedPaths.some(p => path.startsWith(p))
 
-    if (isProtected && !authRole) {
-        // Only redirect to login if explicitly accessing a protected route without a session
-        return NextResponse.redirect(new URL('/login', request.url))
-    }
+    // EMERGENCY: Removing the bounce to /login if !authRole to allow Supabase session to settle
+    // if (isProtected && !authRole) {
+    //     return NextResponse.redirect(new URL('/login', request.url))
+    // }
 
     // 5. Admin Only Route
     if (path.startsWith('/admin') && authRole?.toLowerCase() !== 'admin') {

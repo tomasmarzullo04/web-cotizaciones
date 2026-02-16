@@ -95,12 +95,10 @@ export default function LoginPage() {
         }
 
         try {
-            alert('Abriendo ventana de Google...');
-            const productionDomain = 'https://cotizador.thestoreintelligence.com'
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${productionDomain}/quote/new`,
+                    redirectTo: 'https://cotizador.thestoreintelligence.com/quote/new',
                     queryParams: {
                         access_type: 'offline',
                         prompt: 'consent',
