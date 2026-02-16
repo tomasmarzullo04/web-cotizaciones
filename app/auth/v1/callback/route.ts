@@ -47,10 +47,11 @@ export async function GET(request: Request) {
     // BLINDAJE GOOGLE OAUTH & SYNC
     // If usage of Google, we might not have a DB user yet. We MUST create one.
     // If usage of Email, we already created one in registerAction, but we confirm here.
+    let dbUser;
     try {
         const fullName = user.user_metadata?.full_name || email.split('@')[0]
 
-        await prisma.user.upsert({
+        dbUser = await prisma.user.upsert({
             where: { email },
             update: {
                 // If they exist, we ensure ID matches (in case of legacy migration fixing)
@@ -72,10 +73,7 @@ export async function GET(request: Request) {
     }
 
     // Session is valid, DB is synced.
-    // We set cookies via the supabase client helpers above (automatically).
-    // Now we also set our custom cookies for middleware/client ease
-    const dbUser = await prisma.user.findUnique({ where: { email } })
-
+    // Set our custom cookies for middleware/client ease using the upserted user record
     if (dbUser) {
         const cookieOptions = { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const }
         cookieStore.set('session_role', dbUser.role, cookieOptions)
@@ -83,7 +81,7 @@ export async function GET(request: Request) {
         cookieStore.set('session_user_id', dbUser.id, cookieOptions)
     }
 
-    // FORCE REDIRECT TO PORTAL BASED ON ROLE
+    // FORCE REDIRECT TO PORTAL BASED ON ROLE FROM DB
     const role = dbUser?.role || 'CONSULTOR'
     const targetPath = role === 'ADMIN' ? '/admin' : '/quote/new'
     return NextResponse.redirect(`${origin}${targetPath}`)
