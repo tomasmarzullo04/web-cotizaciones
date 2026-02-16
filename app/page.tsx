@@ -14,7 +14,6 @@ export default function Home() {
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (event === 'SIGNED_IN' && session) {
-                alert('Sesión detectada en Home (Landing). Redirigiendo a panel...');
                 window.location.href = 'https://cotizador.thestoreintelligence.com/quote/new';
             }
         })
@@ -23,7 +22,7 @@ export default function Home() {
     }, [])
 
     return (
-        <main className="min-h-screen bg-[#171717] pt-32 pb-12 px-6 overflow-hidden">
+        <main className="min-h-screen bg-[#171717] pt-40 md:pt-32 pb-12 px-6 overflow-hidden">
             <div className="container mx-auto max-w-[1600px] space-y-32">
 
                 {/* HERO SECTION */}

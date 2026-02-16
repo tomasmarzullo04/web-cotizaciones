@@ -2312,8 +2312,8 @@ graph TD
                                         const capabilities = ['Jr', 'Med', 'Sr', 'Expert']
 
                                         return (
-                                            <div key={roleKey} className="flex items-center justify-between p-3 bg-[#333533] border border-[#4A4D4A] rounded-xl hover:border-[#F5CB5C] transition-colors group">
-                                                <div className="font-bold capitalize text-[#E8EDDF] text-sm">{roleName}</div>
+                                            <div key={roleKey} className="flex items-center justify-between p-3 bg-[#333533] border border-[#4A4D4A] rounded-xl hover:border-[#F5CB5C] transition-colors group gap-3">
+                                                <div className="font-bold capitalize text-[#E8EDDF] text-sm flex-1 min-w-0 leading-snug">{roleName}</div>
 
                                                 <SenioritySelector
                                                     roleName={roleName}
@@ -2416,8 +2416,8 @@ graph TD
                                                             {profile.seniority.substring(0, 2)}
                                                         </div>
 
-                                                        <div className="flex flex-col justify-center min-w-0">
-                                                            <span className="text-[#E8EDDF] font-bold text-xs leading-tight whitespace-normal break-words">
+                                                        <div className="flex flex-col justify-center min-w-0 flex-1">
+                                                            <span className="text-[#E8EDDF] font-bold text-xs leading-snug whitespace-normal break-words">
                                                                 {displayName}
                                                             </span>
                                                             <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wide mt-0.5">

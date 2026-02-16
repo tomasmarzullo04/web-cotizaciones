@@ -1,6 +1,3 @@
-'use client'
-
-alert('Página de Login Cargada');
 
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -35,11 +32,9 @@ async function getUserRole(email?: string) {
     try {
         const result = await syncSessionAction()
         const role = result.success ? result.role : 'CONSULTOR'
-        console.log('USUARIO LOGUEADO:', email || 'SIN EMAIL', 'ROL DETECTADO:', role)
         return role
     } catch (e) {
         console.error("Error consultando rol:", e)
-        console.log('USUARIO LOGUEADO:', email || 'SIN EMAIL', 'ROL DETECTADO (FALLBACK):', 'CONSULTOR')
         return 'CONSULTOR'
     }
 }
@@ -62,27 +57,19 @@ export default function LoginPage() {
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (event === 'SIGNED_IN' && session) {
-                alert('Sesión detectada en Cliente. Iniciando sincronización...');
                 setRedirecting(true)
                 try {
-                    // EMERGENCY FIX: Redirección Forzada con Log
                     const email = session.user?.email
                     const role = await getUserRole(email)
 
-                    alert('USUARIO: ' + email + ' | ROL: ' + role + '. Redirigiendo...');
-
                     const productionDomain = 'https://cotizador.thestoreintelligence.com'
                     if (role === 'ADMIN') {
-                        console.log('REDIRIGIENDO A ADMIN EN PRODUCCIÓN');
                         window.location.href = `${productionDomain}/admin/dashboard`;
                     } else {
-                        console.log('REDIRIGIENDO A CONSULTOR EN PRODUCCIÓN');
                         window.location.href = `${productionDomain}/quote/new`;
                     }
                 } catch (err) {
-                    alert('ERROR EN SINCRONIZACIÓN: ' + (err as any).message);
                     // EMERGENCY BYPASS: Redirigir por defecto
-                    console.log('EMERGENCY BYPASS: Redirigiendo a /quote/new por error');
                     window.location.href = 'https://cotizador.thestoreintelligence.com/quote/new';
                 }
             }
@@ -115,7 +102,6 @@ export default function LoginPage() {
             });
             if (error) throw error
         } catch (err) {
-            alert('ERROR INICIANDO GOOGLE: ' + (err as any).message);
             setIsGoogleLoading(false)
         }
     }
@@ -185,7 +171,7 @@ export default function LoginPage() {
     }
 
     return (
-        <main className="min-h-screen w-full bg-red-600 flex items-center justify-center p-6 relative overflow-hidden">
+        <main className="min-h-screen w-full bg-[#171717] flex items-center justify-center p-6 relative overflow-hidden">
 
             {/* Ambient Background Effects */}
             <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#F5CB5C] rounded-full blur-[120px] opacity-[0.03] pointer-events-none" />
@@ -197,7 +183,7 @@ export default function LoginPage() {
                         <Lock className="w-8 h-8 text-[#F5CB5C]" />
                     </div>
                     <CardTitle className="text-3xl font-black text-[#E8EDDF] tracking-tight mb-2">
-                        ### VERSION 0.1.2 - RED BG ###
+                        {isRegistering ? 'Crear Cuenta' : 'Ingreso al Portal'}
                     </CardTitle>
                     <CardDescription className="text-[#CFDBD5] text-base">
                         {isRegistering ? 'Únete al equipo de Consultores' : 'Sistema Corporativo de Cotizaciones'}
@@ -308,7 +294,7 @@ export default function LoginPage() {
                                     />
                                 </svg>
                             )}
-                            PRUEBA DE CONEXIÓN
+                            Continuar con Google
                         </Button>
                     </form>
 
