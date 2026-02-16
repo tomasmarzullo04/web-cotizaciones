@@ -48,12 +48,18 @@ export default function LoginPage() {
                     const syncResult = await syncSessionAction()
 
                     if (syncResult.success) {
-                        // We check the cookies or just wait for middleware, 
-                        // but a direct sync is better for immediate redirection
-                        window.location.reload() // Reload to let middleware do its job with the new session
+                        const role = (syncResult as any).role || 'CONSULTOR'
+                        const productionDomain = 'https://cotizador.thestoreintelligence.com'
+                        const targetPath = role === 'ADMIN' ? '/admin/dashboard' : '/quote/new'
+
+                        console.log(`[CLIENT AUTH] Redirecting to: ${productionDomain}${targetPath}`)
+
+                        // Force redirection to production target
+                        window.location.href = `${productionDomain}${targetPath}`
                     }
                 } catch (err) {
                     console.error("Client-side sync/redirect failed", err)
+                    setRedirecting(false)
                 }
             }
         })

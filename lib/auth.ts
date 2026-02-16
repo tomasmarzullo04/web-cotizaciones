@@ -148,9 +148,12 @@ export async function loginAction(formData: FormData) {
     console.log(`[AUTH] Login Exitoso: ${email}, Rol: ${user.role}`)
 
     // Return URL instead of Redirecting (Avoids NEXT_REDIRECT error in try/catch blocks)
+    const productionDomain = 'https://cotizador.thestoreintelligence.com'
     return {
         success: true,
-        redirectUrl: user.role === 'ADMIN' ? '/admin' : '/quote/new'
+        redirectUrl: user.role === 'ADMIN'
+            ? `${productionDomain}/admin/dashboard`
+            : `${productionDomain}/quote/new`
     }
 }
 
