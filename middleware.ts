@@ -15,6 +15,12 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL(targetPath, productionDomain))
     }
 
+    // 2b. Redirect Admins away from Consultant entry page if they land there via direct redirect
+    if (path === '/quote/new' && authRole?.toLowerCase() === 'admin') {
+        const productionDomain = 'https://cotizador.thestoreintelligence.com'
+        return NextResponse.redirect(new URL('/admin/dashboard', productionDomain))
+    }
+
     // 3. Bypass Auth Flows (only for unauthenticated users)
     if (path.startsWith('/auth') || path.startsWith('/login')) {
         return NextResponse.next()
