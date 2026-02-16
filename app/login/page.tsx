@@ -94,6 +94,7 @@ export default function LoginPage() {
         }
 
         try {
+            alert('Abriendo ventana de Google...');
             const productionDomain = 'https://cotizador.thestoreintelligence.com'
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
@@ -107,8 +108,7 @@ export default function LoginPage() {
             });
             if (error) throw error
         } catch (err) {
-            console.error("Google Login failed", err)
-            setError(err instanceof Error ? err.message : "Error iniciando sesión con Google")
+            alert('ERROR INICIANDO GOOGLE: ' + (err as any).message);
             setIsGoogleLoading(false)
         }
     }
