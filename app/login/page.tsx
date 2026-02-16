@@ -1,5 +1,7 @@
 'use client'
 
+alert('Página de Login Cargada');
+
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -19,7 +21,13 @@ const getSupabaseClient = () => {
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_NDFtz_7ldXuNu3yP3ZsVfA_te2fF1_S"
 
     if (!url || !key) return null
-    return createBrowserClient(url, key)
+    return createBrowserClient(url, key, {
+        auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+        }
+    })
 }
 
 // EMERGENCY FIX: Helper to get role and redirect with logs and fallback
