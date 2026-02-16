@@ -1,8 +1,27 @@
+'use client'
+
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
 import { Calculator, ShieldCheck, Activity, Database, Key, FileText, FileSpreadsheet } from "lucide-react"
+import { useEffect } from 'react'
+import { createBrowserClient } from '@supabase/ssr'
 
 export default function Home() {
+    useEffect(() => {
+        const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://gcajouecfyhcpbazxjhy.supabase.co"
+        const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_NDFtz_7ldXuNu3yP3ZsVfA_te2fF1_S"
+        const supabase = createBrowserClient(url, key)
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+                alert('Sesión detectada en Home (Landing). Redirigiendo a panel...');
+                window.location.href = 'https://cotizador.thestoreintelligence.com/quote/new';
+            }
+        })
+
+        return () => subscription.unsubscribe()
+    }, [])
+
     return (
         <main className="min-h-screen bg-[#171717] pt-32 pb-12 px-6 overflow-hidden">
             <div className="container mx-auto max-w-[1600px] space-y-32">
