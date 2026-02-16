@@ -312,8 +312,16 @@ export default function LoginPage() {
                         </Button>
                     </form>
 
-                    <div className="pt-6 border-t border-[#2D2D2D]/50 text-center space-y-4">
-                        <p className="text-xs text-[#CFDBD5]/30 uppercase tracking-widest font-medium pt-4">
+                    <div className="pt-6 border-t border-[#2D2D2D]/50 text-center space-y-6">
+                        <div className="py-2">
+                            <Link
+                                href="https://cotizador.thestoreintelligence.com/quote/new"
+                                className="text-[#F5CB5C] hover:text-[#E0B84C] text-sm font-bold uppercase tracking-widest transition-colors"
+                            >
+                                ¿No fuiste redirigido? Haz clic aquí para entrar
+                            </Link>
+                        </div>
+                        <p className="text-xs text-[#CFDBD5]/30 uppercase tracking-widest font-medium">
                             Store Intelligence &copy; 2026
                         </p>
                     </div>
