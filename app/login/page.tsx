@@ -22,6 +22,16 @@ const getSupabaseClient = () => {
     return createBrowserClient(url, key)
 }
 
+// Level 1 Fix: Helper to get role and redirect
+async function getUserRole() {
+    try {
+        const result = await syncSessionAction()
+        return result.success ? result.role : 'CONSULTOR'
+    } catch (e) {
+        return 'CONSULTOR'
+    }
+}
+
 export default function LoginPage() {
     const searchParams = useSearchParams()
     const router = useRouter()
@@ -44,18 +54,13 @@ export default function LoginPage() {
             if (event === 'SIGNED_IN' && session) {
                 setRedirecting(true)
                 try {
-                    // Sync session with Prisma to get the authoritative role
-                    const syncResult = await syncSessionAction()
+                    // INSTRUCCIÓN TÉCNICA NIVEL 1: Redirección Forzada
+                    const role = await getUserRole()
 
-                    if (syncResult.success) {
-                        const role = (syncResult as any).role || 'CONSULTOR'
-                        const productionDomain = 'https://cotizador.thestoreintelligence.com'
-                        const targetPath = role === 'ADMIN' ? '/admin/dashboard' : '/quote/new'
-
-                        console.log(`[CLIENT AUTH] Redirecting to: ${productionDomain}${targetPath}`)
-
-                        // Force redirection to production target
-                        window.location.href = `${productionDomain}${targetPath}`
+                    if (role === 'ADMIN') {
+                        window.location.href = '/admin/dashboard';
+                    } else {
+                        window.location.href = '/quote/new';
                     }
                 } catch (err) {
                     console.error("Client-side sync/redirect failed", err)
