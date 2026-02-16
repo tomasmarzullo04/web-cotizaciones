@@ -10,8 +10,9 @@ export function middleware(request: NextRequest) {
 
     // 2. Redirect authenticated users away from Public Landing (/) or Login if they already have a session
     if ((path === '/' || path === '/login') && authRole) {
-        const targetPath = authRole.toLowerCase() === 'admin' ? '/admin' : '/quote/new'
-        return NextResponse.redirect(new URL(targetPath, request.url))
+        const productionDomain = 'https://cotizador.thestoreintelligence.com'
+        const targetPath = authRole.toLowerCase() === 'admin' ? '/admin/dashboard' : '/quote/new'
+        return NextResponse.redirect(new URL(targetPath, productionDomain))
     }
 
     // 3. Bypass Auth Flows (only for unauthenticated users)
