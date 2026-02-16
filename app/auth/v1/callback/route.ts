@@ -84,5 +84,10 @@ export async function GET(request: Request) {
     // FORCE REDIRECT TO PORTAL BASED ON ROLE FROM DB
     const role = dbUser?.role || 'CONSULTOR'
     const targetPath = role === 'ADMIN' ? '/admin' : '/quote/new'
-    return NextResponse.redirect(`${origin}${targetPath}`)
+
+    console.log(`[AUTH CALLBACK] Success. Email: ${email}, Role: ${role}, Redirecting to: ${targetPath}`)
+
+    // Use absolute URL for the redirect to avoid relative path issues in some environments
+    const finalUrl = new URL(targetPath, origin).toString()
+    return NextResponse.redirect(finalUrl)
 }
