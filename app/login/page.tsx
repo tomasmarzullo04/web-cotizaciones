@@ -22,12 +22,16 @@ const getSupabaseClient = () => {
     return createBrowserClient(url, key)
 }
 
-// Level 1 Fix: Helper to get role and redirect
-async function getUserRole() {
+// EMERGENCY FIX: Helper to get role and redirect with logs and fallback
+async function getUserRole(email?: string) {
     try {
         const result = await syncSessionAction()
-        return result.success ? result.role : 'CONSULTOR'
+        const role = result.success ? result.role : 'CONSULTOR'
+        console.log('USUARIO LOGUEADO:', email || 'SIN EMAIL', 'ROL DETECTADO:', role)
+        return role
     } catch (e) {
+        console.error("Error consultando rol:", e)
+        console.log('USUARIO LOGUEADO:', email || 'SIN EMAIL', 'ROL DETECTADO (FALLBACK):', 'CONSULTOR')
         return 'CONSULTOR'
     }
 }
