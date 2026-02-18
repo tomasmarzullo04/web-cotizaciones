@@ -337,6 +337,17 @@ const SUSTAIN_TECH_OPTIONS = [
     { id: 'other', name: 'Otros' }
 ]
 
+const RECOMMENDATIONS: Record<string, { role: RoleKey, seniority: string, reason: string }> = {
+    azure: { role: 'data_engineer', seniority: 'Med', reason: 'Para orquestación en Data Factory' },
+    databricks: { role: 'data_engineer', seniority: 'Sr', reason: 'Para ingeniería de datos avanzada' },
+    powerbi: { role: 'bi_visualization_developer', seniority: 'Med', reason: 'Para modelado y visualización' },
+    snowflake: { role: 'data_engineer', seniority: 'Sr', reason: 'Para optimización de Warehouse' },
+    python: { role: 'data_engineer', seniority: 'Sr', reason: 'Para custom scripting y pipelines' },
+    datascience: { role: 'data_scientist', seniority: 'Sr', reason: 'Para análisis avanzado y ML' },
+    synapse: { role: 'bi_data_architect', seniority: 'Sr', reason: 'Para diseño de arquitectura unificada' },
+    sqlserver: { role: 'data_operations_analyst', seniority: 'Med', reason: 'Para administración y soporte T-SQL' }
+}
+
 // --- 2. COMPONENT ---
 
 
@@ -367,6 +378,26 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
     const [viewMode, setViewMode] = useState<'monthly' | 'annual'>('monthly')
 
     // ... (rest of state) ... 
+
+    // --- Dynamic Step Numbering ---
+    const getSectionNumber = useCallback((sectionId: string) => {
+        const sequence: string[] = []
+        sequence.push('general')
+        if (state.serviceType === 'Proyecto') {
+            sequence.push('volumetry')
+            sequence.push('business')
+        }
+        sequence.push('staffing')
+        if (state.serviceType !== 'Sustain') {
+            sequence.push('tech')
+            sequence.push('criticitness')
+        }
+        sequence.push('commercial')
+
+        const index = sequence.indexOf(sectionId)
+        if (index === -1) return "00"
+        return (index + 1).toString().padStart(2, '0')
+    }, [state.serviceType])
 
     // FROZEN RATES LOGIC (Data Freezing)
     // We extract the unit costs from the saved snapshot to prevent recalculation with new DB rates.
@@ -1570,7 +1601,7 @@ graph TD
                     </div>
 
                     {/* 1. GENERAL */}
-                    <SectionCard number="01" title="Información General" icon={ClipboardList}>
+                    <SectionCard number={getSectionNumber('general')} title="Información General" icon={ClipboardList}>
                         <div className="space-y-8">
                             <div>
                                 <Label className="text-[#CFDBD5] text-sm font-bold uppercase tracking-wider mb-2 block">Cliente / Prospecto</Label>
@@ -2270,7 +2301,7 @@ graph TD
                     {/* 2. VOLUMETRY - Hidden for Staffing & Sustain */}
                     {state.serviceType !== 'Staffing' && state.serviceType !== 'Sustain' && (
                         <>
-                            <SectionCard number="02" title="Volumetría y Técnica" icon={Database}>
+                            <SectionCard number={getSectionNumber('volumetry')} title="Volumetría y Técnica" icon={Database}>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                                     <CountInput label="Pipelines" value={state.pipelinesCount} onChange={(v: number) => updateState('pipelinesCount', v)} />
                                     <CountInput label="Notebooks" value={state.notebooksCount} onChange={(v: number) => updateState('notebooksCount', v)} />
@@ -2282,7 +2313,7 @@ graph TD
                             </SectionCard>
 
                             {/* 3. CONSUMPTION */}
-                            <SectionCard number="03" title="Consumo y Negocio" icon={Users}>
+                            <SectionCard number={getSectionNumber('business')} title="Consumo y Negocio" icon={Users}>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-end">
                                     <CountInput label="# Reportes Finales" value={state.reportsCount} onChange={(v: number) => updateState('reportsCount', v)} />
                                     <CountInput label="# Usuarios Finales" value={state.reportUsers} onChange={(v: number) => updateState('reportUsers', v)} />
@@ -2299,7 +2330,7 @@ graph TD
                     )}
 
                     {/* 4. TEAM (Dynamic Selection) */}
-                    <SectionCard number={state.serviceType === 'Staffing' ? "02" : "04"} title={state.serviceType === 'Staffing' ? "Selección de Perfiles" : "Equipo Requerido"} icon={Briefcase}>
+                    <SectionCard number={getSectionNumber('staffing')} title={state.serviceType === 'Staffing' ? "Selección de Perfiles" : "Equipo Requerido"} icon={Briefcase}>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {/* LEFT: Available Roles */}
                             <div className="space-y-4">
@@ -2420,7 +2451,7 @@ graph TD
                                                             <span className="text-[#E8EDDF] font-bold text-xs leading-snug whitespace-normal break-words overflow-visible">
                                                                 {displayName}
                                                             </span>
-                                                            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wide mt-0.5">
+                                                            <span className="text-[9px] text-[#F5CB5C] font-bold uppercase tracking-wide mt-0.5">
                                                                 {profile.seniority}
                                                             </span>
                                                         </div>
@@ -2428,12 +2459,32 @@ graph TD
 
                                                     {/* RIGHT: Quantity + Price + Trash */}
                                                     <div className="flex items-center gap-4 shrink-0">
-                                                        {/* Quantity: Clean Text Style - No Box */}
-                                                        <div className="flex items-baseline gap-2">
-                                                            <span className="text-xs text-zinc-400 font-medium uppercase tracking-wide">CANT:</span>
-                                                            <span className="text-white font-bold text-sm">
-                                                                {profile.count}
-                                                            </span>
+                                                        {/* Quantity: Input for Decimals */}
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">CANT</span>
+                                                            <input
+                                                                type="number"
+                                                                step="0.1"
+                                                                min="0"
+                                                                value={profile.count}
+                                                                onChange={(e) => {
+                                                                    const val = parseFloat(e.target.value) || 0
+                                                                    const newProfiles = [...state.staffingDetails.profiles]
+                                                                    const delta = val - profile.count
+                                                                    newProfiles[idx].count = val
+
+                                                                    // Find roleKey safely
+                                                                    const keyEntry = Object.entries(ROLE_CONFIG).find(([k, v]) => v.label === profile.role) || Object.entries(ROLE_CONFIG).find(([k, v]) => k === profile.role)
+                                                                    const roleKey = keyEntry ? keyEntry[0] as RoleKey : null
+
+                                                                    setState(prev => ({
+                                                                        ...prev,
+                                                                        roles: roleKey ? { ...prev.roles, [roleKey]: Math.max(0, (prev.roles[roleKey] || 0) + delta) } : prev.roles,
+                                                                        staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
+                                                                    }))
+                                                                }}
+                                                                className="w-12 bg-[#242423] border border-zinc-800 rounded px-1 text-center text-xs font-bold text-[#F5CB5C] focus:border-[#F5CB5C] focus:outline-none"
+                                                            />
                                                         </div>
 
                                                         {/* Price */}
@@ -2489,7 +2540,7 @@ graph TD
                     {/* 5. TECH */}
                     {/* 5. TECH - Included in Scorecard for Sustain */}
                     {state.serviceType !== 'Sustain' && (
-                        <SectionCard number="05" title="Stack Tecnológico" icon={Layers}>
+                        <SectionCard number={getSectionNumber('tech')} title="Stack Tecnológico" icon={Layers}>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                                 {TECH_OPTIONS.map(tech => (
                                     <div
@@ -2514,7 +2565,7 @@ graph TD
                     {/* 6. CRITICITNESS (Upgraded v2) */}
                     {/* 6. CRITICITNESS (Fixed) - Hidden for Sustain (now in Scorecard) */}
                     {state.serviceType !== 'Sustain' && (
-                        <SectionCard number="06" title="Evaluación de Criticidad" icon={ShieldAlert}>
+                        <SectionCard number={getSectionNumber('criticitness')} title="Evaluación de Criticidad" icon={ShieldAlert}>
                             <div className="flex items-center justify-between mb-8">
                                 <div className="flex items-center gap-4">
                                     <div className="p-3 bg-[#333533] rounded-xl border border-[#4A4D4A]">
@@ -2628,7 +2679,7 @@ graph TD
                     )}
 
                     {/* 7. COMMERCIAL DATA & RETENTION */}
-                    <SectionCard number="07" title="Datos Comercial & Retenciones" icon={Users}>
+                    <SectionCard number={getSectionNumber('commercial')} title="Datos Comercial & Retenciones" icon={Users}>
                         <div className="space-y-6">
                             {/* ROW 1: Contact Info (4 Columns) */}
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
