@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { Slider } from "@/components/ui/slider"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Separator } from "@/components/ui/separator"
 import { ServiceRate } from "@prisma/client"
@@ -25,6 +26,7 @@ import html2canvas from 'html2canvas'
 import { motion, AnimatePresence } from "framer-motion"
 import { sendQuoteToN8N, updateQuote } from "@/lib/actions"
 import { ClientSelector, ClientData } from "@/components/client-selector"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import {
     Dialog,
@@ -51,6 +53,11 @@ const ROLE_CONFIG = {
     low_code_developer: { label: "Low Code Developer", defaultPrice: 3538.00 },
     power_app_streamlit_developer: { label: "Power App / Streamlit Developer", defaultPrice: 3538.00 }
 }
+
+const MANAGEMENT_ROLES: RoleKey[] = ['solution_architect', 'bi_data_architect', 'project_product_manager', 'business_analyst']
+const DATA_ROLES: RoleKey[] = ['data_engineer', 'data_scientist', 'data_operations_analyst', 'azure_developer']
+const GOVERNANCE_ROLES: RoleKey[] = ['bi_data_architect', 'data_operations_analyst']
+const PRODUCT_ROLES: RoleKey[] = ['bi_visualization_developer', 'low_code_developer', 'power_app_streamlit_developer']
 
 const SENIORITY_MODIFIERS = {
     'Jr': 0.7,
@@ -94,6 +101,7 @@ interface QuoteState {
     roles: Record<RoleKey, number>
 
     // 3. Volumetry
+    dataSourcesCount: number // Added for compatibility
     pipelinesCount: number
     notebooksCount: number
     manualProcessPct: number
@@ -226,6 +234,7 @@ const INITIAL_STATE: QuoteState = {
         low_code_developer: 0,
         power_app_streamlit_developer: 0
     },
+    dataSourcesCount: 0,
     pipelinesCount: 0,
     notebooksCount: 0,
     manualProcessPct: 20,
@@ -382,6 +391,33 @@ const RECOMENDACIONES_MAPPING: Record<string, Array<{ role: RoleKey, seniority: 
 export default function QuoteBuilder({ dbRates = [], initialData, readOnly = false }: { dbRates?: ServiceRate[], initialData?: any, readOnly?: boolean }) {
     const [state, setState] = useState<QuoteState>(JSON.parse(JSON.stringify(INITIAL_STATE)))
     const [viewMode, setViewMode] = useState<'monthly' | 'annual'>('monthly')
+    const [isSuggestionLoading, setIsSuggestionLoading] = useState(false)
+
+    const handleAddProfile = (roleKey: RoleKey) => {
+        const role = ROLE_CONFIG[roleKey]
+        if (!role) return
+
+        const newProfile = {
+            id: crypto.randomUUID(),
+            role: roleKey,
+            seniority: 'Sr',
+            count: 1,
+            price: role.defaultPrice * SENIORITY_MODIFIERS['Sr'],
+            skills: '',
+            startDate: new Date().toISOString(),
+            endDate: new Date().toISOString()
+        }
+
+        setState(prev => ({
+            ...prev,
+            roles: { ...prev.roles, [roleKey]: (prev.roles[roleKey] || 0) + 1 },
+            staffingDetails: {
+                ...prev.staffingDetails,
+                profiles: [...prev.staffingDetails.profiles, newProfile]
+            }
+        }))
+        toast.success(`${role.label} agregado`)
+    }
 
     // ... (rest of state) ... 
 
@@ -936,6 +972,8 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
 
     // --- Save Quote ---
     // Refactored to support Partial Saves (Dependencies)
+
+
     const handleSaveQuote = (redirect: boolean = true) => {
         return performSave({ redirect, validate: true })
     }
@@ -1163,6 +1201,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             complexity: 'medium',
             updateFrequency: 'daily',
             roles: Object.keys(ROLE_CONFIG).reduce((acc, key) => ({ ...acc, [key]: 0 }), {} as Record<RoleKey, number>),
+            dataSourcesCount: 0,
             pipelinesCount: 0,
             notebooksCount: 0,
             manualProcessPct: 0,
@@ -1702,7 +1741,7 @@ graph TD
                                             ) : (
                                                 <Sparkles className="w-3.5 h-3.5 mr-2" />
                                             )}
-                                            {polishLoading ? 'Puliendo...' : 'Pulir IA'}
+                                            {polishLoading ? 'Puliendo...' : 'Pulir texto de descripción de proyecto con IA'}
                                         </Button>
                                     </div>
                                 </div>
@@ -2301,226 +2340,196 @@ graph TD
                         </div>
                     )}
 
-                    {/* 2. VOLUMETRY - Hidden for Staffing & Sustain */}
+                    {/* 3. VOLUMETRY (Project Only) */}
                     {state.serviceType === 'Proyecto' && (
-                        <>
-                            <SectionCard number={getSectionNumber('volumetry')} title="Volumetría y Técnica" icon={Database}>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                                    <CountInput label="Pipelines" value={state.pipelinesCount} onChange={(v: number) => updateState('pipelinesCount', v)} />
-                                    <CountInput label="Notebooks" value={state.notebooksCount} onChange={(v: number) => updateState('notebooksCount', v)} />
-                                    <CountInput label="Ejecuciones/Mes" value={state.pipelineExecutions} onChange={(v: number) => updateState('pipelineExecutions', v)} />
-                                    <CountInput label="% Manual" value={state.manualProcessPct} onChange={(v: number) => updateState('manualProcessPct', v)} max={100} />
-                                    <CountInput label="Dashboards" value={state.dashboardsCount} onChange={(v: number) => updateState('dashboardsCount', v)} />
-                                    <CountInput label="Modelos ML" value={state.dsModelsCount} onChange={(v: number) => updateState('dsModelsCount', v)} />
-                                </div>
-                            </SectionCard>
-
-                            {/* 3. CONSUMPTION */}
-                            <SectionCard number={getSectionNumber('business')} title="Consumo y Negocio" icon={Users}>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-end">
-                                    <CountInput label="# Reportes Finales" value={state.reportsCount} onChange={(v: number) => updateState('reportsCount', v)} />
-                                    <CountInput label="# Usuarios Finales" value={state.reportUsers} onChange={(v: number) => updateState('reportUsers', v)} />
-                                    <div className="col-span-1 md:col-span-2 bg-[#333533] rounded-[1.5rem] p-8 flex items-center justify-between border border-[#4A4D4A]">
-                                        <div>
-                                            <h4 className="font-bold text-[#E8EDDF] text-lg">Uso Crítico</h4>
-                                            <p className="text-sm text-[#CFDBD5]">¿Impacta Cierre Financiero o Ventas?</p>
-                                        </div>
-                                        <Switch checked={state.isFinancialOrSales} onCheckedChange={v => updateState('isFinancialOrSales', v)} className="data-[state=checked]:bg-[#F5CB5C]" />
-                                    </div>
-                                </div>
-                            </SectionCard>
-                        </>
-                    )}
-
-                    {/* 4. TEAM (Dynamic Selection) */}
-                    {/* 3. STAFFING (Reordered to Step 03 for Staffing) */}
-                    <SectionCard number={getSectionNumber('staffing')} title={state.serviceType === 'Staffing' ? "Selección de Perfiles" : "Equipo Requerido"} icon={Briefcase}>
-                        <div className="mb-8 p-4 bg-[#F5CB5C]/5 border border-[#F5CB5C]/20 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-[#F5CB5C]/10 rounded-lg">
-                                    <Sparkles className="w-5 h-5 text-[#F5CB5C]" />
+                        <SectionCard number={getSectionNumber('volumetry')} title="Volumetría de Datos" icon={Database}>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                <div>
+                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Fuentes de Datos</Label>
+                                    <Input type="number" value={state.dataSourcesCount} onChange={e => updateState('dataSourcesCount', parseInt(e.target.value) || 0)} className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF]" />
                                 </div>
                                 <div>
-                                    <p className="text-[#E8EDDF] font-bold text-sm">¿Deseas ayuda con la selección?</p>
-                                    <p className="text-[#CFDBD5] text-xs">Podemos recomendarte perfiles basados en tu stack tecnológico.</p>
+                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Entidades de Negocio</Label>
+                                    <Input type="number" value={state.pipelinesCount} onChange={e => updateState('pipelinesCount', parseInt(e.target.value) || 0)} className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF]" />
+                                </div>
+                                <div>
+                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Dashboards</Label>
+                                    <Input type="number" value={state.dashboardsCount} onChange={e => updateState('dashboardsCount', parseInt(e.target.value) || 0)} className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF]" />
+                                </div>
+                                <div>
+                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Modelos ML/AI</Label>
+                                    <Input type="number" value={state.reportsCount} onChange={e => updateState('reportsCount', parseInt(e.target.value) || 0)} className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF]" />
+                                </div>
+                            </div>
+                        </SectionCard>
+                    )}
+
+                    {/* 4. BUSINESS / CONSUMPTION (Project Only) */}
+                    {state.serviceType === 'Proyecto' && (
+                        <SectionCard number={getSectionNumber('business')} title="Consumo y Negocio" icon={Users}>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Usuarios Finales</Label>
+                                    <Input type="number" value={state.reportUsers} onChange={e => updateState('reportUsers', parseInt(e.target.value) || 0)} className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF]" />
+                                </div>
+                                <div>
+                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Frecuencia Actualización</Label>
+                                    <Select value={state.updateFrequency} onValueChange={v => updateState('updateFrequency', v as any)}>
+                                        <SelectTrigger className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
+                                        <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                                            <SelectItem value="Real-time">Real-time / Streaming</SelectItem>
+                                            <SelectItem value="Diaria">Diaria</SelectItem>
+                                            <SelectItem value="Semanal">Semanal</SelectItem>
+                                            <SelectItem value="Mensual">Mensual</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">% Proceso Manual Actual</Label>
+                                    <div className="flex items-center gap-4">
+                                        <Slider value={[state.manualProcessPct]} min={0} max={100} step={5} onValueChange={([v]) => updateState('manualProcessPct', v)} className="flex-1" />
+                                        <span className="text-[#F5CB5C] font-bold w-12 text-right">{state.manualProcessPct}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </SectionCard>
+                    )}
+
+                    {/* 5. TEAM SELECTION */}
+                    <SectionCard number={getSectionNumber('team')} title="Selección de Perfiles" icon={Users}>
+
+                        {/* Suggestion AI Banner */}
+                        <div className="mb-6 bg-gradient-to-r from-yellow-500/10 to-transparent p-4 rounded-xl border border-yellow-500/20 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-yellow-500/20 rounded-lg">
+                                    <Sparkles className="w-5 h-5 text-yellow-500" />
+                                </div>
+                                <div>
+                                    <h4 className="text-[#E8EDDF] font-bold text-sm">Sugerencia Automática de Equipo</h4>
+                                    <p className="text-[#CFDBD5] text-xs opacity-70">Basado en la volumetría y stack definidos</p>
                                 </div>
                             </div>
                             <Button
-                                onClick={() => {
-                                    // Logic: Get unique recommendations based on tech stack
-                                    const activeTechStack = state.serviceType === 'Sustain'
-                                        ? state.sustainDetails.techStack
-                                        : state.techStack;
-
-                                    if (!activeTechStack || activeTechStack.length === 0) {
-                                        toast.error("Selecciona tecnologías en el paso anterior para obtener recomendaciones.")
-                                        return
-                                    }
-
-                                    const recs: any[] = []
-                                    activeTechStack.forEach(t => {
-                                        if (RECOMENDACIONES_MAPPING[t]) {
-                                            RECOMENDACIONES_MAPPING[t].forEach(r => {
-                                                if (!recs.find(existing => existing.role === r.role && existing.seniority === r.seniority)) {
-                                                    recs.push(r)
-                                                }
-                                            })
-                                        }
-                                    })
-
-                                    if (recs.length === 0) {
-                                        toast.error("No se encontraron recomendaciones para el stack actual.")
-                                        return
-                                    }
-
-                                    setPendingRecs(recs)
-                                    setIsSuggestionModalOpen(true)
-                                }}
-                                className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold rounded-xl"
+                                onClick={() => setIsSuggestionModalOpen(true)}
+                                disabled={isSuggestionLoading || state.serviceType !== 'Proyecto'}
+                                className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold text-xs"
                             >
-                                Sugerencia Automática
+                                {isSuggestionLoading ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Wand2 className="w-3 h-3 mr-2" />}
+                                {isSuggestionLoading ? 'Analizando...' : 'Generar Sugerencia'}
                             </Button>
                         </div>
+
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {/* LEFT: Available Roles */}
-                            <div className="space-y-4">
-                                <h4 className="text-sm font-bold uppercase tracking-wider text-[#CFDBD5]">Roles Disponibles</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {Object.entries(ROLE_CONFIG).map(([roleKey, config]) => {
-                                        const roleName = config.label
-                                        const serviceRates = dbRates.filter(r => r.service.toLowerCase() === roleName.toLowerCase())
-                                        // Filter capabilities: Jr, Med, Sr, Expert
-                                        const capabilities = ['Jr', 'Med', 'Sr', 'Expert']
+                            <div className="space-y-6">
+                                <Tabs defaultValue="management" className="w-full">
+                                    <TabsList className="bg-[#1E1E1E] border border-[#333533] p-1 h-auto flex flex-wrap gap-1 justify-start rounded-xl mb-4">
+                                        <TabsTrigger value="management" className="data-[state=active]:bg-[#F5CB5C] data-[state=active]:text-[#242423] text-[#CFDBD5] text-xs">Management</TabsTrigger>
+                                        <TabsTrigger value="data" className="data-[state=active]:bg-[#F5CB5C] data-[state=active]:text-[#242423] text-[#CFDBD5] text-xs">Data Eng</TabsTrigger>
+                                        <TabsTrigger value="governance" className="data-[state=active]:bg-[#F5CB5C] data-[state=active]:text-[#242423] text-[#CFDBD5] text-xs">Governance</TabsTrigger>
+                                        <TabsTrigger value="product" className="data-[state=active]:bg-[#F5CB5C] data-[state=active]:text-[#242423] text-[#CFDBD5] text-xs">Product & Design</TabsTrigger>
+                                    </TabsList>
+
+                                    {['management', 'data', 'governance', 'product'].map(tabValue => {
+                                        let roles: RoleKey[] = [];
+                                        if (tabValue === 'management') roles = MANAGEMENT_ROLES;
+                                        else if (tabValue === 'data') roles = DATA_ROLES;
+                                        else if (tabValue === 'governance') roles = GOVERNANCE_ROLES;
+                                        else if (tabValue === 'product') roles = PRODUCT_ROLES;
 
                                         return (
-                                            <div key={roleKey} className="flex items-center justify-between p-3 bg-[#333533] border border-[#4A4D4A] rounded-xl hover:border-[#F5CB5C] transition-colors group gap-3">
-                                                <div className="font-bold capitalize text-[#E8EDDF] text-sm flex-1 min-w-0 leading-snug whitespace-normal break-words">{roleName}</div>
-
-                                                <SenioritySelector
-                                                    roleName={roleName}
-                                                    roleKey={roleKey}
-                                                    capabilities={capabilities}
-                                                    serviceRates={serviceRates}
-                                                    onSelect={(level, price) => {
-                                                        const roleName = roleKey === 'data_engineer' ? 'Data Engineer' :
-                                                            roleKey === 'ml_engineer' ? 'ML Engineer' :
-                                                                roleKey === 'cloud_architect' ? 'Cloud Architect' :
-                                                                    roleKey === 'consultant' ? 'Consultor' : roleKey
-
-                                                        // AGGREGATION LOGIC: Check if profile exists
-                                                        const existingProfileIndex = state.staffingDetails.profiles.findIndex(
-                                                            prof => prof.role === roleName && prof.seniority === level
-                                                        )
-
-                                                        if (existingProfileIndex >= 0) {
-                                                            // Update Existing
-                                                            const newProfiles = [...state.staffingDetails.profiles]
-                                                            newProfiles[existingProfileIndex].count += 1
-
-                                                            setState(prev => ({
-                                                                ...prev,
-                                                                roles: { ...prev.roles, [roleKey]: (prev.roles[roleKey as RoleKey] || 0) + 1 },
-                                                                staffingDetails: {
-                                                                    ...prev.staffingDetails,
-                                                                    profiles: newProfiles
-                                                                }
-                                                            }))
-                                                            toast.success(`${roleName} (${level}) actualizado (+1)`)
-                                                        } else {
-                                                            // Create New
-                                                            const newProfile = {
-                                                                id: crypto.randomUUID(),
-                                                                role: roleName,
-                                                                seniority: level,
-                                                                count: 1,
-                                                                price: price,
-                                                                skills: '',
-                                                                startDate: new Date().toISOString(),
-                                                                endDate: new Date().toISOString()
-                                                            }
-
-                                                            setState(prev => ({
-                                                                ...prev,
-                                                                roles: { ...prev.roles, [roleKey]: (prev.roles[roleKey as RoleKey] || 0) + 1 },
-                                                                staffingDetails: {
-                                                                    ...prev.staffingDetails,
-                                                                    profiles: [...prev.staffingDetails.profiles, newProfile]
-                                                                }
-                                                            }))
-                                                            toast.success(`${roleName} (${level}) agregado`)
-                                                        }
-                                                    }}
-                                                />
-                                            </div>
-                                        )
+                                            <TabsContent key={tabValue} value={tabValue} className="space-y-3">
+                                                {roles.map(roleKey => {
+                                                    const role = ROLE_CONFIG[roleKey];
+                                                    const currentCount = state.roles[roleKey] || 0;
+                                                    const isLimitReached = currentCount >= 5;
+                                                    return (
+                                                        <div key={roleKey} className="group flex items-center justify-between p-3 rounded-xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 rounded-lg bg-[#1E1E1E] flex items-center justify-center border border-[#333533] group-hover:border-[#F5CB5C] transition-colors">
+                                                                    <span className="text-[10px] font-bold text-[#7C7F7C] group-hover:text-[#F5CB5C]">SR</span>
+                                                                </div>
+                                                                <div>
+                                                                    <div className="text-[#E8EDDF] font-bold text-xs">{role.label}</div>
+                                                                    <div className="text-[#CFDBD5] text-[10px] opacity-60">
+                                                                        USD {viewMode === 'annual' ? (role.defaultPrice * 12).toLocaleString() : role.defaultPrice.toLocaleString()}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => handleAddProfile(roleKey)}
+                                                                disabled={isLimitReached}
+                                                                className="w-8 h-8 rounded-full bg-[#333533] flex items-center justify-center text-[#F5CB5C] hover:bg-[#F5CB5C] hover:text-[#242423] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                                            >
+                                                                <Plus className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </TabsContent>
+                                        );
                                     })}
-                                </div>
+                                </Tabs>
                             </div>
 
-                            {/* RIGHT: Selected Team */}
-                            <div className="bg-[#1D1D1C] rounded-[1.5rem] border border-[#333533] p-6 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-[#F5CB5C]/5 blur-[60px] rounded-full pointer-events-none" />
-                                <h4 className="text-sm font-bold uppercase tracking-wider text-[#F5CB5C] mb-4 flex items-center gap-2">
+                            {/* RIGHT: Selected Team Snapshot */}
+                            <div className="bg-[#1E1E1E] p-6 rounded-[1.5rem] border border-[#333533] shadow-inner h-fit">
+                                <h4 className="text-[#F5CB5C] text-sm font-bold uppercase tracking-wider mb-6 flex items-center gap-2">
                                     <Users className="w-4 h-4" /> Equipo Seleccionado (Snapshot Precios)
                                 </h4>
 
-                                {(!state.staffingDetails.profiles || state.staffingDetails.profiles.length === 0) ? (
-                                    <div className="text-center py-12 text-[#CFDBD5] opacity-30 italic text-sm border-2 border-dashed border-[#333533] rounded-xl">
-                                        No hay perfiles seleccionados
-                                    </div>
-                                ) : (
-                                    <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                                        {state.staffingDetails.profiles.map((profile, idx) => {
-                                            const monthlyPrice = (profile.price || 0) * profile.count
-                                            const displayPrice = viewMode === 'annual' ? monthlyPrice * 12 : monthlyPrice
-                                            const periodLabel = viewMode === 'annual' ? 'ANUALIZADO' : 'MENSUAL'
+                                <div className="space-y-4">
+                                    {state.staffingDetails.profiles.length === 0 ? (
+                                        <div className="text-center py-10 border-2 border-dashed border-[#333533] rounded-xl">
+                                            <p className="text-[#CFDBD5]/50 text-sm italic">No se han seleccionado perfiles aún.</p>
+                                        </div>
+                                    ) : (
+                                        state.staffingDetails.profiles.map((profile, idx) => {
+                                            const displayPrice = (profile.price || 0) * (profile.count || 1)
+                                            // Handle Monthly/Annual Toggle
+                                            const finalPrice = viewMode === 'annual' ? displayPrice * 12 : displayPrice
+                                            const periodLabel = viewMode === 'annual' ? 'ANUAL' : 'MENSUAL'
 
-                                            // Resolve Display Name
-                                            let displayName = profile.role;
-                                            if (ROLE_CONFIG[profile.role as keyof typeof ROLE_CONFIG]) {
-                                                displayName = ROLE_CONFIG[profile.role as keyof typeof ROLE_CONFIG].label;
-                                            } else {
-                                                displayName = profile.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                                            }
+                                            // Determine Badge Color based on Seniority
+                                            const badgeColor = profile.seniority === 'Expert' ? 'border-purple-500/50 text-purple-400' :
+                                                profile.seniority === 'Sr' ? 'border-blue-500/50 text-blue-400' :
+                                                    profile.seniority === 'Med' ? 'border-emerald-500/50 text-emerald-400' :
+                                                        'border-zinc-500/50 text-zinc-400'
 
                                             return (
-                                                <div key={profile.id || idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 bg-zinc-900/40 border border-zinc-800 rounded-lg w-full gap-3 group hover:border-zinc-700/50 transition-all">
-                                                    {/* LEFT: Avatar + Name + Seniority */}
-                                                    <div className="flex items-center gap-3 flex-1 min-w-0 py-1">
-                                                        <div className={cn(
-                                                            "w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold border shrink-0",
-                                                            profile.seniority === 'Expert' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
-                                                                profile.seniority === 'Sr' ? "bg-purple-500/10 text-purple-500 border-purple-500/20" :
-                                                                    profile.seniority === 'Ssr' ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
-                                                                        "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                                                        )}>
-                                                            {profile.seniority.substring(0, 2)}
-                                                        </div>
+                                                <div key={idx} className="group relative flex items-center justify-between p-4 bg-[#242423] rounded-xl border border-[#333533] hover:border-[#F5CB5C]/30 transition-colors">
 
-                                                        <div className="flex flex-col justify-center min-w-0 pr-2">
-                                                            <span className="text-[#E8EDDF] font-bold text-xs leading-tight whitespace-normal break-words">
-                                                                {displayName}
-                                                            </span>
-                                                            <span className="text-[9px] text-[#F5CB5C] font-bold uppercase tracking-wide mt-0.5">
-                                                                {profile.seniority}
-                                                            </span>
+                                                    {/* LEFT: Avatar + Info */}
+                                                    <div className="flex items-center gap-4 flex-1 min-w-0 mr-4">
+                                                        <div className={`w-10 h-10 rounded-full border-2 ${badgeColor} bg-[#1E1E1E] flex items-center justify-center text-[10px] font-bold shadow-lg shrink-0`}>
+                                                            {profile.seniority?.substring(0, 2).toUpperCase()}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <div className="flex items-center gap-2 mb-0.5">
+                                                                <h5 className="text-[#E8EDDF] font-bold text-sm truncate leading-tight">
+                                                                    {profile.role}
+                                                                </h5>
+                                                            </div>
+                                                            <p className="text-[#CFDBD5]/50 text-[10px] leading-tight truncate pl-1">
+                                                                {profile.skills || 'Sin descripción adicional'}
+                                                            </p>
                                                         </div>
                                                     </div>
 
                                                     {/* RIGHT: Quantity + Price + Trash */}
                                                     <div className="flex items-center gap-6 shrink-0">
-                                                        {/* Minimalist Quantity Display */}
-                                                        <div className="flex flex-col items-end">
-                                                            <span className="text-[9px] text-[#CFDBD5]/40 font-black uppercase tracking-widest leading-none mb-1">CANTIDAD</span>
-                                                            <div className="text-[#F5CB5C] font-mono font-bold text-xs">
-                                                                CANT: {profile.count % 1 === 0 ? profile.count : profile.count.toFixed(1)}
-                                                            </div>
+                                                        {/* Quantity: Plain Text */}
+                                                        <div className="flex flex-col items-center">
+                                                            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">CANTIDAD</span>
+                                                            <span className="text-[#F5CB5C] font-bold text-sm">
+                                                                CANT: {profile.count}
+                                                            </span>
                                                         </div>
 
                                                         {/* Price */}
                                                         <div className="text-right min-w-[80px]">
-                                                            <div className="text-[#F5CB5C] font-mono font-bold text-sm leading-none">
-                                                                {formatMoney(displayPrice)}
+                                                            <div className="text-[#F5CB5C] font-mono font-bold text-sm leading-none tabular-nums">
+                                                                USD {finalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                             </div>
                                                             <div className="text-[8px] text-zinc-500 font-bold tracking-tighter mt-1 opacity-60">
                                                                 {periodLabel}
@@ -2531,47 +2540,90 @@ graph TD
                                                         <Button
                                                             size="icon"
                                                             variant="ghost"
-                                                            className="h-6 w-6 text-zinc-600 hover:bg-red-500/10 hover:text-red-500/80 rounded-full transition-colors shrink-0"
+                                                            className="h-8 w-8 text-zinc-600 hover:bg-red-500/10 hover:text-red-500/80 rounded-full transition-colors shrink-0"
                                                             onClick={() => {
-                                                                const countToRemove = profile.count
-                                                                // Remove logic
-                                                                const newProfiles = [...state.staffingDetails.profiles]
-                                                                newProfiles.splice(idx, 1)
+                                                                const newProfiles = state.staffingDetails.profiles.filter((_, i) => i !== idx)
+                                                                const roleKey = Object.keys(ROLE_CONFIG).find(key => ROLE_CONFIG[key as RoleKey].label === profile.role) as RoleKey
 
-                                                                // Decrement role counter
-                                                                const keyEntry = Object.entries(ROLE_CONFIG).find(([k, v]) => v.label === profile.role) || Object.entries(ROLE_CONFIG).find(([k, v]) => k === profile.role)
-                                                                const roleKey = keyEntry ? keyEntry[0] as RoleKey : null
-
-                                                                if (roleKey) {
-                                                                    setState(prev => ({
-                                                                        ...prev,
-                                                                        roles: { ...prev.roles, [roleKey]: Math.max(0, (prev.roles[roleKey as RoleKey] || 0) - countToRemove) },
-                                                                        staffingDetails: {
-                                                                            ...prev.staffingDetails,
-                                                                            profiles: newProfiles
-                                                                        }
-                                                                    }))
-                                                                }
+                                                                setState(prev => ({
+                                                                    ...prev,
+                                                                    roles: {
+                                                                        ...prev.roles,
+                                                                        [roleKey]: Math.max(0, (prev.roles[roleKey] || 0) - profile.count)
+                                                                    },
+                                                                    staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
+                                                                }))
+                                                                toast.success("Perfil eliminado")
                                                             }}
                                                         >
-                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                            <Trash2 className="w-4 h-4 opacity-70" />
                                                         </Button>
                                                     </div>
                                                 </div>
                                             )
-                                        })}
+                                        })
+                                    )}
+                                </div>
+
+                                {/* TOTALS FOOTER */}
+                                {state.staffingDetails.profiles.length > 0 && (
+                                    <div className="mt-6 pt-6 border-t border-[#333533] flex items-center justify-between">
+                                        <span className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider">Total Estimado</span>
+                                        <div className="text-right">
+                                            <div className="text-2xl font-black text-[#F5CB5C] tracking-tight">
+                                                USD {state.staffingDetails.profiles.reduce((acc, p) => acc + ((p.price || 0) * p.count), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </div>
+                                            <div className="text-[10px] text-[#CFDBD5]/50 font-medium">+ IVA si corresponde</div>
+                                        </div>
                                     </div>
                                 )}
                             </div>
                         </div>
+                        <Dialog open={isSuggestionModalOpen} onOpenChange={setIsSuggestionModalOpen}>
+                            <DialogContent className="bg-[#1E1E1E] border border-[#333533] text-[#E8EDDF] sm:max-w-md">
+                                <DialogHeader>
+                                    <DialogTitle className="text-[#F5CB5C] flex items-center gap-2">
+                                        <Sparkles className="w-5 h-5" /> Sugerencias de Equipo
+                                    </DialogTitle>
+                                </DialogHeader>
+
+                                <div className="space-y-3 py-4">
+                                    {pendingRecs.length > 0 ? pendingRecs.map((rec, idx) => (
+                                        <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-[#242423] border border-[#333533]">
+                                            <div>
+                                                <div className="text-[#E8EDDF] font-bold text-sm">{rec.role}</div>
+                                                <div className="text-[10px] text-[#CFDBD5] opacity-70">{rec.seniority} • {rec.rationale}</div>
+                                            </div>
+                                            <div className="bg-[#333533] px-2 py-1 rounded text-[#F5CB5C] font-bold text-xs">
+                                                x{rec.count}
+                                            </div>
+                                        </div>
+                                    )) : (
+                                        <p className="text-[#CFDBD5] text-sm text-center py-4">No hay recomendaciones adicionales.</p>
+                                    )}
+                                </div>
+
+                                <DialogFooter className="gap-4 sm:gap-4 mt-2">
+                                    <Button
+                                        variant="ghost"
+                                        onClick={() => {
+                                            setIsSuggestionModalOpen(false)
+                                            setPendingRecs([])
+                                        }}
+                                        className="text-[#CFDBD5] hover:text-[#E8EDDF] hover:bg-[#333533]"
+                                    >
+                                        Cancelar
+                                    </Button>
+                                    <Button
+                                        onClick={handleApplyRecommendations}
+                                        className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold px-6"
+                                    >
+                                        Aceptar y Agregar
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
                     </SectionCard>
-
-
-
-                    {/* 6. CRITICITNESS */}
-                    {/* 6. CRITICITNESS (Upgraded v2) */}
-                    {/* 6. CRITICITNESS (REMOVED) */}
-
                     {/* 7. COMMERCIAL DATA & RETENTION */}
                     <SectionCard number={getSectionNumber('commercial')} title="Datos Comercial & Retenciones" icon={Users}>
                         <div className="space-y-6">
