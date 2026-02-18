@@ -229,8 +229,13 @@ export function ClientFormModal({ initialData, isOpen, onOpenChange, onClientSav
                 })
             } else {
                 result = await createClient({
-                    ...formData,
-                    clientLogoUrl: finalLogoUrl
+                    companyName: formData.companyName,
+                    clientLogoUrl: finalLogoUrl,
+                    contacts: [{
+                        name: formData.contactName,
+                        role: '', // Default as empty since not in form yet
+                        email: formData.email
+                    }]
                 })
             }
 
