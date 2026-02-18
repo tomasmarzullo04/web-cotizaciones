@@ -15,18 +15,6 @@ export default function Home() {
         if (error) {
             setLastError(error)
         }
-
-        const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://gcajouecfyhcpbazxjhy.supabase.co"
-        const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_NDFtz_7ldXuNu3yP3ZsVfA_te2fF1_S"
-        const supabase = createBrowserClient(url, key)
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (event === 'SIGNED_IN' && session) {
-                window.location.href = 'https://cotizador.thestoreintelligence.com/quote/new';
-            }
-        })
-
-        return () => subscription.unsubscribe()
     }, [])
 
     return (
