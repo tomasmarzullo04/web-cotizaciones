@@ -420,16 +420,14 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
     }
 
     const handleUpdateProfileCount = (index: number, newCount: number) => {
-        // Allow 0.5 minimum step
-        if (newCount < 0.5) return
+        // Allow decimals, prevent negative
+        if (newCount < 0) return
 
         setState(prev => {
             const profile = prev.staffingDetails.profiles[index]
             const roleKey = Object.keys(ROLE_CONFIG).find(key => ROLE_CONFIG[key as RoleKey].label === profile.role) as RoleKey
 
             // Calculate delta for roles summary
-            // Note: roles summary tracks integers usually, but for staffing cost it should just track sum
-            // Let's ensure roles[roleKey] tracks the sum of counts for that role
             const currentCount = profile.count || 0
             const delta = newCount - currentCount
 
@@ -2551,30 +2549,18 @@ graph TD
 
                                                     {/* RIGHT: Quantity + Price + Trash */}
                                                     <div className="flex items-center gap-6 shrink-0">
-                                                        {/* Quantity: Plain Text */}
+                                                        {/* Quantity: Clean Input for Decimals */}
                                                         <div className="flex flex-col items-center gap-1">
-                                                            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">CANTIDAD</span>
-                                                            <div className="flex items-center bg-[#1E1E1E] rounded-lg border border-[#333533]">
-                                                                <button
-                                                                    onClick={() => handleUpdateProfileCount(idx, (profile.count || 1) - 0.5)}
-                                                                    className="px-2 py-1 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-[#333533] rounded-l-lg transition-colors"
-                                                                >
-                                                                    -
-                                                                </button>
+                                                            <div className="flex items-center gap-2 px-2 py-1">
+                                                                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">CANT:</span>
                                                                 <input
                                                                     type="number"
                                                                     step="0.5"
-                                                                    min="0.5"
-                                                                    className="w-12 text-center bg-transparent text-[#F5CB5C] font-bold text-sm focus:outline-none border-x border-[#333533]"
-                                                                    value={profile.count || 1}
-                                                                    onChange={(e) => handleUpdateProfileCount(idx, parseFloat(e.target.value) || 0.5)}
+                                                                    min="0"
+                                                                    className="w-12 text-center bg-transparent text-[#F5CB5C] font-bold text-sm focus:outline-none border-b border-[#333533] focus:border-[#F5CB5C] placeholder-zinc-700 transition-colors"
+                                                                    value={profile.count || 0}
+                                                                    onChange={(e) => handleUpdateProfileCount(idx, parseFloat(e.target.value) || 0)}
                                                                 />
-                                                                <button
-                                                                    onClick={() => handleUpdateProfileCount(idx, (profile.count || 1) + 0.5)}
-                                                                    className="px-2 py-1 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-[#333533] rounded-r-lg transition-colors"
-                                                                >
-                                                                    +
-                                                                </button>
                                                             </div>
                                                         </div>
 
@@ -2816,12 +2802,12 @@ graph TD
                     </SectionCard>
 
                 </div>
-            </div>
+            </div >
 
             {/* ================= RIGHT COLUMN: INDEPENDENT SCROLL SUMMARY ================= */}
-            <div className="w-full lg:w-1/3 h-full overflow-y-auto scrollbar-custom bg-[#242423] border-l border-[#CFDBD5]/10 p-8 lg:p-10 space-y-10 relative order-last lg:order-none">
+            < div className="w-full lg:w-1/3 h-full overflow-y-auto scrollbar-custom bg-[#242423] border-l border-[#CFDBD5]/10 p-8 lg:p-10 space-y-10 relative order-last lg:order-none" >
                 {/* Cost Summary */}
-                <div className="space-y-6">
+                < div className="space-y-6" >
                     <div>
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="text-[#F5CB5C] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
