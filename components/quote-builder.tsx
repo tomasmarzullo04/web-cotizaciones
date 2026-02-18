@@ -89,6 +89,7 @@ interface QuoteState {
     // 1. General
     clientName: string
     clientId?: string // NEW: Linked Client ID
+    contactId?: string // NEW: Linked Contact ID
     quoteNumber?: number // NEW: Incremental ID from DB
     isNewClient?: boolean // NEW: Flag
     newClientData?: ClientData // NEW: For Context
@@ -1689,19 +1690,28 @@ graph TD
                                 <Label className="text-[#CFDBD5] text-sm font-bold uppercase tracking-wider mb-2 block">Cliente / Prospecto</Label>
                                 <ClientSelector
                                     value={state.clientId}
+                                    contactValue={state.contactId}
                                     clientName={state.clientName}
-                                    onClientSelect={(client, isNew) => {
+                                    onClientSelect={(client, contactId) => {
+                                        // Find Contact Data if selected
+                                        const selectedContact = contactId && client.contacts
+                                            ? client.contacts.find(c => c.id === contactId)
+                                            : null
+
                                         setState(prev => ({
                                             ...prev,
                                             clientName: client.companyName,
                                             clientId: client.id,
-                                            isNewClient: isNew,
+                                            contactId: contactId,
+                                            // Logic: If we just created a client/contact, we treat it as valid.
+                                            // The isNew check was mostly for the 'create' flow, now handled by presence of data.
                                             newClientData: client,
                                             clientLogoUrl: client.clientLogoUrl,
                                             clientContact: {
                                                 ...prev.clientContact,
-                                                name: client.contactName || prev.clientContact.name,
-                                                email: client.email || prev.clientContact.email
+                                                name: selectedContact?.name || client.contactName || prev.clientContact.name,
+                                                email: selectedContact?.email || client.email || prev.clientContact.email,
+                                                role: selectedContact?.role || prev.clientContact.role || ''
                                             }
                                         }))
                                     }}

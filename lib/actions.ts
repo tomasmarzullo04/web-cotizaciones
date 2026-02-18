@@ -309,7 +309,8 @@ export async function searchClients(query: string) {
                 } : {})
             },
             orderBy: { companyName: 'asc' },
-            select: { id: true, companyName: true, contactName: true, email: true, status: true, clientLogoUrl: true }
+            // Include contacts in the selection
+            include: { contacts: true },
         })
         return clients
     } catch (e) {
@@ -318,7 +319,11 @@ export async function searchClients(query: string) {
     }
 }
 
-export async function createClient(data: { companyName: string, contactName: string, email: string, clientLogoUrl?: string }) {
+export async function createClient(data: {
+    companyName: string,
+    contacts: { name: string, role: string, email: string }[],
+    clientLogoUrl?: string
+}) {
     const cookieStore = await cookies()
     const userId = cookieStore.get('session_user_id')?.value
 
@@ -330,12 +335,18 @@ export async function createClient(data: { companyName: string, contactName: str
         const newClient = await prisma.client.create({
             data: {
                 companyName: data.companyName,
-                contactName: data.contactName,
-                email: data.email,
                 clientLogoUrl: data.clientLogoUrl,
                 status: 'PROSPECTO',
-                userId: userId // Link to Owner
-            }
+                userId: userId, // Link to Owner
+                contacts: {
+                    create: data.contacts.map(c => ({
+                        name: c.name,
+                        role: c.role,
+                        email: c.email
+                    }))
+                }
+            },
+            include: { contacts: true }
         })
         return { success: true, client: newClient }
     } catch (e: any) {

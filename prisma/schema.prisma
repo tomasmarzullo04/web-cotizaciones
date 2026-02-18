@@ -67,11 +67,21 @@ model Client {
   monday_id   String?  @map("monday_id")
   driveFolder String?
   createdAt   DateTime @default(now())
-  quotes      Quote[]
+  contacts    Contact[]
   
   userId      String    // Required for strict ownership
   user        User      @relation(fields: [userId], references: [id])
   clientLogoUrl String? @map("client_logo_url")
+}
+
+model Contact {
+  id        String   @id @default(uuid())
+  name      String
+  role      String?
+  email     String?
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }
 
 // Update Quote to link to Client

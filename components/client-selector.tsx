@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from "react"
-import { Check, ChevronsUpDown, Loader2, Plus, Search, User, Building2, Mail, Upload, Link2, CheckCircle2, XCircle, AlertCircle } from "lucide-react"
+import { Check, ChevronsUpDown, Loader2, Plus, Search, User, Building2, Mail, Upload, Link2, CheckCircle2, XCircle, AlertCircle, Trash2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label"
 import { createClient, searchClients, uploadClientLogo, validateExternalLogoUrl } from "@/lib/actions"
 import { toast } from "sonner"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 // Simple Debounce Implementation
 function useDebounceValue<T>(value: T, delay: number): T {
@@ -41,32 +42,40 @@ function useDebounceValue<T>(value: T, delay: number): T {
 export interface ClientData {
     id: string
     companyName: string
+    contacts?: { id: string, name: string, role?: string | null, email?: string | null }[]
+    clientLogoUrl?: string | null
+    // Legacy fields for fallback
     contactName?: string | null
     email?: string | null
-    clientLogoUrl?: string | null
 }
 
 interface ClientSelectorProps {
-    value?: string
+    value?: string // Client ID
+    contactValue?: string // Contact ID
     clientName?: string // For initial display or fallback
-    onClientSelect: (client: ClientData, isNew: boolean) => void
+    onClientSelect: (client: ClientData, contactId?: string) => void
 }
 
-export function ClientSelector({ value, clientName, onClientSelect }: ClientSelectorProps) {
+export function ClientSelector({ value, contactValue, clientName, onClientSelect }: ClientSelectorProps) {
     const [open, setOpen] = React.useState(false)
     const [searchQuery, setSearchQuery] = React.useState("")
     const debouncedQuery = useDebounceValue(searchQuery, 300)
     const [loading, setLoading] = React.useState(false)
     const [clients, setClients] = React.useState<ClientData[]>([])
 
+    // Selected Client State for Contact Selection
+    const [selectedClient, setSelectedClient] = React.useState<ClientData | null>(null)
+
     // Create Modal State
     const [showCreateModal, setShowCreateModal] = React.useState(false)
     const [newClientData, setNewClientData] = React.useState({
         companyName: "",
-        contactName: "",
-        email: "",
         clientLogoUrl: ""
     })
+    const [newContacts, setNewContacts] = React.useState<{ name: string, role: string, email: string }[]>([
+        { name: "", role: "", email: "" }
+    ])
+
     const [isCreating, setIsCreating] = React.useState(false)
 
     // Logo Upload State
@@ -114,6 +123,14 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
             fetchClients()
         }
     }, [debouncedQuery, open])
+
+    // Update selected client when value changes or clients load
+    React.useEffect(() => {
+        if (value && clients.length > 0) {
+            const found = clients.find(c => c.id === value)
+            if (found) setSelectedClient(found)
+        }
+    }, [value, clients])
 
     // Handle File Select
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,10 +202,33 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
         if (fileInputRef.current) fileInputRef.current.value = ''
     }
 
+    // Handle Contact Changes in Create Modal
+    const handleContactChange = (index: number, field: keyof typeof newContacts[0], value: string) => {
+        const updatedContacts = [...newContacts]
+        updatedContacts[index] = { ...updatedContacts[index], [field]: value }
+        setNewContacts(updatedContacts)
+    }
+
+    const addContactField = () => {
+        setNewContacts([...newContacts, { name: "", role: "", email: "" }])
+    }
+
+    const removeContactField = (index: number) => {
+        if (newContacts.length === 1) return
+        setNewContacts(newContacts.filter((_, i) => i !== index))
+    }
+
     // Handle Create New
     const handleCreateClient = async () => {
-        if (!newClientData.companyName || !newClientData.email || !newClientData.contactName) {
-            alert("Por favor complete todos los campos obligatorios.")
+        if (!newClientData.companyName) {
+            alert("El nombre de la empresa es obligatorio.")
+            return
+        }
+
+        // Filter out empty contacts
+        const validContacts = newContacts.filter(c => c.name.trim() !== "")
+        if (validContacts.length === 0) {
+            alert("Debe agregar al menos un contacto con nombre.")
             return
         }
 
@@ -220,16 +260,22 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
             }
 
             const res = await createClient({
-                ...newClientData,
+                companyName: newClientData.companyName,
+                contacts: validContacts,
                 clientLogoUrl: finalLogoUrl
             })
 
             if (res.success && res.client) {
-                onClientSelect(res.client, true)
+                // Auto-select the first contact of the new client
+                const firstContactId = res.client.contacts && res.client.contacts.length > 0 ? res.client.contacts[0].id : undefined
+
+                onClientSelect(res.client, firstContactId)
+
                 setShowCreateModal(false)
                 setOpen(false)
                 setSearchQuery("")
-                setNewClientData({ companyName: "", contactName: "", email: "", clientLogoUrl: "" })
+                setNewClientData({ companyName: "", clientLogoUrl: "" })
+                setNewContacts([{ name: "", role: "", email: "" }])
                 setPreviewUrl(null)
                 setSelectedFile(null)
             } else {
@@ -246,7 +292,8 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
 
     // Initialize "Create" form
     const handleOpenCreate = () => {
-        setNewClientData({ companyName: searchQuery, contactName: "", email: "", clientLogoUrl: "" })
+        setNewClientData({ companyName: searchQuery, clientLogoUrl: "" })
+        setNewContacts([{ name: "", role: "", email: "" }])
         setPreviewUrl(null)
         setSelectedFile(null)
         setUploadMode('url')
@@ -254,14 +301,15 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
     }
 
     return (
-        <div className="w-full">
+        <div className="w-full flex gap-2">
+            {/* 1. Client Select */}
             <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                     <Button
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
-                        className="w-full justify-between bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] hover:bg-[#404240] hover:text-[#E8EDDF] h-[50px] text-lg font-normal py-6 rounded-xl"
+                        className="w-full justify-between bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] hover:bg-[#404240] hover:text-[#E8EDDF] h-[50px] text-lg font-normal py-6 rounded-xl flex-1"
                     >
                         {clientName ? (
                             <div className="flex flex-col items-start truncate text-left">
@@ -269,7 +317,7 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
                                 {/* Optional: Show ID or subtle indicator */}
                             </div>
                         ) : (
-                            <span className="text-[#CFDBD5]/50">Buscar cliente...</span>
+                            <span className="text-[#CFDBD5]/50 flex items-center gap-2"><Building2 className="w-4 h-4" /> Seleccionar Empresa...</span>
                         )}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -278,7 +326,7 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
                     <div className="flex items-center border-b border-[#4A4D4A] px-3">
                         <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                         <Input
-                            placeholder="Escriba nombre de empresa..."
+                            placeholder="Buscar empresa..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-[#E8EDDF]"
@@ -301,7 +349,10 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
                                     <div
                                         key={client.id}
                                         onClick={() => {
-                                            onClientSelect(client, false)
+                                            setSelectedClient(client)
+                                            // Select first contact by default/logic
+                                            const defaultContactId = client.contacts?.[0]?.id
+                                            onClientSelect(client, defaultContactId)
                                             setOpen(false)
                                             setSearchQuery("")
                                         }}
@@ -311,9 +362,8 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
                                         )}
                                     >
                                         <div className="font-bold text-base">{client.companyName}</div>
-                                        <div className="text-xs text-[#CFDBD5]/70 flex gap-3">
-                                            {client.contactName && <span className="flex items-center gap-1"><User className="w-3 h-3" /> {client.contactName}</span>}
-                                            {client.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {client.email}</span>}
+                                        <div className="text-xs text-[#CFDBD5]/50">
+                                            {client.contacts?.length || 0} contactos asociados
                                         </div>
                                     </div>
                                 ))}
@@ -327,7 +377,7 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
                                     onClick={handleOpenCreate}
                                 >
                                     <Plus className="mr-2 h-4 w-4" />
-                                    Crear Nuevo Lead: "{searchQuery}"
+                                    Crear Nuevo Cliente: "{searchQuery}"
                                 </Button>
                             </div>
                         )}
@@ -335,18 +385,41 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
                 </PopoverContent>
             </Popover>
 
+            {/* 2. Contact Select (Only if client selected) */}
+            {selectedClient && selectedClient.contacts && selectedClient.contacts.length > 0 && (
+                <Select
+                    value={contactValue}
+                    onValueChange={(val) => onClientSelect(selectedClient, val)}
+                >
+                    <SelectTrigger className="w-[280px] bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] hover:bg-[#404240] h-[50px] rounded-xl">
+                        <SelectValue placeholder="Seleccionar Contacto" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
+                        {selectedClient.contacts.map(contact => (
+                            <SelectItem key={contact.id} value={contact.id}>
+                                <div className="flex flex-col text-left">
+                                    <span className="font-bold">{contact.name}</span>
+                                    <span className="text-xs text-[#CFDBD5]/50">{contact.role || 'Sin cargo'}</span>
+                                </div>
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            )}
+
             {/* CREATE MODAL */}
             <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-                <DialogContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+                <DialogContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle className="text-[#F5CB5C]">Crear Nuevo Lead</DialogTitle>
+                        <DialogTitle className="text-[#F5CB5C]">Crear Nuevo Cliente</DialogTitle>
                         <DialogDescription className="text-[#CFDBD5]">
-                            Ingrese los datos para registrar el prospecto en el sistema.
+                            Registre la empresa y sus contactos clave.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
+                    <div className="grid gap-6 py-4">
+                        {/* Company Info */}
                         <div className="grid gap-2">
-                            <Label htmlFor="company" className="text-[#E8EDDF]">Empresa *</Label>
+                            <Label htmlFor="company" className="text-[#E8EDDF] font-bold">Empresa *</Label>
                             <Input
                                 id="company"
                                 value={newClientData.companyName}
@@ -355,27 +428,55 @@ export function ClientSelector({ value, clientName, onClientSelect }: ClientSele
                                 placeholder="Nombre de la empresa"
                             />
                         </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="contact" className="text-[#E8EDDF]">Contacto Principal *</Label>
-                            <Input
-                                id="contact"
-                                value={newClientData.contactName}
-                                onChange={(e) => setNewClientData({ ...newClientData, contactName: e.target.value })}
-                                className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] focus:border-[#F5CB5C]"
-                                placeholder="Nombre y Apellido"
-                            />
+
+                        {/* Contacts Section */}
+                        <div className="space-y-3">
+                            <Label className="text-[#E8EDDF] font-bold flex justify-between items-center">
+                                Contactos
+                                <Button size="sm" variant="ghost" onClick={addContactField} className="h-6 text-[#F5CB5C] hover:bg-[#F5CB5C]/10 text-xs">
+                                    + Agregar Otro
+                                </Button>
+                            </Label>
+
+                            {newContacts.map((contact, index) => (
+                                <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-[#1E1E1E] rounded-lg border border-[#333533] relative group">
+                                    {newContacts.length > 1 && (
+                                        <button
+                                            onClick={() => removeContactField(index)}
+                                            className="absolute -right-2 -top-2 bg-[#333533] text-zinc-400 p-1 rounded-full hover:text-red-400 hover:bg-[#1a1a1a] border border-[#4A4D4A]"
+                                        >
+                                            <Trash2 className="w-3 h-3" />
+                                        </button>
+                                    )}
+
+                                    <div className="col-span-12 md:col-span-4">
+                                        <Input
+                                            placeholder="Nombre Completo"
+                                            value={contact.name}
+                                            onChange={(e) => handleContactChange(index, 'name', e.target.value)}
+                                            className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-9 text-sm"
+                                        />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-4">
+                                        <Input
+                                            placeholder="Cargo / Rol"
+                                            value={contact.role}
+                                            onChange={(e) => handleContactChange(index, 'role', e.target.value)}
+                                            className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-9 text-sm"
+                                        />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-4">
+                                        <Input
+                                            placeholder="Email"
+                                            value={contact.email}
+                                            onChange={(e) => handleContactChange(index, 'email', e.target.value)}
+                                            className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-9 text-sm"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="email" className="text-[#E8EDDF]">Email *</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                value={newClientData.email}
-                                onChange={(e) => setNewClientData({ ...newClientData, email: e.target.value })}
-                                className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] focus:border-[#F5CB5C]"
-                                placeholder="correo@empresa.com"
-                            />
-                        </div>
+
 
                         {/* Logo Upload Section */}
                         <div className="space-y-3 pt-4 border-t border-[#333533]">
