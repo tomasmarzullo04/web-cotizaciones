@@ -62,22 +62,18 @@ export default function LoginPage() {
             console.table({ event, user: session?.user?.email || 'No session' });
 
             if (session) {
-                // Pequeño delay de seguridad para asegurar persistencia de cookies
-                setTimeout(async () => {
-                    setRedirecting(true)
-                    try {
-                        // Detectar rol desde metadata o fallback a syncSessionAction
-                        const role = session.user.user_metadata?.role || await getUserRole(session.user.email)
+                try {
+                    // Detectar rol desde metadata o fallback a syncSessionAction
+                    const role = session.user.user_metadata?.role || await getUserRole(session.user.email)
 
-                        const target = role === 'ADMIN'
-                            ? 'https://cotizador.thestoreintelligence.com/admin/dashboard'
-                            : 'https://cotizador.thestoreintelligence.com/quote/new';
+                    const target = role === 'ADMIN'
+                        ? 'https://cotizador.thestoreintelligence.com/admin/dashboard'
+                        : 'https://cotizador.thestoreintelligence.com/quote/new';
 
-                        window.location.assign(target);
-                    } catch (err) {
-                        window.location.assign('https://cotizador.thestoreintelligence.com/quote/new');
-                    }
-                }, 500);
+                    window.location.assign(target);
+                } catch (err) {
+                    window.location.assign('https://cotizador.thestoreintelligence.com/quote/new');
+                }
             }
         })
 
@@ -147,12 +143,6 @@ export default function LoginPage() {
 
                 // ONLY redirect after successful server validation
                 if (result.success) {
-                    setSuccessMessage("Acceso concedido. Entrando...")
-                    setIsTransitioning(true)
-
-                    // Wait for server to set cookies properly
-                    await new Promise(resolve => setTimeout(resolve, 300))
-
                     // Use the validated redirect URL from server but forced to absolute domain
                     const targetSubPath = (result as any).redirectUrl || '/quote/new'
                     const target = targetSubPath.startsWith('http')
@@ -306,40 +296,7 @@ export default function LoginPage() {
                     </div>
                 </CardContent>
             </Card>
-            {/* Full Screen Loading Overlay */}
-            {(loading || isTransitioning || redirecting) && (
-                <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#171717]/95 backdrop-blur-xl transition-all animate-in fade-in duration-500">
-                    <div className="relative mb-12">
-                        {/* Outer rotating ring */}
-                        <div className="w-32 h-32 rounded-full border-2 border-[#2D2D2D] border-t-[#F5CB5C] animate-[spin_1.5s_linear_infinite]" />
-                        {/* Middle pulsing ring */}
-                        <div className="absolute inset-2 rounded-full border border-[#2D2D2D] border-b-[#CFDBD5] animate-[spin_2s_linear_infinite_reverse] opacity-50" />
-                        {/* Center Icon */}
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            {redirecting ? (
-                                <CheckCircle2 className="w-10 h-10 text-[#F5CB5C] animate-pulse" />
-                            ) : (
-                                <Lock className="w-10 h-10 text-[#F5CB5C]/40" />
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="space-y-4 text-center px-6 max-w-sm">
-                        <h2 className="text-[#E8EDDF] text-2xl font-black tracking-tight uppercase">
-                            {redirecting ? 'Sesión Detectada' : 'Validando Acceso'}
-                        </h2>
-                        <div className="h-1 w-24 bg-gradient-to-r from-transparent via-[#F5CB5C] to-transparent mx-auto rounded-full" />
-                        <p className="text-[#CFDBD5] text-lg font-medium">
-                            {redirecting
-                                ? 'Configurando tu panel de consultoría...'
-                                : 'Verificando estándares de seguridad enterprise...'}
-                        </p>
-                        <p className="text-[#CFDBD5]/30 text-xs font-bold tracking-[0.2em] uppercase pt-4">
-                            Store Intelligence System
-                        </p>
-                    </div>
-                </div>
-            )}
+            {/* Full Screen Loading Overlay REMOVED for Direct Flow */}
         </main >
     )
 }
