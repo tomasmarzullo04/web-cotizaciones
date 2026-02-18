@@ -2545,34 +2545,33 @@ graph TD
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {/* LEFT: Available Roles */}
                             <div className="space-y-6">
-                                {/* LISTA PLANA DE PERFILES (Restaurada) */}
-                                <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-custom">
+                                {/* LISTA GRID DE PERFILES (2 Columnas) */}
+                                <div className="grid grid-cols-2 gap-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-custom content-start">
                                     {Object.keys(ROLE_CONFIG).map((key) => {
                                         const roleKey = key as RoleKey
                                         const role = ROLE_CONFIG[roleKey]
-                                        // Count from dedicated state or roles map
                                         const currentCount = state.roles[roleKey] || 0
                                         const isLimitReached = currentCount >= 5
 
                                         return (
-                                            <div key={roleKey} className="group flex items-center justify-between p-4 rounded-2xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all shadow-sm hover:shadow-md">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 rounded-xl bg-[#1E1E1E] flex items-center justify-center border border-[#333533] group-hover:border-[#F5CB5C] transition-colors shadow-inner">
-                                                        <span className="text-xs font-bold text-[#CFDBD5] group-hover:text-[#F5CB5C]">SR</span>
+                                            <div key={roleKey} className="group flex items-center justify-between p-3 rounded-xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all shadow-sm hover:shadow-md h-[72px]">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-lg bg-[#1E1E1E] flex items-center justify-center border border-[#333533] group-hover:border-[#F5CB5C] transition-colors shadow-inner shrink-0">
+                                                        <span className="text-[10px] font-bold text-[#CFDBD5] group-hover:text-[#F5CB5C]">SR</span>
                                                     </div>
-                                                    <div>
-                                                        <div className="text-[#E8EDDF] font-bold text-sm tracking-tight">{role.label}</div>
-                                                        <div className="text-[#CFDBD5] text-[10px] opacity-60 font-mono mt-0.5">
-                                                            USD {viewMode === 'annual' ? (role.defaultPrice * 12).toLocaleString() : role.defaultPrice.toLocaleString()} {viewMode === 'annual' ? '/ año' : '/ mes'}
+                                                    <div className="min-w-0">
+                                                        <div className="text-[#E8EDDF] font-bold text-xs leading-tight truncate pr-1">{role.label}</div>
+                                                        <div className="text-[#CFDBD5] text-[9px] opacity-60 font-mono mt-0.5 truncate">
+                                                            USD {(viewMode === 'annual' ? role.defaultPrice * 12 : role.defaultPrice).toLocaleString()}
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <button
                                                     onClick={() => handleAddProfile(roleKey)}
                                                     disabled={isLimitReached}
-                                                    className="w-9 h-9 rounded-xl bg-[#333533] flex items-center justify-center text-[#F5CB5C] hover:bg-[#F5CB5C] hover:text-[#242423] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg active:scale-95"
+                                                    className="w-7 h-7 rounded-lg bg-[#333533] flex items-center justify-center text-[#F5CB5C] hover:bg-[#F5CB5C] hover:text-[#242423] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg active:scale-95 shrink-0"
                                                 >
-                                                    <Plus className="w-5 h-5" />
+                                                    <Plus className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         )
@@ -2605,57 +2604,49 @@ graph TD
                                                         'border-zinc-500/50 text-zinc-400'
 
                                             return (
-                                                <div key={idx} className="group relative flex items-center justify-between p-4 bg-[#242423] rounded-xl border border-[#333533] hover:border-[#F5CB5C]/30 transition-colors">
+                                                <div key={idx} className="group relative flex items-center justify-between p-3 pl-4 bg-[#242423] rounded-xl border border-[#333533] hover:border-[#F5CB5C]/30 transition-all">
 
-                                                    {/* LEFT: Avatar + Info */}
-                                                    <div className="flex items-center gap-4 flex-1 min-w-0 mr-4">
-                                                        <div className={`w-10 h-10 rounded-full border-2 ${badgeColor} bg-[#1E1E1E] flex items-center justify-center text-[10px] font-bold shadow-lg shrink-0`}>
+                                                    {/* LEFT: Avatar + Name (Protagonist) */}
+                                                    <div className="flex items-center gap-3 overflow-hidden mr-4">
+                                                        <div className={`w-8 h-8 rounded-full border ${badgeColor} bg-[#1E1E1E] flex items-center justify-center text-[9px] font-bold shadow-sm shrink-0`}>
                                                             {profile.seniority?.substring(0, 2).toUpperCase()}
                                                         </div>
-                                                        <div className="min-w-0">
-                                                            <div className="flex items-center gap-2 mb-0.5">
-                                                                <h5 className="text-[#E8EDDF] font-bold text-sm truncate leading-tight">
-                                                                    {profile.role}
-                                                                </h5>
-                                                            </div>
-                                                            <p className="text-[#CFDBD5]/50 text-[10px] leading-tight truncate pl-1">
-                                                                {profile.skills || 'Sin descripción adicional'}
-                                                            </p>
+                                                        <div className="min-w-0 flex flex-col justify-center">
+                                                            <h5 className="text-[#E8EDDF] font-bold text-sm truncate leading-none mb-0.5">
+                                                                {profile.role}
+                                                            </h5>
                                                         </div>
                                                     </div>
 
                                                     {/* RIGHT: Quantity + Price + Trash */}
-                                                    <div className="flex items-center gap-6 shrink-0">
-                                                        {/* Quantity: Clean Input for Decimals */}
-                                                        <div className="flex flex-col items-center gap-1">
-                                                            <div className="flex items-center gap-2 px-2 py-1 bg-[#1E1E1E] rounded-lg border border-[#333533]">
-                                                                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">CANT:</span>
-                                                                <input
-                                                                    type="number"
-                                                                    step="0.5"
-                                                                    min="0"
-                                                                    className="w-12 text-center bg-transparent text-[#F5CB5C] font-bold text-sm focus:outline-none placeholder-zinc-700 transition-colors"
-                                                                    value={profile.count || 0}
-                                                                    onChange={(e) => handleUpdateProfileCount(idx, parseFloat(e.target.value) || 0)}
-                                                                />
-                                                            </div>
+                                                    <div className="flex items-center gap-4 shrink-0">
+
+                                                        {/* CANT: [N] */}
+                                                        <div className="flex items-center gap-1.5 bg-[#1E1E1E] px-2 py-1 rounded-md border border-[#333533]/50">
+                                                            <span className="text-[9px] text-zinc-500 font-bold tracking-wider">CANT:</span>
+                                                            <input
+                                                                type="number"
+                                                                step="0.5"
+                                                                min="0"
+                                                                className="w-8 text-center bg-transparent text-[#E8EDDF] font-bold text-xs focus:outline-none focus:text-[#F5CB5C] transition-colors appearance-none"
+                                                                value={profile.count || 0}
+                                                                onChange={(e) => handleUpdateProfileCount(idx, parseFloat(e.target.value) || 0)}
+                                                            />
                                                         </div>
 
-                                                        {/* Price */}
-                                                        <div className="text-right min-w-[80px]">
+                                                        {/* Price (Yellow) */}
+                                                        <div className="text-right w-[70px]">
                                                             <div className="text-[#F5CB5C] font-mono font-bold text-sm leading-none tabular-nums">
-                                                                USD {finalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                                ${finalPrice.toLocaleString('en-US', { disableGrouping: true }).split('.')[0]}
                                                             </div>
-                                                            <div className="text-[8px] text-zinc-500 font-bold tracking-tighter mt-1 opacity-60">
-                                                                {periodLabel}
+                                                            <div className="text-[8px] text-zinc-600 font-bold uppercase tracking-wider mt-0.5 opacity-50">
+                                                                {periodLabel === 'ANUAL' ? 'AÑO' : 'MES'}
                                                             </div>
                                                         </div>
 
                                                         {/* Trash Action */}
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            className="h-8 w-8 text-zinc-600 hover:bg-red-500/10 hover:text-red-500/80 rounded-full transition-colors shrink-0"
+                                                        <button
+                                                            className="text-zinc-600 hover:text-red-400 transition-colors p-1"
                                                             onClick={() => {
                                                                 const newProfiles = state.staffingDetails.profiles.filter((_, i) => i !== idx)
                                                                 const roleKey = Object.keys(ROLE_CONFIG).find(key => ROLE_CONFIG[key as RoleKey].label === profile.role) as RoleKey
@@ -2671,8 +2662,8 @@ graph TD
                                                                 toast.success("Perfil eliminado")
                                                             }}
                                                         >
-                                                            <Trash2 className="w-4 h-4 opacity-70" />
-                                                        </Button>
+                                                            <Trash2 className="w-4 h-4 opacity-70 hover:opacity-100" />
+                                                        </button>
                                                     </div>
                                                 </div>
                                             )
