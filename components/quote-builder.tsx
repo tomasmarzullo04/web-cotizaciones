@@ -26,6 +26,14 @@ import { motion, AnimatePresence } from "framer-motion"
 import { sendQuoteToN8N, updateQuote } from "@/lib/actions"
 import { ClientSelector, ClientData } from "@/components/client-selector"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 
 // Hardcoded fallback rates in case DB fails or during transition
 // Updated Q3 Rates based on User Request
@@ -441,6 +449,10 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
     const [chartCode, setChartCode] = useState(DEFAULT_DIAGRAM)
     const [manualDiagramCode, setManualDiagramCode] = useState<string | null>(null)
     const [isEditingDiagram, setIsEditingDiagram] = useState(false)
+
+    // Suggestion Modal State
+    const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false)
+    const [pendingRecs, setPendingRecs] = useState<any[]>([])
     const [tempDiagramCode, setTempDiagramCode] = useState('')
     const [aiPrompt, setAiPrompt] = useState('')
     const [isAiLoading, setIsAiLoading] = useState(false)
@@ -664,6 +676,51 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         if (sustainScore >= 9) return { label: 'MEDIA', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' }
         return { label: 'BAJA', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' }
     }, [sustainScore])
+
+    const handleApplyRecommendations = () => {
+        pendingRecs.forEach(r => {
+            const roleKey = r.role as RoleKey
+            const roleName = ROLE_CONFIG[roleKey]?.label || roleKey
+            const level = r.seniority
+            // Get price from dbRates or fallback
+            // Use service name for lookup (fix from previous step)
+            const rateObj = dbRates.find(rate => rate.service.toLowerCase() === roleName.toLowerCase() && rate.complexity === level)
+            const price = rateObj ? rateObj.basePrice : 4000
+
+            setState(prev => {
+                const existing = prev.staffingDetails.profiles.find(p => p.role === roleName && p.seniority === level)
+                if (existing) {
+                    const newProfiles = prev.staffingDetails.profiles.map(p =>
+                        (p.role === roleName && p.seniority === level) ? { ...p, count: p.count + 1 } : p
+                    )
+                    return {
+                        ...prev,
+                        roles: { ...prev.roles, [roleKey]: (prev.roles[roleKey] || 0) + 1 },
+                        staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
+                    }
+                } else {
+                    const newProfile = {
+                        id: crypto.randomUUID(),
+                        role: roleName,
+                        seniority: level,
+                        count: 1,
+                        price: price,
+                        skills: r.rationale,
+                        startDate: new Date().toISOString(),
+                        endDate: new Date().toISOString()
+                    }
+                    return {
+                        ...prev,
+                        roles: { ...prev.roles, [roleKey]: (prev.roles[roleKey] || 0) + 1 },
+                        staffingDetails: { ...prev.staffingDetails, profiles: [...prev.staffingDetails.profiles, newProfile] }
+                    }
+                }
+            })
+        })
+        toast.success("Sugerencias aplicadas al equipo.")
+        setIsSuggestionModalOpen(false)
+        setPendingRecs([])
+    }
 
     const handleAiPolish = async () => {
         if (!state.description || readOnly) return
@@ -2316,47 +2373,8 @@ graph TD
                                         return
                                     }
 
-                                    if (confirm(`Recomendamos los siguientes perfiles:\n${recs.map(r => `• ${ROLE_CONFIG[r.role as keyof typeof ROLE_CONFIG]?.label || r.role.replace(/_/g, ' ').toUpperCase()} (${r.seniority})`).join('\n')}\n\n¿Deseas agregarlos al equipo?`)) {
-                                        recs.forEach(r => {
-                                            const roleKey = r.role as RoleKey
-                                            const roleName = ROLE_CONFIG[roleKey]?.label || roleKey
-                                            const level = r.seniority
-                                            // Get price from dbRates or fallback
-                                            const rateObj = dbRates.find(rate => rate.service.toLowerCase() === roleName.toLowerCase() && rate.complexity === level)
-                                            const price = rateObj ? rateObj.basePrice : 4000
-
-                                            setState(prev => {
-                                                const existing = prev.staffingDetails.profiles.find(p => p.role === roleName && p.seniority === level)
-                                                if (existing) {
-                                                    const newProfiles = prev.staffingDetails.profiles.map(p =>
-                                                        (p.role === roleName && p.seniority === level) ? { ...p, count: p.count + 1 } : p
-                                                    )
-                                                    return {
-                                                        ...prev,
-                                                        roles: { ...prev.roles, [roleKey]: (prev.roles[roleKey] || 0) + 1 },
-                                                        staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
-                                                    }
-                                                } else {
-                                                    const newProfile = {
-                                                        id: crypto.randomUUID(),
-                                                        role: roleName,
-                                                        seniority: level,
-                                                        count: 1,
-                                                        price: price,
-                                                        skills: r.rationale,
-                                                        startDate: new Date().toISOString(),
-                                                        endDate: new Date().toISOString()
-                                                    }
-                                                    return {
-                                                        ...prev,
-                                                        roles: { ...prev.roles, [roleKey]: (prev.roles[roleKey] || 0) + 1 },
-                                                        staffingDetails: { ...prev.staffingDetails, profiles: [...prev.staffingDetails.profiles, newProfile] }
-                                                    }
-                                                }
-                                            })
-                                        })
-                                        toast.success("Sugerencias aplicadas al equipo.")
-                                    }
+                                    setPendingRecs(recs)
+                                    setIsSuggestionModalOpen(true)
                                 }}
                                 className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold rounded-xl"
                             >
@@ -3025,6 +3043,63 @@ graph TD
                         </div>
                     </div>
                 </div>
+
+                {/* Suggestion Modal */}
+                <Dialog open={isSuggestionModalOpen} onOpenChange={setIsSuggestionModalOpen}>
+                    <DialogContent className="bg-[#1E1E1E] border border-[#333533] text-[#E8EDDF] sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle className="text-[#F5CB5C] flex items-center gap-2">
+                                <Sparkles className="w-5 h-5" />
+                                Sugerencia de Perfiles
+                            </DialogTitle>
+                            <DialogDescription className="text-[#CFDBD5]">
+                                Basado en tu stack tecnológico, recomendamos agregar los siguientes perfiles a tu equipo:
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="space-y-3 my-4">
+                            {pendingRecs.map((rec, idx) => (
+                                <div key={idx} className="flex items-start gap-3 p-3 bg-[#242423] rounded-lg border border-[#333533]">
+                                    <div className="p-2 bg-[#F5CB5C]/10 rounded-lg shrink-0">
+                                        <Users className="w-4 h-4 text-[#F5CB5C]" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-sm text-[#E8EDDF]">
+                                            {ROLE_CONFIG[rec.role as keyof typeof ROLE_CONFIG]?.label || rec.role}
+                                        </p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-[10px] bg-[#333533] px-1.5 py-0.5 rounded text-[#CFDBD5] font-bold uppercase">
+                                                {rec.seniority}
+                                            </span>
+                                            <span className="text-[10px] text-[#CFDBD5]/60 italic">
+                                                {rec.rationale}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <DialogFooter className="gap-2 sm:gap-0">
+                            <Button
+                                variant="ghost"
+                                onClick={() => {
+                                    setIsSuggestionModalOpen(false)
+                                    setPendingRecs([])
+                                }}
+                                className="text-[#CFDBD5] hover:text-[#E8EDDF] hover:bg-[#333533]"
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                onClick={handleApplyRecommendations}
+                                className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold"
+                            >
+                                Aceptar y Agregar
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
 
             </div >
         </motion.div >
