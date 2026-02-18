@@ -29,6 +29,7 @@ async function main() {
         { email: 'liliana@thestoreintelligence.com', name: 'Liliana', pass: 'liliana2026' },
         { email: 'loudal@thestoreintelligence.com', name: 'Loudal', pass: 'loudal2026' },
         { email: 'ktellez@thestoreintelligence.com', name: 'Ktellez', pass: 'ktellez2026' },
+        { email: 'alovera@thestoreintelligence.com', name: 'Alovera', pass: 'alovera2026' },
     ]
 
     for (const c of consultors) {
