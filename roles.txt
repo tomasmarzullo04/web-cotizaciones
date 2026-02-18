@@ -23,6 +23,11 @@ Roles
     - ktellez@thestoreintelligence.com
     - ktellez2026
 
+    - alovera@thestoreintelligence.com
+    - alovera2026
+
+    
+
     
 
     
