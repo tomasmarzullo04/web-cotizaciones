@@ -814,7 +814,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         }
 
         // --- 3. Totals & Overhead ---
-        const l2SupportCost = (baseRoles + baseServices) * 0.10
+        const l2SupportCost = state.serviceType === 'Staffing' ? 0 : (baseRoles + baseServices) * 0.10
         const subTotal = baseRoles + baseServices + l2SupportCost
 
         // Risk (Criticality) - Sustain Only

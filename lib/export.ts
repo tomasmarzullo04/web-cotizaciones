@@ -473,7 +473,7 @@ function createPDFDocument(data: QuoteState & {
         })
     }
 
-    if (data.l2SupportCost > 0) drawRow("Soporte L2", "10%", fmt(data.l2SupportCost), fmt(data.l2SupportCost * data.durationMonths))
+    if (data.serviceType !== 'Staffing' && data.l2SupportCost > 0) drawRow("Soporte L2", "10%", fmt(data.l2SupportCost), fmt(data.l2SupportCost * data.durationMonths))
     if (data.riskCost > 0) drawRow("Fee de Gestión y Riesgo", `${((data.criticitnessLevel?.margin || 0) * 100).toFixed(0)}%`, fmt(data.riskCost), fmt(data.riskCost * data.durationMonths))
     if (data.discountAmount > 0) drawRow("Descuento Comercial", `${data.commercialDiscount || 0}%`, `-${fmt(data.discountAmount)}`, `-${fmt(data.discountAmount * data.durationMonths)}`)
 
@@ -797,7 +797,9 @@ function createPDFDocument(data: QuoteState & {
         "Propuesta Válida durante 30 días desde su emisión.",
         "Proyecto a iniciar con Orden de Compra formal.",
         "Costos tasados según acuerdo regional Store Intelligence.",
-        "Sustain no se incluye en espera que el requerimiento no evolucione.",
+        data.serviceType === 'Staffing'
+            ? "Asignación de talento sujeta a disponibilidad y confirmación de perfiles."
+            : "Sustain no se incluye en espera que el requerimiento no evolucione.",
         "Desarrollos adicionales serán cotizados por separado.",
         "Entregables propiedad de Nestlé finalizado el proyecto.",
         "Sprints de Pago acordados al inicio del proyecto.",
