@@ -72,6 +72,7 @@ model Client {
   userId      String    // Required for strict ownership
   user        User      @relation(fields: [userId], references: [id])
   clientLogoUrl String? @map("client_logo_url")
+  quotes      Quote[] // Relation to Quotes
 }
 
 model Contact {
