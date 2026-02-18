@@ -2278,83 +2278,91 @@ graph TD
                     {/* 4. TEAM (Dynamic Selection) */}
                     {/* 3. STAFFING (Reordered to Step 03 for Staffing) */}
                     <SectionCard number={getSectionNumber('staffing')} title={state.serviceType === 'Staffing' ? "Selección de Perfiles" : "Equipo Requerido"} icon={Briefcase}>
-                        {state.serviceType === 'Staffing' && (
-                            <div className="mb-8 p-4 bg-[#F5CB5C]/5 border border-[#F5CB5C]/20 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-[#F5CB5C]/10 rounded-lg">
-                                        <Sparkles className="w-5 h-5 text-[#F5CB5C]" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[#E8EDDF] font-bold text-sm">¿Deseas ayuda con la selección?</p>
-                                        <p className="text-[#CFDBD5] text-xs">Podemos recomendarte perfiles basados en tu stack tecnológico.</p>
-                                    </div>
+                        <div className="mb-8 p-4 bg-[#F5CB5C]/5 border border-[#F5CB5C]/20 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-[#F5CB5C]/10 rounded-lg">
+                                    <Sparkles className="w-5 h-5 text-[#F5CB5C]" />
                                 </div>
-                                <Button
-                                    onClick={() => {
-                                        // Simplified Logic: Get unique recommendations based on tech stack
-                                        const recs: any[] = []
-                                        state.techStack.forEach(t => {
-                                            if (RECOMENDACIONES_MAPPING[t]) {
-                                                RECOMENDACIONES_MAPPING[t].forEach(r => {
-                                                    if (!recs.find(existing => existing.role === r.role && existing.seniority === r.seniority)) {
-                                                        recs.push(r)
-                                                    }
-                                                })
-                                            }
-                                        })
-
-                                        if (recs.length === 0) {
-                                            toast.error("Selecciona tecnologías en el paso anterior para obtener recomendaciones.")
-                                            return
-                                        }
-
-                                        if (confirm(`Recomendamos los siguientes perfiles:\n${recs.map(r => `• ${r.role.replace(/_/g, ' ').toUpperCase()} (${r.seniority})`).join('\n')}\n\n¿Deseas agregarlos al equipo?`)) {
-                                            recs.forEach(r => {
-                                                // Trigger logic similar to manual selection but for each rec
-                                                const roleKey = r.role as RoleKey
-                                                const level = r.seniority
-                                                const price = ROLE_CONFIG[roleKey]?.defaultPrice || 4000
-                                                const roleName = ROLE_CONFIG[roleKey]?.label || roleKey
-
-                                                setState(prev => {
-                                                    const existing = prev.staffingDetails.profiles.find(p => p.role === roleName && p.seniority === level)
-                                                    if (existing) {
-                                                        const newProfiles = prev.staffingDetails.profiles.map(p =>
-                                                            (p.role === roleName && p.seniority === level) ? { ...p, count: p.count + 1 } : p
-                                                        )
-                                                        return {
-                                                            ...prev,
-                                                            roles: { ...prev.roles, [roleKey]: (prev.roles[roleKey] || 0) + 1 },
-                                                            staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
-                                                        }
-                                                    } else {
-                                                        const newProfile = {
-                                                            id: crypto.randomUUID(),
-                                                            role: roleName,
-                                                            seniority: level,
-                                                            count: 1,
-                                                            price: price,
-                                                            skills: r.rationale,
-                                                            startDate: new Date().toISOString(),
-                                                            endDate: new Date().toISOString()
-                                                        }
-                                                        return {
-                                                            ...prev,
-                                                            roles: { ...prev.roles, [roleKey]: (prev.roles[roleKey] || 0) + 1 },
-                                                            staffingDetails: { ...prev.staffingDetails, profiles: [...prev.staffingDetails.profiles, newProfile] }
-                                                        }
-                                                    }
-                                                })
-                                            })
-                                            toast.success("Sugerencias aplicadas al equipo.")
-                                        }
-                                    }}
-                                    className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold rounded-xl"
-                                >
-                                    Sugerencia Automática
-                                </Button>
+                                <div>
+                                    <p className="text-[#E8EDDF] font-bold text-sm">¿Deseas ayuda con la selección?</p>
+                                    <p className="text-[#CFDBD5] text-xs">Podemos recomendarte perfiles basados en tu stack tecnológico.</p>
+                                </div>
                             </div>
-                        )}
+                            <Button
+                                onClick={() => {
+                                    // Logic: Get unique recommendations based on tech stack
+                                    const activeTechStack = state.serviceType === 'Sustain'
+                                        ? state.sustainDetails.techStack
+                                        : state.techStack;
+
+                                    if (!activeTechStack || activeTechStack.length === 0) {
+                                        toast.error("Selecciona tecnologías en el paso anterior para obtener recomendaciones.")
+                                        return
+                                    }
+
+                                    const recs: any[] = []
+                                    activeTechStack.forEach(t => {
+                                        if (RECOMENDACIONES_MAPPING[t]) {
+                                            RECOMENDACIONES_MAPPING[t].forEach(r => {
+                                                if (!recs.find(existing => existing.role === r.role && existing.seniority === r.seniority)) {
+                                                    recs.push(r)
+                                                }
+                                            })
+                                        }
+                                    })
+
+                                    if (recs.length === 0) {
+                                        toast.error("No se encontraron recomendaciones para el stack actual.")
+                                        return
+                                    }
+
+                                    if (confirm(`Recomendamos los siguientes perfiles:\n${recs.map(r => `• ${ROLE_CONFIG[r.role as keyof typeof ROLE_CONFIG]?.label || r.role.replace(/_/g, ' ').toUpperCase()} (${r.seniority})`).join('\n')}\n\n¿Deseas agregarlos al equipo?`)) {
+                                        recs.forEach(r => {
+                                            const roleKey = r.role as RoleKey
+                                            const level = r.seniority
+                                            // Get price from dbRates or fallback
+                                            const rateObj = dbRates.find(rate => rate.roleKey === roleKey && rate.complexity === level)
+                                            const price = rateObj ? rateObj.basePrice : 4000
+                                            const roleName = ROLE_CONFIG[roleKey]?.label || roleKey
+
+                                            setState(prev => {
+                                                const existing = prev.staffingDetails.profiles.find(p => p.role === roleName && p.seniority === level)
+                                                if (existing) {
+                                                    const newProfiles = prev.staffingDetails.profiles.map(p =>
+                                                        (p.role === roleName && p.seniority === level) ? { ...p, count: p.count + 1 } : p
+                                                    )
+                                                    return {
+                                                        ...prev,
+                                                        roles: { ...prev.roles, [roleKey]: (prev.roles[roleKey] || 0) + 1 },
+                                                        staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
+                                                    }
+                                                } else {
+                                                    const newProfile = {
+                                                        id: crypto.randomUUID(),
+                                                        role: roleName,
+                                                        seniority: level,
+                                                        count: 1,
+                                                        price: price,
+                                                        skills: r.rationale,
+                                                        startDate: new Date().toISOString(),
+                                                        endDate: new Date().toISOString()
+                                                    }
+                                                    return {
+                                                        ...prev,
+                                                        roles: { ...prev.roles, [roleKey]: (prev.roles[roleKey] || 0) + 1 },
+                                                        staffingDetails: { ...prev.staffingDetails, profiles: [...prev.staffingDetails.profiles, newProfile] }
+                                                    }
+                                                }
+                                            })
+                                        })
+                                        toast.success("Sugerencias aplicadas al equipo.")
+                                    }
+                                }}
+                                className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold rounded-xl"
+                            >
+                                Sugerencia Automática
+                            </Button>
+                        </div>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {/* LEFT: Available Roles */}
                             <div className="space-y-4">
