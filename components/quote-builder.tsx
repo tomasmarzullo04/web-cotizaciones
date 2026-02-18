@@ -2319,11 +2319,11 @@ graph TD
                                     if (confirm(`Recomendamos los siguientes perfiles:\n${recs.map(r => `• ${ROLE_CONFIG[r.role as keyof typeof ROLE_CONFIG]?.label || r.role.replace(/_/g, ' ').toUpperCase()} (${r.seniority})`).join('\n')}\n\n¿Deseas agregarlos al equipo?`)) {
                                         recs.forEach(r => {
                                             const roleKey = r.role as RoleKey
+                                            const roleName = ROLE_CONFIG[roleKey]?.label || roleKey
                                             const level = r.seniority
                                             // Get price from dbRates or fallback
-                                            const rateObj = dbRates.find(rate => rate.roleKey === roleKey && rate.complexity === level)
+                                            const rateObj = dbRates.find(rate => rate.service.toLowerCase() === roleName.toLowerCase() && rate.complexity === level)
                                             const price = rateObj ? rateObj.basePrice : 4000
-                                            const roleName = ROLE_CONFIG[roleKey]?.label || roleKey
 
                                             setState(prev => {
                                                 const existing = prev.staffingDetails.profiles.find(p => p.role === roleName && p.seniority === level)
