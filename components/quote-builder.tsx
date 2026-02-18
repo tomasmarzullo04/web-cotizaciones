@@ -419,6 +419,39 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         toast.success(`${role.label} agregado`)
     }
 
+    const handleUpdateProfileCount = (index: number, newCount: number) => {
+        // Allow 0.5 minimum step
+        if (newCount < 0.5) return
+
+        setState(prev => {
+            const profile = prev.staffingDetails.profiles[index]
+            const roleKey = Object.keys(ROLE_CONFIG).find(key => ROLE_CONFIG[key as RoleKey].label === profile.role) as RoleKey
+
+            // Calculate delta for roles summary
+            // Note: roles summary tracks integers usually, but for staffing cost it should just track sum
+            // Let's ensure roles[roleKey] tracks the sum of counts for that role
+            const currentCount = profile.count || 0
+            const delta = newCount - currentCount
+
+            const newRoles = {
+                ...prev.roles,
+                [roleKey]: Math.max(0, (prev.roles[roleKey] || 0) + delta)
+            }
+
+            const newProfiles = [...prev.staffingDetails.profiles]
+            newProfiles[index] = { ...newProfiles[index], count: newCount }
+
+            return {
+                ...prev,
+                roles: newRoles,
+                staffingDetails: {
+                    ...prev.staffingDetails,
+                    profiles: newProfiles
+                }
+            }
+        })
+    }
+
     // ... (rest of state) ... 
 
     // --- Dynamic Step Numbering ---
@@ -2519,11 +2552,30 @@ graph TD
                                                     {/* RIGHT: Quantity + Price + Trash */}
                                                     <div className="flex items-center gap-6 shrink-0">
                                                         {/* Quantity: Plain Text */}
-                                                        <div className="flex flex-col items-center">
-                                                            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">CANTIDAD</span>
-                                                            <span className="text-[#F5CB5C] font-bold text-sm">
-                                                                CANT: {profile.count}
-                                                            </span>
+                                                        <div className="flex flex-col items-center gap-1">
+                                                            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">CANTIDAD</span>
+                                                            <div className="flex items-center bg-[#1E1E1E] rounded-lg border border-[#333533]">
+                                                                <button
+                                                                    onClick={() => handleUpdateProfileCount(idx, (profile.count || 1) - 0.5)}
+                                                                    className="px-2 py-1 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-[#333533] rounded-l-lg transition-colors"
+                                                                >
+                                                                    -
+                                                                </button>
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.5"
+                                                                    min="0.5"
+                                                                    className="w-12 text-center bg-transparent text-[#F5CB5C] font-bold text-sm focus:outline-none border-x border-[#333533]"
+                                                                    value={profile.count || 1}
+                                                                    onChange={(e) => handleUpdateProfileCount(idx, parseFloat(e.target.value) || 0.5)}
+                                                                />
+                                                                <button
+                                                                    onClick={() => handleUpdateProfileCount(idx, (profile.count || 1) + 0.5)}
+                                                                    className="px-2 py-1 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-[#333533] rounded-r-lg transition-colors"
+                                                                >
+                                                                    +
+                                                                </button>
+                                                            </div>
                                                         </div>
 
                                                         {/* Price */}
