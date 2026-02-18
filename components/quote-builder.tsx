@@ -973,7 +973,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     usersCount: state.usersCount,
                     pipelinesCount: state.pipelinesCount,
                     databricksUsage: state.techStack.includes('databricks') ? 'high' : 'none',
-                    criticality: state.criticitness.enabled ? 'high' : 'low',
+                    criticality: 'low',
                     dataVolume: 'GB',
                     sourceSystemsCount: 1,
                     securityCompliance: 'standard',
@@ -1105,14 +1105,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             techStack: [],
             dsModelsCount: 0,
             dashboardsCount: 0,
-            criticitness: {
-                enabled: false,
-                level: 'low',
-                impactOperative: 'low',
-                impactFinancial: 'low',
-                dataExposure: 'internal',
-                countriesCount: 1
-            },
+            // criticitness REMOVED
             serviceType: 'Proyecto', // Reset to default
             durationValue: 6,
             durationUnit: 'months',
