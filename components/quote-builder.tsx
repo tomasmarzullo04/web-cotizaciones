@@ -2637,7 +2637,7 @@ graph TD
                                                         {/* Price (Yellow) */}
                                                         <div className="text-right w-[70px]">
                                                             <div className="text-[#F5CB5C] font-mono font-bold text-sm leading-none tabular-nums">
-                                                                ${finalPrice.toLocaleString('en-US', { disableGrouping: true }).split('.')[0]}
+                                                                ${finalPrice.toLocaleString('en-US', { useGrouping: false }).split('.')[0]}
                                                             </div>
                                                             <div className="text-[8px] text-zinc-600 font-bold uppercase tracking-wider mt-0.5 opacity-50">
                                                                 {periodLabel === 'ANUAL' ? 'AÑO' : 'MES'}
