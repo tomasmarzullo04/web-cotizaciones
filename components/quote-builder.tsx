@@ -245,6 +245,7 @@ const INITIAL_STATE: QuoteState = {
     usersCount: 0,
     isFinancialOrSales: false,
     reportsCount: 0,
+    reportUsers: 0,
     contactId: undefined, // NEW
 
     techStack: [],
