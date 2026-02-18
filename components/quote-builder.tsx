@@ -105,15 +105,7 @@ interface QuoteState {
     dsModelsCount: number
     dashboardsCount: number
 
-    // 7. Criticitness
-    criticitness: {
-        enabled: boolean
-        level: 'low' | 'medium' | 'high'
-        impactOperative: 'low' | 'medium' | 'high'
-        impactFinancial: 'low' | 'medium' | 'high'
-        dataExposure: 'internal' | 'partners' | 'public'
-        countriesCount: number
-    }
+    // 7. Criticitness REMOVED
 
     // New Service Type
     serviceType: 'Proyecto' | 'Staffing' | 'Sustain'
@@ -243,14 +235,7 @@ const INITIAL_STATE: QuoteState = {
 
     dsModelsCount: 0,
     dashboardsCount: 0,
-    criticitness: {
-        enabled: false,
-        level: 'low',
-        impactOperative: 'low',
-        impactFinancial: 'low',
-        dataExposure: 'internal',
-        countriesCount: 1
-    },
+    // criticitness REMOVED
     durationValue: 6,
     durationUnit: 'months',
     supportHours: 'business',
@@ -390,7 +375,6 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         sequence.push('staffing')
         if (state.serviceType !== 'Sustain') {
             sequence.push('tech')
-            sequence.push('criticitness')
         }
         sequence.push('commercial')
 
@@ -530,7 +514,6 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                 // Ensure Explicit Profile Array from snapshot if needed? 
                 // Using params.staffingDetails should be enough as it comes from JSON.
                 sustainDetails: params?.sustainDetails || prev.sustainDetails,
-                criticitness: params?.criticitness || prev.criticitness,
                 clientContact: params?.clientContact || prev.clientContact,
             }))
 
@@ -556,9 +539,6 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
 
     const handleStepSelection = (type: 'Proyecto' | 'Staffing' | 'Sustain') => {
         updateState('serviceType', type)
-        if (type === 'Sustain') {
-            updateCriticitness('enabled', true)
-        }
         setWizardStep(1)
     }
 
@@ -641,13 +621,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         return durationValue
     }, [state.durationValue, state.durationUnit])
 
-    const updateCriticitness = <K extends keyof QuoteState['criticitness']>(key: K, val: QuoteState['criticitness'][K]) => {
-        if (readOnly) return // BLOCK EDITING
-        setState(prev => ({
-            ...prev,
-            criticitness: { ...prev.criticitness, [key]: val }
-        }))
-    }
+    // updateCriticitness REMOVED
 
     const toggleTech = (id: string) => {
         if (readOnly) return // BLOCK EDITING
@@ -663,29 +637,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
     }
 
     // --- BUSINESS LOGIC ---
-    const criticitnessScore = useMemo(() => {
-        if (!state.criticitness.enabled) return 0
-        let score = 0
-        if (state.criticitness.impactOperative === 'high') score += 5
-        else if (state.criticitness.impactOperative === 'medium') score += 3
-        else score += 1
-        if (state.criticitness.impactFinancial === 'high') score += 5
-        else if (state.criticitness.impactFinancial === 'medium') score += 3
-        else score += 1
-        if (state.criticitness.countriesCount > 3) score += 5
-        else if (state.criticitness.countriesCount > 1) score += 2
-        else score += 1
-        if (state.reportUsers > 100) score += 5
-        else if (state.reportUsers > 10) score += 3
-        else score += 1
-        return score
-    }, [state.criticitness, state.reportUsers])
-
-    const criticitnessLevel = useMemo(() => {
-        if (criticitnessScore >= 15) return { label: 'ALTA', margin: 0.20, color: 'text-red-400' }
-        if (criticitnessScore >= 9) return { label: 'MEDIA', margin: 0.10, color: 'text-yellow-400' }
-        return { label: 'BAJA', margin: 0.0, color: 'text-[#F5CB5C]' }
-    }, [criticitnessScore])
+    // criticitnessScore and criticitnessLevel REMOVED
 
     // --- SUSTAIN LOGIC ---
     const sustainScore = useMemo(() => {
@@ -706,7 +658,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         // Simulate AI delay
         await new Promise(r => setTimeout(r, 1500))
         updateState('description',
-            `PROYECTO: ${state.clientName || 'Empresa'}\n\nOBJETIVO ESTRATÉGICO:\n${state.description}\n\nARQUITECTURA PROPUESTA:\nImplementaciÃ³n de un ecosistema de datos moderno basado en ${state.techStack.join(', ') || 'Azure/AWS'}. Se diseñarán ${state.pipelinesCount} pipelines de ingesta resilientes y se desplegarán ${state.dashboardsCount + state.reportsCount} activos de visualización para soportar la toma de decisiones.\n\nALCANCE:\n- Ingesta: ${state.updateFrequency} (${state.manualProcessPct}% manual actual)\n- Consumo: ${state.reportUsers} usuarios finales\n- Seguridad: ${state.criticitness.enabled ? 'Alta Criticidad (Audit Logs + RLS)' : 'Estándar'}`)
+            `PROYECTO: ${state.clientName || 'Empresa'}\n\nOBJETIVO ESTRATÉGICO:\n${state.description}\n\nARQUITECTURA PROPUESTA:\nImplementaciÃ³n de un ecosistema de datos moderno basado en ${state.techStack.join(', ') || 'Azure/AWS'}. Se diseñarán ${state.pipelinesCount} pipelines de ingesta resilientes y se desplegarán ${state.dashboardsCount + state.reportsCount} activos de visualización para soportar la toma de decisiones.\n\nALCANCE:\n- Ingesta: ${state.updateFrequency} (${state.manualProcessPct}% manual actual)\n- Consumo: ${state.reportUsers} usuarios finales`)
         setPolishLoading(false)
     }
 
@@ -865,17 +817,14 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         const l2SupportCost = (baseRoles + baseServices) * 0.10
         const subTotal = baseRoles + baseServices + l2SupportCost
 
-        // Risk (Criticality)
+        // Risk (Criticality) - Sustain Only
         let riskMargin = 0
         if (state.serviceType === 'Sustain') {
             if (sustainLevel.label === 'ALTA') riskMargin = 0.20
             else if (sustainLevel.label === 'MEDIA') riskMargin = 0.10
-        } else if (state.criticitness.enabled) {
-            riskMargin = criticitnessLevel.margin
         }
 
         const riskVal = subTotal * riskMargin
-
         const preDiscountTotal = subTotal + riskVal
 
         // --- 4. Commercial Discount (on Subtotal + Risk) ---
@@ -898,7 +847,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             finalTotal: netTotal, // Renaming used variable to match semantic "Final to Pay"
             totalMonthlyCost: netTotal
         }
-    }, [state, dbRates, criticitnessLevel, findDynamicRate, sustainLevel, readOnly, frozenRates]) // ADDED DEPENDENCIES
+    }, [state, dbRates, findDynamicRate, sustainLevel, readOnly, frozenRates])
 
     const durationInMonths = getDurationInMonths()
     const totalProjectCost = finalTotal * durationInMonths
@@ -977,7 +926,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     l2SupportCost: l2SupportCostVal,
                     riskCost: riskCostVal,
                     totalWithRisk: totalWithRiskVal,
-                    criticitnessLevel: criticitnessLevel as any,
+                    criticitnessLevel: { label: state.serviceType === 'Sustain' ? sustainLevel.label : 'N/A', margin: 0 },
                     diagramImage: diagramDataUrl,
                     serviceType: state.serviceType,
                     commercialDiscount: state.commercialDiscount,
@@ -1280,7 +1229,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     l2SupportCost,
                     riskCost,
                     totalWithRisk,
-                    criticitnessLevel,
+                    criticitnessLevel: { label: state.serviceType === 'Sustain' ? sustainLevel.label : 'N/A', margin: 0 },
                     diagramImage: diagramDataUrl,
                     serviceType: state.serviceType,
                     commercialDiscount: state.commercialDiscount,
@@ -1301,7 +1250,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     l2SupportCost,
                     riskCost,
                     totalWithRisk,
-                    criticitnessLevel,
+                    criticitnessLevel: { label: state.serviceType === 'Sustain' ? sustainLevel.label : 'N/A', margin: 0 },
                     diagramImage: diagramDataUrl,
                     serviceType: state.serviceType,
                     commercialDiscount: state.commercialDiscount,
@@ -2563,120 +2512,7 @@ graph TD
 
                     {/* 6. CRITICITNESS */}
                     {/* 6. CRITICITNESS (Upgraded v2) */}
-                    {/* 6. CRITICITNESS (Fixed) - Hidden for Sustain (now in Scorecard) */}
-                    {state.serviceType !== 'Sustain' && (
-                        <SectionCard number={getSectionNumber('criticitness')} title="Evaluación de Criticidad" icon={ShieldAlert}>
-                            <div className="flex items-center justify-between mb-8">
-                                <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-[#333533] rounded-xl border border-[#4A4D4A]">
-                                        <ShieldAlert className="w-6 h-6 text-[#F5CB5C]" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[#E8EDDF] font-bold">Análisis de Riesgo y SLA</p>
-                                        <p className="text-sm text-[#CFDBD5]">Calculadora de márgenes operativos</p>
-                                    </div>
-                                </div>
-                                <Switch checked={state.criticitness.enabled} onCheckedChange={v => updateCriticitness('enabled', v)} className="data-[state=checked]:bg-[#F5CB5C]" />
-                            </div>
-
-                            {/* Predictive Logic Alert (Only if enabled and update frequency/complexity mismatch) */}
-                            {(state.criticitness.enabled && state.complexity === 'high' && (state.updateFrequency === 'weekly' || state.updateFrequency === 'realtime') && state.supportHours !== '24/7') && (
-                                <div className="bg-orange-900/20 border border-orange-500/30 rounded-2xl p-4 flex items-start gap-4 mb-6">
-                                    <AlertTriangle className="w-6 h-6 text-orange-400 shrink-0 mt-1" />
-                                    <div>
-                                        <h4 className="text-orange-300 font-bold text-sm">Nivel de Criticidad Elevado</h4>
-                                        <p className="text-xs text-orange-200/70 mt-1">
-                                            La combinación de complejidad <strong>Alta</strong> y frecuencia <strong>{state.updateFrequency}</strong> sugiere un esquema de soporte <strong>24/7</strong>.
-                                        </p>
-                                        <Button
-                                            variant="link"
-                                            className="text-orange-400 p-0 h-auto text-xs mt-2 underline"
-                                            onClick={() => updateState('supportHours', '24/7')}
-                                        >
-                                            Actualizar a Soporte 24/7
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Conditional Criticality Inputs */}
-                            {state.criticitness.enabled && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
-
-                                    {/* Score Display (Moved inside for context) */}
-                                    <div className="relative z-10 flex flex-col md:flex-row gap-4 items-center bg-[#F5CB5C]/5 p-4 rounded-2xl border border-[#F5CB5C]/20 w-full">
-                                        <div className="flex-1">
-                                            <span className="text-xs font-bold text-[#CFDBD5] uppercase tracking-widest flex items-center gap-2">
-                                                <Activity className="w-4 h-4 text-[#F5CB5C]" /> Score de Riesgo Calculado
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className="text-4xl font-black text-[#E8EDDF] flex items-baseline gap-2">
-                                                {criticitnessScore}
-                                                <span className="text-lg text-[#7C7F7C] font-normal">/100</span>
-                                            </div>
-                                            <div className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-full border w-fit text-sm font-bold", criticitnessLevel.color)}>
-                                                <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
-                                                {criticitnessLevel.label}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <Label className="text-[#CFDBD5] mb-2 block">Nivel de Soporte</Label>
-                                            <Select value={state.supportHours} onValueChange={(v: any) => updateState('supportHours', v)}>
-                                                <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
-                                                <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                    <SelectItem value="business">Business (9-18h)</SelectItem>
-                                                    <SelectItem value="24/7">24/7 Critical</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div>
-                                            <Label className="text-[#CFDBD5] mb-2 block">Impacto Operativo</Label>
-                                            <Select value={state.criticitness.impactOperative} onValueChange={(v: any) => updateCriticitness('impactOperative', v)}>
-                                                <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
-                                                <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                    <SelectItem value="low">Bajo (Interno)</SelectItem>
-                                                    <SelectItem value="medium">Medio (Departamental)</SelectItem>
-                                                    <SelectItem value="high">Alto (Core Business)</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <Label className="text-[#CFDBD5] mb-2 block">Exposición de Datos</Label>
-                                            <Select value={state.criticitness.dataExposure} onValueChange={(v: any) => updateCriticitness('dataExposure', v)}>
-                                                <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
-                                                <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                    <SelectItem value="internal">Interna</SelectItem>
-                                                    <SelectItem value="partners">Partners / Clientes</SelectItem>
-                                                    <SelectItem value="public">Pública / Regulatoria</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div>
-                                            <Label className="text-[#CFDBD5] mb-2 block">Impacto Financiero</Label>
-                                            <Select value={state.criticitness.impactFinancial} onValueChange={(v: any) => updateCriticitness('impactFinancial', v)}>
-                                                <SelectTrigger className="bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] h-12 rounded-xl"><SelectValue /></SelectTrigger>
-                                                <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                    <SelectItem value="low">Bajo ({'<'} 10k USD)</SelectItem>
-                                                    <SelectItem value="medium">Medio (10k - 100k USD)</SelectItem>
-                                                    <SelectItem value="high">Alto ({'>'} 100k USD)</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </div>
-                                    <div className="col-span-1 md:col-span-2">
-                                        <CountInput label="Países Involucrados" value={state.criticitness.countriesCount} onChange={(v: number) => updateCriticitness('countriesCount', v)} min={1} />
-                                    </div>
-                                </div>
-                            )}
-                        </SectionCard>
-                    )}
+                    {/* 6. CRITICITNESS (REMOVED) */}
 
                     {/* 7. COMMERCIAL DATA & RETENTION */}
                     <SectionCard number={getSectionNumber('commercial')} title="Datos Comercial & Retenciones" icon={Users}>
@@ -2875,12 +2711,7 @@ graph TD
                             <span className="font-mono text-xl">+ {formatMoney(l2SupportCost * durationInMonths)}</span>
                         </div>
                     )}
-                    {state.criticitness.enabled && (
-                        <div className="flex justify-between items-center text-orange-400 bg-orange-900/10 p-3 rounded-xl -mx-2 border border-orange-500/20">
-                            <span className="text-xs font-bold">RIESGO ({criticitnessLevel.label})</span>
-                            <span className="font-mono text-xl">+ {formatMoney(riskCost * durationInMonths)}</span>
-                        </div>
-                    )}
+                    {/* RIESGO (REMOVED) */}
                     <Separator className="bg-[#4A4D4A]" />
 
                     {/* Commercial Discount Input */}
@@ -2933,12 +2764,7 @@ graph TD
                         </div>
                     )}
 
-                    {state.retention.enabled && (
-                        <div className="flex justify-between items-center text-[#F5CB5C]/70 border-t border-[#4A4D4A]/50 pt-2">
-                            <span>Retención ({state.retention.percentage}%) {viewMode === 'annual' ? 'Anual' : 'Mensual'}</span>
-                            <span className="font-mono">- {formatMoney(viewMode === 'annual' ? retentionAmount * 12 : retentionAmount)}</span>
-                        </div>
-                    )}
+                    {/* RETENCION REMOVED IF EMPTY */}
 
                     <Separator className="bg-[#4A4D4A]" />
                     <div className="space-y-1">
