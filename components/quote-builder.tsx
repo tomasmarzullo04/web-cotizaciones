@@ -2621,17 +2621,12 @@ graph TD
                                                     {/* RIGHT: Quantity + Price + Trash */}
                                                     <div className="flex items-center gap-4 shrink-0">
 
-                                                        {/* CANT: [N] */}
-                                                        <div className="flex items-center gap-1.5 bg-[#1E1E1E] px-2 py-1 rounded-md border border-[#333533]/50">
-                                                            <span className="text-[9px] text-zinc-500 font-bold tracking-wider">CANT:</span>
-                                                            <input
-                                                                type="number"
-                                                                step="0.5"
-                                                                min="0"
-                                                                className="w-8 text-center bg-transparent text-[#E8EDDF] font-bold text-xs focus:outline-none focus:text-[#F5CB5C] transition-colors appearance-none"
-                                                                value={profile.count || 0}
-                                                                onChange={(e) => handleUpdateProfileCount(idx, parseFloat(e.target.value) || 0)}
-                                                            />
+                                                        {/* CANT: [N] Text Only */}
+                                                        <div className="flex items-center">
+                                                            <span className="text-[10px] text-zinc-500 font-bold tracking-wider mr-1">CANT:</span>
+                                                            <span className="text-[#E8EDDF] font-bold text-sm tabular-nums">
+                                                                {profile.count}
+                                                            </span>
                                                         </div>
 
                                                         {/* Price (Yellow) */}
