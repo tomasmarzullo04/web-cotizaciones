@@ -359,6 +359,43 @@ export async function createClient(data: {
     }
 }
 
+export async function addContactToClient(clientId: string, contact: { name: string, role: string, email: string }) {
+    const cookieStore = await cookies()
+    const userId = cookieStore.get('session_user_id')?.value
+
+    if (!userId) {
+        return { success: false, error: "Sesión expirada" }
+    }
+
+    try {
+        const newContact = await prisma.contact.create({
+            data: {
+                name: contact.name,
+                role: contact.role,
+                email: contact.email,
+                clientId: clientId
+            }
+        })
+        revalidatePath('/admin') // Ensure admin views update
+        return { success: true, contact: newContact }
+    } catch (e: any) {
+        console.error("Add Contact Failed", e)
+        return { success: false, error: e.message }
+    }
+}
+
+export async function getClientContacts(clientId: string) {
+    try {
+        const contacts = await prisma.contact.findMany({
+            where: { clientId },
+            orderBy: { name: 'asc' }
+        })
+        return contacts
+    } catch (e) {
+        return []
+    }
+}
+
 // --- CLIENT LOGO MANAGEMENT ---
 
 export async function uploadClientLogo(formData: FormData, oldLogoUrl?: string) {
@@ -542,6 +579,7 @@ export async function saveQuote(data: {
     clientData?: { name: string, contact: string, email: string }, // NEW: For creating in Monday
     pdfBase64?: string, // NEW: Snapshot
     status?: string // NEW: Allow overriding status
+    contactId?: string // NEW: Contact persistence
 }) {
     const cookieStore = await cookies()
     const userId = cookieStore.get('session_user_id')?.value
@@ -595,6 +633,7 @@ export async function saveQuote(data: {
                     user: { connect: { id: userId } },
                     status: data.status || 'BORRADOR',
                     client: data.clientId ? { connect: { id: data.clientId } } : undefined,
+                    contactId: data.contactId || null, // NEW: Persist Contact
                     pdfSnapshot: data.pdfBase64 || null,
                     quoteNumber: nextQuoteNumber // Manual assignment
                 } as any
@@ -652,6 +691,7 @@ export async function updateQuote(id: string, data: {
     isNewClient?: boolean,
     clientData?: { name: string, contact: string, email: string },
     pdfBase64?: string // NEW: Snapshot
+    contactId?: string
 }) {
     const cookieStore = await cookies()
     const userId = cookieStore.get('session_user_id')?.value
@@ -691,6 +731,7 @@ export async function updateQuote(id: string, data: {
                 // Update linked client only if explicitly changed? 
                 // Mostly we just update the quote content.
                 client: data.clientId ? { connect: { id: data.clientId } } : undefined,
+                contactId: data.contactId || null,
                 pdfSnapshot: data.pdfBase64 || undefined, // NEW: Snapshot
                 // Preserve quoteNumber if passed in technicalParameters but Prisma handles it.
                 // However, we want to make sure we don't accidentally try to "create" a new one if it's an update.

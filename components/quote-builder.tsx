@@ -210,6 +210,7 @@ interface QuoteState {
         email: string
         areaLeader: string
     }
+
 }
 
 const INITIAL_STATE: QuoteState = {
@@ -244,8 +245,7 @@ const INITIAL_STATE: QuoteState = {
     usersCount: 0,
     isFinancialOrSales: false,
     reportsCount: 0,
-    reportUsers: 0,
-
+    contactId: undefined, // NEW
 
     techStack: [],
 
@@ -1708,21 +1708,29 @@ graph TD
                                             ? client.contacts.find(c => c.id === contactId)
                                             : null
 
-                                        setState(prev => ({
-                                            ...prev,
+                                        // Update basics
+                                        let newState = {
                                             clientName: client.companyName,
                                             clientId: client.id,
                                             contactId: contactId,
-                                            // Logic: If we just created a client/contact, we treat it as valid.
-                                            // The isNew check was mostly for the 'create' flow, now handled by presence of data.
                                             newClientData: client,
                                             clientLogoUrl: client.clientLogoUrl,
-                                            clientContact: {
-                                                ...prev.clientContact,
-                                                name: selectedContact?.name || client.contactName || prev.clientContact.name,
-                                                email: selectedContact?.email || client.email || prev.clientContact.email,
-                                                role: selectedContact?.role || prev.clientContact.role || ''
+                                            isNewClient: false
+                                        } as any
+
+                                        // Update contact details if a contact is selected
+                                        if (selectedContact) {
+                                            newState.clientContact = {
+                                                ...state.clientContact,
+                                                name: selectedContact.name,
+                                                email: selectedContact.email || state.clientContact.email,
+                                                role: selectedContact.role || state.clientContact.role
                                             }
+                                        }
+
+                                        setState(prev => ({
+                                            ...prev,
+                                            ...newState
                                         }))
                                     }}
                                 />
