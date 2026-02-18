@@ -374,6 +374,7 @@ const DEFAULT_DIAGRAM = `graph TD
     class Pipe,Store,Vis highlight
 `
 const RECOMENDACIONES_MAPPING: Record<string, Array<{ role: RoleKey, seniority: string, rationale: string }>> = {
+    // Project Techs
     'azure': [{ role: 'data_engineer', seniority: 'Sr', rationale: 'Implementación de pipelines de datos y orquestación.' }],
     'databricks': [{ role: 'data_engineer', seniority: 'Sr', rationale: 'Procesamiento Spark y optimización de Lakehouse.' }],
     'synapse': [{ role: 'data_engineer', seniority: 'Sr', rationale: 'Modelado de datos y Analytics Pools.' }],
@@ -386,7 +387,16 @@ const RECOMENDACIONES_MAPPING: Record<string, Array<{ role: RoleKey, seniority: 
     'n8n': [{ role: 'azure_developer', seniority: 'Med', rationale: 'Automatización de flujos con herramientas Low-Code.' }],
     'antigravity': [{ role: 'data_scientist', seniority: 'Expert', rationale: 'Implementación de Agentes IA y RAG.' }],
     'lovable': [{ role: 'low_code_developer', seniority: 'Med', rationale: 'Desarrollo de interfaces aceleradas con No-Code.' }],
-    'powerapps': [{ role: 'power_app_streamlit_developer', seniority: 'Med', rationale: 'Aplicaciones de negocio y personalización corporativa.' }]
+    'powerapps': [{ role: 'power_app_streamlit_developer', seniority: 'Med', rationale: 'Aplicaciones de negocio y personalización corporativa.' }],
+
+    // Sustain Techs
+    'azure_df': [{ role: 'data_engineer', seniority: 'Sr', rationale: 'Soporte y mantenimiento de pipelines ADF.' }],
+    'sql': [{ role: 'data_operations_analyst', seniority: 'Med', rationale: 'Mantenimiento de bases de datos y consultas SQL.' }],
+    'dotnet': [{ role: 'azure_developer', seniority: 'Med', rationale: 'Mantenimiento de aplicaciones backend .NET.' }],
+    'react': [{ role: 'azure_developer', seniority: 'Med', rationale: 'Mantenimiento de frontend React.' }], // Mapped to Generic Dev
+    'streamlit': [{ role: 'power_app_streamlit_developer', seniority: 'Med', rationale: 'Soporte a aplicaciones de datos Streamlit.' }],
+    'datascience': [{ role: 'data_scientist', seniority: 'Sr', rationale: 'Mantenimiento de modelos ML productivos.' }],
+    'other': []
 }
 
 export default function QuoteBuilder({ dbRates = [], initialData, readOnly = false }: { dbRates?: ServiceRate[], initialData?: any, readOnly?: boolean }) {
@@ -2439,78 +2449,126 @@ graph TD
                     {/* 5. TEAM SELECTION */}
                     <SectionCard number={getSectionNumber('team')} title="Selección de Perfiles" icon={Users}>
 
-                        {/* Suggestion AI Banner */}
-                        <div className="mb-6 bg-gradient-to-r from-yellow-500/10 to-transparent p-4 rounded-xl border border-yellow-500/20 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-yellow-500/20 rounded-lg">
-                                    <Sparkles className="w-5 h-5 text-yellow-500" />
+
+
+                        {/* =====================================================================================
+                            NEW LOGIC: GENERATE SUGGESTIONS (PROJECT & SUSTAIN)
+                           ===================================================================================== */}
+                        {(() => {
+                            const handleGenerateSuggestions = () => {
+                                setIsSuggestionLoading(true)
+                                setTimeout(() => {
+                                    // 1. Detect Stack source based on Service Type
+                                    let activeStack: string[] = []
+                                    if (state.serviceType === 'Sustain') {
+                                        activeStack = state.sustainDetails.techStack || []
+                                    } else {
+                                        activeStack = state.techStack || []
+                                    }
+
+                                    if (activeStack.length === 0) {
+                                        toast.error("Selecciona al menos una tecnología primero")
+                                        setIsSuggestionLoading(false)
+                                        return
+                                    }
+
+                                    // 2. Generate Recommendations
+                                    const recommendations: any[] = []
+                                    const processedRoles = new Set<string>()
+
+                                    activeStack.forEach(techId => {
+                                        const suggestions = RECOMENDACIONES_MAPPING[techId]
+                                        if (suggestions) {
+                                            suggestions.forEach(sug => {
+                                                // Unique key to prevent duplicates
+                                                const key = `${sug.role}-${sug.seniority}`
+                                                if (!processedRoles.has(key)) {
+                                                    const roleConfig = ROLE_CONFIG[sug.role]
+                                                    if (roleConfig) {
+                                                        recommendations.push({
+                                                            role: roleConfig.label,
+                                                            seniority: sug.seniority,
+                                                            count: 1,
+                                                            rationale: sug.rationale,
+                                                            roleKey: sug.role
+                                                        })
+                                                        processedRoles.add(key)
+                                                    }
+                                                }
+                                            })
+                                        }
+                                    })
+
+                                    if (recommendations.length > 0) {
+                                        setPendingRecs(recommendations)
+                                        setIsSuggestionModalOpen(true)
+                                        toast.success(`${recommendations.length} perfiles sugeridos`)
+                                    } else {
+                                        toast.info("No se encontraron sugerencias específicas para este stack")
+                                    }
+                                    setIsSuggestionLoading(false)
+                                }, 800)
+                            }
+
+                            return (
+                                <div className="mb-6 bg-gradient-to-r from-yellow-500/10 to-transparent p-4 rounded-xl border border-yellow-500/20 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-yellow-500/20 rounded-lg">
+                                            <Sparkles className="w-5 h-5 text-yellow-500" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-[#E8EDDF] font-bold text-sm">Sugerencia Automática de Equipo</h4>
+                                            <p className="text-[#CFDBD5] text-xs opacity-70">Basado en la volumetría y stack definidos</p>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        onClick={handleGenerateSuggestions}
+                                        disabled={isSuggestionLoading}
+                                        className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold text-xs"
+                                    >
+                                        {isSuggestionLoading ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Wand2 className="w-3 h-3 mr-2" />}
+                                        {isSuggestionLoading ? 'Analizando...' : 'Generar Sugerencia'}
+                                    </Button>
                                 </div>
-                                <div>
-                                    <h4 className="text-[#E8EDDF] font-bold text-sm">Sugerencia Automática de Equipo</h4>
-                                    <p className="text-[#CFDBD5] text-xs opacity-70">Basado en la volumetría y stack definidos</p>
-                                </div>
-                            </div>
-                            <Button
-                                onClick={() => setIsSuggestionModalOpen(true)}
-                                disabled={isSuggestionLoading || state.serviceType !== 'Proyecto'}
-                                className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold text-xs"
-                            >
-                                {isSuggestionLoading ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Wand2 className="w-3 h-3 mr-2" />}
-                                {isSuggestionLoading ? 'Analizando...' : 'Generar Sugerencia'}
-                            </Button>
-                        </div>
+                            )
+                        })()}
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {/* LEFT: Available Roles */}
                             <div className="space-y-6">
-                                <Tabs defaultValue="management" className="w-full">
-                                    <TabsList className="bg-[#1E1E1E] border border-[#333533] p-1 h-auto flex flex-wrap gap-1 justify-start rounded-xl mb-4">
-                                        <TabsTrigger value="management" className="data-[state=active]:bg-[#F5CB5C] data-[state=active]:text-[#242423] text-[#CFDBD5] text-xs">Management</TabsTrigger>
-                                        <TabsTrigger value="data" className="data-[state=active]:bg-[#F5CB5C] data-[state=active]:text-[#242423] text-[#CFDBD5] text-xs">Data Eng</TabsTrigger>
-                                        <TabsTrigger value="governance" className="data-[state=active]:bg-[#F5CB5C] data-[state=active]:text-[#242423] text-[#CFDBD5] text-xs">Governance</TabsTrigger>
-                                        <TabsTrigger value="product" className="data-[state=active]:bg-[#F5CB5C] data-[state=active]:text-[#242423] text-[#CFDBD5] text-xs">Product & Design</TabsTrigger>
-                                    </TabsList>
-
-                                    {['management', 'data', 'governance', 'product'].map(tabValue => {
-                                        let roles: RoleKey[] = [];
-                                        if (tabValue === 'management') roles = MANAGEMENT_ROLES;
-                                        else if (tabValue === 'data') roles = DATA_ROLES;
-                                        else if (tabValue === 'governance') roles = GOVERNANCE_ROLES;
-                                        else if (tabValue === 'product') roles = PRODUCT_ROLES;
+                                {/* LISTA PLANA DE PERFILES (Restaurada) */}
+                                <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-custom">
+                                    {Object.keys(ROLE_CONFIG).map((key) => {
+                                        const roleKey = key as RoleKey
+                                        const role = ROLE_CONFIG[roleKey]
+                                        // Count from dedicated state or roles map
+                                        const currentCount = state.roles[roleKey] || 0
+                                        const isLimitReached = currentCount >= 5
 
                                         return (
-                                            <TabsContent key={tabValue} value={tabValue} className="space-y-3">
-                                                {roles.map(roleKey => {
-                                                    const role = ROLE_CONFIG[roleKey];
-                                                    const currentCount = state.roles[roleKey] || 0;
-                                                    const isLimitReached = currentCount >= 5;
-                                                    return (
-                                                        <div key={roleKey} className="group flex items-center justify-between p-3 rounded-xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-8 h-8 rounded-lg bg-[#1E1E1E] flex items-center justify-center border border-[#333533] group-hover:border-[#F5CB5C] transition-colors">
-                                                                    <span className="text-[10px] font-bold text-[#7C7F7C] group-hover:text-[#F5CB5C]">SR</span>
-                                                                </div>
-                                                                <div>
-                                                                    <div className="text-[#E8EDDF] font-bold text-xs">{role.label}</div>
-                                                                    <div className="text-[#CFDBD5] text-[10px] opacity-60">
-                                                                        USD {viewMode === 'annual' ? (role.defaultPrice * 12).toLocaleString() : role.defaultPrice.toLocaleString()}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <button
-                                                                onClick={() => handleAddProfile(roleKey)}
-                                                                disabled={isLimitReached}
-                                                                className="w-8 h-8 rounded-full bg-[#333533] flex items-center justify-center text-[#F5CB5C] hover:bg-[#F5CB5C] hover:text-[#242423] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                                            >
-                                                                <Plus className="w-4 h-4" />
-                                                            </button>
+                                            <div key={roleKey} className="group flex items-center justify-between p-4 rounded-2xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all shadow-sm hover:shadow-md">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-xl bg-[#1E1E1E] flex items-center justify-center border border-[#333533] group-hover:border-[#F5CB5C] transition-colors shadow-inner">
+                                                        <span className="text-xs font-bold text-[#CFDBD5] group-hover:text-[#F5CB5C]">SR</span>
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-[#E8EDDF] font-bold text-sm tracking-tight">{role.label}</div>
+                                                        <div className="text-[#CFDBD5] text-[10px] opacity-60 font-mono mt-0.5">
+                                                            USD {viewMode === 'annual' ? (role.defaultPrice * 12).toLocaleString() : role.defaultPrice.toLocaleString()} {viewMode === 'annual' ? '/ año' : '/ mes'}
                                                         </div>
-                                                    );
-                                                })}
-                                            </TabsContent>
-                                        );
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleAddProfile(roleKey)}
+                                                    disabled={isLimitReached}
+                                                    className="w-9 h-9 rounded-xl bg-[#333533] flex items-center justify-center text-[#F5CB5C] hover:bg-[#F5CB5C] hover:text-[#242423] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg active:scale-95"
+                                                >
+                                                    <Plus className="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                        )
                                     })}
-                                </Tabs>
+                                </div>
                             </div>
 
                             {/* RIGHT: Selected Team Snapshot */}
@@ -2561,13 +2619,13 @@ graph TD
                                                     <div className="flex items-center gap-6 shrink-0">
                                                         {/* Quantity: Clean Input for Decimals */}
                                                         <div className="flex flex-col items-center gap-1">
-                                                            <div className="flex items-center gap-2 px-2 py-1">
+                                                            <div className="flex items-center gap-2 px-2 py-1 bg-[#1E1E1E] rounded-lg border border-[#333533]">
                                                                 <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">CANT:</span>
                                                                 <input
                                                                     type="number"
                                                                     step="0.5"
                                                                     min="0"
-                                                                    className="w-12 text-center bg-transparent text-[#F5CB5C] font-bold text-sm focus:outline-none border-b border-[#333533] focus:border-[#F5CB5C] placeholder-zinc-700 transition-colors"
+                                                                    className="w-12 text-center bg-transparent text-[#F5CB5C] font-bold text-sm focus:outline-none placeholder-zinc-700 transition-colors"
                                                                     value={profile.count || 0}
                                                                     onChange={(e) => handleUpdateProfileCount(idx, parseFloat(e.target.value) || 0)}
                                                                 />
