@@ -1626,25 +1626,28 @@ graph TD
                                 <Label className="text-[#CFDBD5] text-sm font-bold uppercase tracking-wider mb-2 block">
                                     {state.serviceType === 'Staffing' ? 'Contexto de la Búsqueda' : 'Descripción y Objetivo'}
                                 </Label>
-                                <div className="space-y-4">
+                                <div className="relative group/textarea">
                                     <Textarea
                                         value={state.description}
                                         onChange={(e) => updateState('description', e.target.value)}
                                         placeholder={state.serviceType === 'Staffing' ? "Descripción del equipo actual, cultura, y por qué se necesitan estos perfiles..." : "Describe el desafío de negocio..."}
-                                        className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] min-h-[140px] focus-visible:ring-[#F5CB5C] rounded-2xl p-4 leading-relaxed"
+                                        className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] min-h-[160px] focus-visible:ring-[#F5CB5C] rounded-2xl p-4 leading-relaxed pb-12 resize-none"
                                     />
-                                    <Button
-                                        onClick={handleAiPolish}
-                                        disabled={polishLoading || !state.description}
-                                        className="w-full bg-[#171717] hover:bg-[#242423] text-[#F5CB5C] border border-[#F5CB5C]/30 rounded-xl h-12 font-bold transition-all group"
-                                    >
-                                        {polishLoading ? (
-                                            <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                                        ) : (
-                                            <Sparkles className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-                                        )}
-                                        {polishLoading ? 'Pulinedo con IA...' : 'Pulir con Inteligencia Artificial'}
-                                    </Button>
+                                    <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                                        <Button
+                                            onClick={handleAiPolish}
+                                            disabled={polishLoading || !state.description || readOnly}
+                                            size="sm"
+                                            className="h-8 bg-[#171717] hover:bg-[#242423] text-[#F5CB5C] border border-[#F5CB5C]/30 rounded-lg font-bold transition-all px-3"
+                                        >
+                                            {polishLoading ? (
+                                                <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" />
+                                            ) : (
+                                                <Sparkles className="w-3.5 h-3.5 mr-2" />
+                                            )}
+                                            {polishLoading ? 'Puliendo...' : 'Pulir IA'}
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2457,7 +2460,7 @@ graph TD
                                             return (
                                                 <div key={profile.id || idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 bg-zinc-900/40 border border-zinc-800 rounded-lg w-full gap-3 group hover:border-zinc-700/50 transition-all">
                                                     {/* LEFT: Avatar + Name + Seniority */}
-                                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                    <div className="flex items-center gap-3 flex-1 min-w-0 py-1">
                                                         <div className={cn(
                                                             "w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold border shrink-0",
                                                             profile.seniority === 'Expert' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
@@ -2468,8 +2471,8 @@ graph TD
                                                             {profile.seniority.substring(0, 2)}
                                                         </div>
 
-                                                        <div className="flex flex-col justify-center min-w-0 flex-1">
-                                                            <span className="text-[#E8EDDF] font-bold text-xs leading-snug whitespace-normal break-words overflow-visible">
+                                                        <div className="flex flex-col justify-center min-w-0 pr-2">
+                                                            <span className="text-[#E8EDDF] font-bold text-xs leading-tight whitespace-normal break-words">
                                                                 {displayName}
                                                             </span>
                                                             <span className="text-[9px] text-[#F5CB5C] font-bold uppercase tracking-wide mt-0.5">
@@ -2479,39 +2482,19 @@ graph TD
                                                     </div>
 
                                                     {/* RIGHT: Quantity + Price + Trash */}
-                                                    <div className="flex items-center gap-4 shrink-0">
-                                                        {/* Quantity: Input for Decimals */}
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">CANT</span>
-                                                            <input
-                                                                type="number"
-                                                                step="0.1"
-                                                                min="0"
-                                                                value={profile.count}
-                                                                onChange={(e) => {
-                                                                    const val = parseFloat(e.target.value) || 0
-                                                                    const newProfiles = [...state.staffingDetails.profiles]
-                                                                    const delta = val - profile.count
-                                                                    newProfiles[idx].count = val
-
-                                                                    // Find roleKey safely
-                                                                    const keyEntry = Object.entries(ROLE_CONFIG).find(([k, v]) => v.label === profile.role) || Object.entries(ROLE_CONFIG).find(([k, v]) => k === profile.role)
-                                                                    const roleKey = keyEntry ? keyEntry[0] as RoleKey : null
-
-                                                                    setState(prev => ({
-                                                                        ...prev,
-                                                                        roles: roleKey ? { ...prev.roles, [roleKey]: Math.max(0, (prev.roles[roleKey] || 0) + delta) } : prev.roles,
-                                                                        staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
-                                                                    }))
-                                                                }}
-                                                                className="w-12 bg-[#242423] border border-zinc-800 rounded px-1 text-center text-xs font-bold text-[#F5CB5C] focus:border-[#F5CB5C] focus:outline-none"
-                                                            />
+                                                    <div className="flex items-center gap-6 shrink-0">
+                                                        {/* Minimalist Quantity Display */}
+                                                        <div className="flex flex-col items-end">
+                                                            <span className="text-[9px] text-[#CFDBD5]/40 font-black uppercase tracking-widest leading-none mb-1">CANTIDAD</span>
+                                                            <div className="text-[#F5CB5C] font-mono font-bold text-xs">
+                                                                CANT: {profile.count % 1 === 0 ? profile.count : profile.count.toFixed(1)}
+                                                            </div>
                                                         </div>
 
                                                         {/* Price */}
-                                                        <div className="text-right min-w-[70px]">
+                                                        <div className="text-right min-w-[80px]">
                                                             <div className="text-[#F5CB5C] font-mono font-bold text-sm leading-none">
-                                                                ${displayPrice.toLocaleString()}
+                                                                {formatMoney(displayPrice)}
                                                             </div>
                                                             <div className="text-[8px] text-zinc-500 font-bold tracking-tighter mt-1 opacity-60">
                                                                 {periodLabel}
