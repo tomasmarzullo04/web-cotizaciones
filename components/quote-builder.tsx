@@ -470,14 +470,21 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
     const getSectionNumber = useCallback((sectionId: string) => {
         const sequence: string[] = []
         sequence.push('general')
+
         if (state.serviceType === 'Proyecto') {
             sequence.push('volumetry')
-            sequence.push('business')
-        }
-        if (state.serviceType !== 'Sustain') {
             sequence.push('tech')
+        } else if (state.serviceType === 'Staffing') {
+            sequence.push('tech')
+        } else if (state.serviceType === 'Sustain') {
+            // Sustain has its own internal accordion structure usually, but if it uses main sections:
+            // It seems Sustain flows differently in JSX. 
+            // Logic suggests Sustain uses 'general', maybe 'team', 'commercial'?
+            // Let's keep it minimal or check logic from before.
+            // Previous logic was: if !== Sustain push tech.
         }
-        sequence.push('staffing')
+
+        sequence.push('team')
         sequence.push('commercial')
 
         const index = sequence.indexOf(sectionId)
@@ -1860,10 +1867,34 @@ graph TD
                         </div>
                     </SectionCard>
 
-                    {/* 2. TECH (Reordered to Step 02 for Staffing) */}
+                    {/* 2. VOLUMETRY (Moved to Step 02 for Project) */}
+                    {state.serviceType === 'Proyecto' && (
+                        <SectionCard number={getSectionNumber('volumetry')} title="Volumetría de Datos" icon={Database}>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                <div>
+                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Fuentes de Datos</Label>
+                                    <Input type="number" value={state.dataSourcesCount} onChange={e => updateState('dataSourcesCount', parseInt(e.target.value) || 0)} className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF]" />
+                                </div>
+                                <div>
+                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Entidades de Negocio</Label>
+                                    <Input type="number" value={state.pipelinesCount} onChange={e => updateState('pipelinesCount', parseInt(e.target.value) || 0)} className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF]" />
+                                </div>
+                                <div>
+                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Dashboards</Label>
+                                    <Input type="number" value={state.dashboardsCount} onChange={e => updateState('dashboardsCount', parseInt(e.target.value) || 0)} className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF]" />
+                                </div>
+                                <div>
+                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Modelos ML/AI</Label>
+                                    <Input type="number" value={state.reportsCount} onChange={e => updateState('reportsCount', parseInt(e.target.value) || 0)} className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF]" />
+                                </div>
+                            </div>
+                        </SectionCard>
+                    )}
+
+                    {/* 3. TECH (Step 03 for Project, 02 for Staffing) */}
                     {state.serviceType !== 'Sustain' && (
                         <SectionCard number={getSectionNumber('tech')} title="Stack Tecnológico" icon={Layers}>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {TECH_OPTIONS.map(tech => (
                                     <div
                                         key={tech.id}
@@ -2451,60 +2482,7 @@ graph TD
                         </div>
                     )}
 
-                    {/* 3. VOLUMETRY (Project Only) */}
-                    {state.serviceType === 'Proyecto' && (
-                        <SectionCard number={getSectionNumber('volumetry')} title="Volumetría de Datos" icon={Database}>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                <div>
-                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Fuentes de Datos</Label>
-                                    <Input type="number" value={state.dataSourcesCount} onChange={e => updateState('dataSourcesCount', parseInt(e.target.value) || 0)} className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF]" />
-                                </div>
-                                <div>
-                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Entidades de Negocio</Label>
-                                    <Input type="number" value={state.pipelinesCount} onChange={e => updateState('pipelinesCount', parseInt(e.target.value) || 0)} className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF]" />
-                                </div>
-                                <div>
-                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Dashboards</Label>
-                                    <Input type="number" value={state.dashboardsCount} onChange={e => updateState('dashboardsCount', parseInt(e.target.value) || 0)} className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF]" />
-                                </div>
-                                <div>
-                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Modelos ML/AI</Label>
-                                    <Input type="number" value={state.reportsCount} onChange={e => updateState('reportsCount', parseInt(e.target.value) || 0)} className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF]" />
-                                </div>
-                            </div>
-                        </SectionCard>
-                    )}
 
-                    {/* 4. BUSINESS / CONSUMPTION (Project Only) */}
-                    {state.serviceType === 'Proyecto' && (
-                        <SectionCard number={getSectionNumber('business')} title="Consumo y Negocio" icon={Users}>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div>
-                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Usuarios Finales</Label>
-                                    <Input type="number" value={state.reportUsers} onChange={e => updateState('reportUsers', parseInt(e.target.value) || 0)} className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF]" />
-                                </div>
-                                <div>
-                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Frecuencia Actualización</Label>
-                                    <Select value={state.updateFrequency} onValueChange={v => updateState('updateFrequency', v as any)}>
-                                        <SelectTrigger className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
-                                        <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                            <SelectItem value="Real-time">Real-time / Streaming</SelectItem>
-                                            <SelectItem value="Diaria">Diaria</SelectItem>
-                                            <SelectItem value="Semanal">Semanal</SelectItem>
-                                            <SelectItem value="Mensual">Mensual</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">% Proceso Manual Actual</Label>
-                                    <div className="flex items-center gap-4">
-                                        <Slider value={[state.manualProcessPct]} min={0} max={100} step={5} onValueChange={([v]) => updateState('manualProcessPct', v)} className="flex-1" />
-                                        <span className="text-[#F5CB5C] font-bold w-12 text-right">{state.manualProcessPct}%</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </SectionCard>
-                    )}
 
                     {/* 5. TEAM SELECTION */}
                     <SectionCard number={getSectionNumber('team')} title="Selección de Perfiles" icon={Users}>
