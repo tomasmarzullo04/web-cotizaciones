@@ -1783,7 +1783,7 @@ graph TD
                                 {/* Contact Selector - Shows only if client has contacts */}
                                 {state.newClientData?.contacts && state.newClientData.contacts.length > 0 && (
                                     <div className="mt-6 animate-in fade-in slide-in-from-top-2">
-                                        <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider mb-2 block">Contacto Seleccionado</Label>
+                                        <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider mb-3 block">Contacto Seleccionado</Label>
                                         <Select
                                             value={state.contactId || undefined}
                                             onValueChange={(val) => {
@@ -1802,7 +1802,7 @@ graph TD
                                                 }
                                             }}
                                         >
-                                            <SelectTrigger className="w-full bg-[#1E1E1E] border-[#333533] text-[#E8EDDF] h-12 rounded-xl focus:ring-[#F5CB5C]">
+                                            <SelectTrigger className="w-full bg-[#1E1E1E] border-[#333533] text-[#E8EDDF] h-14 pl-4 rounded-xl focus:ring-[#F5CB5C] transition-all">
                                                 <SelectValue placeholder="Seleccionar contacto..." />
                                             </SelectTrigger>
                                             <SelectContent className="bg-[#242423] border-[#333533] text-[#E8EDDF]">
@@ -2608,27 +2608,29 @@ graph TD
                                         const isLimitReached = currentCount >= 5
 
                                         return (
-                                            <div key={roleKey} className="group flex items-center justify-between p-3 rounded-xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all shadow-sm hover:shadow-md min-h-[72px] h-auto py-3">
-                                                <div className="flex items-center gap-3">
+                                            <div key={roleKey} className="group flex items-center justify-between p-3 rounded-xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all shadow-sm hover:shadow-md min-h-[72px] h-auto py-3 relative overflow-hidden">
+                                                <div className="flex items-center gap-3 w-full pr-12">
                                                     <div className="w-8 h-8 rounded-lg bg-[#1E1E1E] flex items-center justify-center border border-[#333533] group-hover:border-[#F5CB5C] transition-colors shadow-inner shrink-0">
                                                         <span className="text-[10px] font-bold text-[#CFDBD5] group-hover:text-[#F5CB5C]">SR</span>
                                                     </div>
-                                                    <div className="min-w-0">
-                                                        <div className="text-[#E8EDDF] font-bold text-xs leading-tight truncate pr-1">{role.label}</div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="text-[#E8EDDF] font-bold text-xs leading-tight truncate" title={role.label}>{role.label}</div>
                                                         <div className="text-[#CFDBD5] text-[9px] opacity-60 font-mono mt-0.5 truncate">
                                                             USD {(viewMode === 'annual' ? role.defaultPrice * 12 : role.defaultPrice).toLocaleString()}
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <SenioritySelector
-                                                    roleName={role.label}
-                                                    roleKey={roleKey}
-                                                    capabilities={['Jr', 'Med', 'Sr']}
-                                                    serviceRates={dbRates}
-                                                    onSelect={(level, price) => handleAddProfile(roleKey, level, price)}
-                                                    defaultPrice={role.defaultPrice}
-                                                    multipliers={SENIORITY_MODIFIERS}
-                                                />
+                                                <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                                                    <SenioritySelector
+                                                        roleName={role.label}
+                                                        roleKey={roleKey}
+                                                        capabilities={['Jr', 'Med', 'Sr']}
+                                                        serviceRates={dbRates}
+                                                        onSelect={(level, price) => handleAddProfile(roleKey, level, price)}
+                                                        defaultPrice={role.defaultPrice}
+                                                        multipliers={SENIORITY_MODIFIERS}
+                                                    />
+                                                </div>
                                             </div>
                                         )
                                     })}
