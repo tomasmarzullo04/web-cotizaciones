@@ -1851,19 +1851,21 @@ graph TD
                                     </div>
                                 </div>
 
-                                <div>
-                                    <Label className="text-[#CFDBD5] text-sm font-bold uppercase tracking-wider mb-2 block">Complejidad Estimada</Label>
-                                    <ToggleGroup
-                                        type="single"
-                                        value={state.complexity}
-                                        onValueChange={(val: any) => val && updateState('complexity', val)}
-                                        className="justify-start bg-[#242423] p-1 rounded-xl border border-[#4A4D4A]"
-                                    >
-                                        <ToggleGroupItem value="low" className="flex-1 data-[state=on]:bg-[#F5CB5C] data-[state=on]:text-[#242423] text-[#CFDBD5] text-xs font-bold transition-all rounded-lg">BAJA</ToggleGroupItem>
-                                        <ToggleGroupItem value="medium" className="flex-1 data-[state=on]:bg-[#F5CB5C] data-[state=on]:text-[#242423] text-[#CFDBD5] text-xs font-bold transition-all rounded-lg">MEDIA</ToggleGroupItem>
-                                        <ToggleGroupItem value="high" className="flex-1 data-[state=on]:bg-[#F5CB5C] data-[state=on]:text-[#242423] text-[#CFDBD5] text-xs font-bold transition-all rounded-lg">ALTA</ToggleGroupItem>
-                                    </ToggleGroup>
-                                </div>
+                                {state.serviceType !== 'Staffing' && (
+                                    <div>
+                                        <Label className="text-[#CFDBD5] text-sm font-bold uppercase tracking-wider mb-2 block">Complejidad Estimada</Label>
+                                        <ToggleGroup
+                                            type="single"
+                                            value={state.complexity}
+                                            onValueChange={(val: any) => val && updateState('complexity', val)}
+                                            className="justify-start bg-[#242423] p-1 rounded-xl border border-[#4A4D4A]"
+                                        >
+                                            <ToggleGroupItem value="low" className="flex-1 data-[state=on]:bg-[#F5CB5C] data-[state=on]:text-[#242423] text-[#CFDBD5] text-xs font-bold transition-all rounded-lg">BAJA</ToggleGroupItem>
+                                            <ToggleGroupItem value="medium" className="flex-1 data-[state=on]:bg-[#F5CB5C] data-[state=on]:text-[#242423] text-[#CFDBD5] text-xs font-bold transition-all rounded-lg">MEDIA</ToggleGroupItem>
+                                            <ToggleGroupItem value="high" className="flex-1 data-[state=on]:bg-[#F5CB5C] data-[state=on]:text-[#242423] text-[#CFDBD5] text-xs font-bold transition-all rounded-lg">ALTA</ToggleGroupItem>
+                                        </ToggleGroup>
+                                    </div>
+                                )}
                             </div>
 
                             <div>
@@ -2603,24 +2605,24 @@ graph TD
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <div className="space-y-6">
-                                {/* LISTA GRID DE PERFILES (RESPONSIVE) */}
-                                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-custom content-start">
+                                {/* LISTA GRID DE PERFILES (RESPONSIVE) - 2 COLUMNS STRICT ON DESKTOP */}
+                                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-custom content-start">
                                     {Object.keys(ROLE_CONFIG).map((key) => {
                                         const roleKey = key as RoleKey
                                         const role = ROLE_CONFIG[roleKey]
 
                                         return (
-                                            <div key={roleKey} className="group relative flex flex-row p-4 rounded-xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all shadow-sm hover:shadow-md min-h-[80px] items-center justify-between gap-3">
+                                            <div key={roleKey} className="group relative flex flex-row p-4 rounded-xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all shadow-sm hover:shadow-md min-h-[90px] h-auto items-center justify-between gap-4">
 
-                                                {/* LEFT: Name */}
-                                                <div className="flex-1 flex items-center justify-start">
-                                                    <div className="text-[#E8EDDF] font-bold text-xs leading-tight text-left whitespace-normal">
+                                                {/* LEFT: Name - Grows vertically if needed */}
+                                                <div className="flex-1 flex items-center justify-start py-1">
+                                                    <div className="text-[#E8EDDF] font-bold text-xs leading-snug text-left whitespace-normal break-words">
                                                         {role.label}
                                                     </div>
                                                 </div>
 
-                                                {/* RIGHT: Button (Aligned) */}
-                                                <div className="opacity-80 hover:opacity-100 transition-opacity shrink-0">
+                                                {/* RIGHT: Button (Aligned & Protected) */}
+                                                <div className="opacity-80 hover:opacity-100 transition-opacity shrink-0 flex items-center justify-center pl-2 border-l border-[#333533]/50 ml-1">
                                                     <SenioritySelector
                                                         roleName={role.label}
                                                         roleKey={roleKey}
