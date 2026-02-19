@@ -249,7 +249,7 @@ export function ClientFormModal({ initialData, isOpen, onOpenChange, onClientSav
                     return
                 }
 
-                finalLogoUrl = uploadResult.url
+                finalLogoUrl = uploadResult.url || ''
             }
 
             // If URL mode, validate first
