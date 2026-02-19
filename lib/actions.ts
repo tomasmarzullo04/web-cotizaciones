@@ -4,6 +4,7 @@
 import { prisma } from './prisma'
 import { TechnicalParameters, CostBreakdown } from './types'
 import { cookies } from 'next/headers'
+import { revalidatePath, unstable_noStore } from 'next/cache'
 
 // Helper to get rates
 // Helper to get rates
@@ -298,6 +299,7 @@ export async function searchClients(query: string) {
     if (!userId) return []
 
     try {
+        unstable_noStore()
         const clients = await prisma.client.findMany({
             where: {
                 // Partial match if query exists (UserId filter removed for globalization)
@@ -869,7 +871,7 @@ export async function getAllQuotes() {
     }
 }
 
-import { revalidatePath, unstable_noStore } from 'next/cache'
+
 
 export async function getAdminStats() {
     unstable_noStore()
@@ -1190,7 +1192,10 @@ export async function updateClient(clientId: string, data: { companyName: string
             return client
         })
 
-        revalidatePath('/clients') // Refresh directory
+        revalidatePath('/clients')
+        revalidatePath('/quote/new') // Ensure Quote Builder sees changes
+        revalidatePath('/quote/new') // Ensure Quote Builder sees changes
+        revalidatePath('/dashboard')
         return { success: true, client: updatedClient }
     } catch (e: any) {
         if (e.code === 'P2002') {
