@@ -30,6 +30,9 @@ export async function POST(req: NextRequest) {
 
     } catch (error) {
         console.error("Word Generation Error:", error)
-        return NextResponse.json({ error: 'Failed to generate Word document' }, { status: 500 })
+        return NextResponse.json({
+            error: 'Failed to generate Word document',
+            details: error instanceof Error ? error.message : String(error)
+        }, { status: 500 })
     }
 }

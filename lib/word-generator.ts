@@ -32,26 +32,20 @@ export function getDataURLType(dataURL: string): 'png' | 'jpg' | 'gif' {
     if (match) {
         const type = match[1].toLowerCase()
         if (type === 'jpg') return 'jpg'
-        if (type === 'jpeg') return 'jpg' // docx expects 'jpg'
+        if (type === 'jpeg') return 'jpg'
         if (type === 'png') return 'png'
         if (type === 'gif') return 'gif'
     }
     return 'png'
 }
 
-// Helper for Base64
+// Helper for Base64 to Uint8Array (Node.js optimized)
 export function base64DataURLToUint8Array(dataURL: string): Uint8Array {
     if (!dataURL) return new Uint8Array(0)
     // Handle optional data: prefix
     const base64Only = dataURL.includes(',') ? dataURL.split(',')[1] : dataURL;
     try {
-        const binaryString = atob(base64Only);
-        const len = binaryString.length;
-        const bytes = new Uint8Array(len);
-        for (let i = 0; i < len; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-        }
-        return bytes;
+        return new Uint8Array(Buffer.from(base64Only, 'base64'));
     } catch (e) {
         console.error("Base64 conversion failed", e)
         return new Uint8Array(0)
