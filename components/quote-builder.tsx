@@ -1710,7 +1710,6 @@ graph TD
                                 <Label className="text-[#CFDBD5] text-sm font-bold uppercase tracking-wider mb-2 block">Cliente / Prospecto</Label>
                                 <ClientSelector
                                     value={state.clientId}
-                                    contactValue={state.contactId}
                                     clientName={state.clientName}
                                     onClientSelect={(client, contactId) => {
                                         // Find Contact Data if selected
@@ -1757,7 +1756,7 @@ graph TD
 
                                 {/* Contact Selector - Shows only if client has contacts */}
                                 {state.newClientData?.contacts && state.newClientData.contacts.length > 0 && (
-                                    <div className="mt-4 animate-in fade-in slide-in-from-top-2">
+                                    <div className="mt-6 animate-in fade-in slide-in-from-top-2">
                                         <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider mb-2 block">Contacto Seleccionado</Label>
                                         <Select
                                             value={state.contactId || undefined}

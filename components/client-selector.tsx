@@ -51,12 +51,11 @@ export interface ClientData {
 
 interface ClientSelectorProps {
     value?: string // Client ID
-    contactValue?: string // Contact ID
     clientName?: string // For initial display or fallback
     onClientSelect: (client: ClientData, contactId?: string) => void
 }
 
-export function ClientSelector({ value, contactValue, clientName, onClientSelect }: ClientSelectorProps) {
+export function ClientSelector({ value, clientName, onClientSelect }: ClientSelectorProps) {
     const [open, setOpen] = React.useState(false)
     const [searchQuery, setSearchQuery] = React.useState("")
     const debouncedQuery = useDebounceValue(searchQuery, 300)
@@ -301,7 +300,7 @@ export function ClientSelector({ value, contactValue, clientName, onClientSelect
     }
 
     return (
-        <div className="w-full flex gap-2">
+        <div className="w-full block">
             {/* 1. Client Select */}
             <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
@@ -309,7 +308,7 @@ export function ClientSelector({ value, contactValue, clientName, onClientSelect
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
-                        className="w-full justify-between bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] hover:bg-[#404240] hover:text-[#E8EDDF] h-[50px] text-lg font-normal py-6 rounded-xl flex-1"
+                        className="w-full justify-between bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] hover:bg-[#404240] hover:text-[#E8EDDF] h-[50px] text-lg font-normal py-6 rounded-xl"
                     >
                         {clientName ? (
                             <div className="flex flex-col items-start truncate text-left">
@@ -384,28 +383,6 @@ export function ClientSelector({ value, contactValue, clientName, onClientSelect
                     </div>
                 </PopoverContent>
             </Popover>
-
-            {/* 2. Contact Select (Only if client selected) */}
-            {selectedClient && selectedClient.contacts && selectedClient.contacts.length > 0 && (
-                <Select
-                    value={contactValue}
-                    onValueChange={(val) => onClientSelect(selectedClient, val)}
-                >
-                    <SelectTrigger className="w-[280px] bg-[#333533] border-[#4A4D4A] text-[#E8EDDF] hover:bg-[#404240] h-[50px] rounded-xl">
-                        <SelectValue placeholder="Seleccionar Contacto" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                        {selectedClient.contacts.map(contact => (
-                            <SelectItem key={contact.id} value={contact.id}>
-                                <div className="flex flex-col text-left">
-                                    <span className="font-bold">{contact.name}</span>
-                                    <span className="text-xs text-[#CFDBD5]/50">{contact.role || 'Sin cargo'}</span>
-                                </div>
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            )}
 
             {/* CREATE MODAL */}
             <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
