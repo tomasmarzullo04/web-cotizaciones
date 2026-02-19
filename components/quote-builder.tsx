@@ -411,25 +411,50 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
 
         const finalPrice = price !== undefined ? price : (role.defaultPrice * (SENIORITY_MODIFIERS[seniority as keyof typeof SENIORITY_MODIFIERS] || 1.0))
 
-        const newProfile = {
-            id: crypto.randomUUID(),
-            role: role.label,
-            seniority: seniority,
-            count: 1,
-            price: finalPrice,
-            skills: '',
-            startDate: new Date().toISOString(),
-            endDate: new Date().toISOString()
-        }
+        setState(prev => {
+            // Check for existing profile with SAME Role AND Seniority
+            const existingIndex = prev.staffingDetails.profiles.findIndex(p => p.role === role.label && p.seniority === seniority)
 
-        setState(prev => ({
-            ...prev,
-            roles: { ...prev.roles, [roleKey]: (prev.roles[roleKey] || 0) + 1 },
-            staffingDetails: {
-                ...prev.staffingDetails,
-                profiles: [...prev.staffingDetails.profiles, newProfile]
+            if (existingIndex >= 0) {
+                // UPDATE EXISTING
+                const newProfiles = [...prev.staffingDetails.profiles]
+                const currentProfile = newProfiles[existingIndex]
+                newProfiles[existingIndex] = {
+                    ...currentProfile,
+                    count: (currentProfile.count || 0) + 1
+                }
+
+                return {
+                    ...prev,
+                    roles: { ...prev.roles, [roleKey]: (prev.roles[roleKey] || 0) + 1 },
+                    staffingDetails: {
+                        ...prev.staffingDetails,
+                        profiles: newProfiles
+                    }
+                }
+            } else {
+                // CREATE NEW
+                const newProfile = {
+                    id: crypto.randomUUID(),
+                    role: role.label,
+                    seniority: seniority,
+                    count: 1,
+                    price: finalPrice,
+                    skills: '',
+                    startDate: new Date().toISOString(),
+                    endDate: new Date().toISOString()
+                }
+
+                return {
+                    ...prev,
+                    roles: { ...prev.roles, [roleKey]: (prev.roles[roleKey] || 0) + 1 },
+                    staffingDetails: {
+                        ...prev.staffingDetails,
+                        profiles: [...prev.staffingDetails.profiles, newProfile]
+                    }
+                }
             }
-        }))
+        })
         toast.success(`${role.label} (${seniority}) agregado`)
     }
 
@@ -2582,7 +2607,7 @@ graph TD
                                         const isLimitReached = currentCount >= 5
 
                                         return (
-                                            <div key={roleKey} className="group flex items-center justify-between p-3 rounded-xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all shadow-sm hover:shadow-md h-[72px]">
+                                            <div key={roleKey} className="group flex items-center justify-between p-3 rounded-xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all shadow-sm hover:shadow-md min-h-[72px] h-auto py-3">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-8 h-8 rounded-lg bg-[#1E1E1E] flex items-center justify-center border border-[#333533] group-hover:border-[#F5CB5C] transition-colors shadow-inner shrink-0">
                                                         <span className="text-[10px] font-bold text-[#CFDBD5] group-hover:text-[#F5CB5C]">SR</span>
