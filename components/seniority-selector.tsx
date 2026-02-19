@@ -17,9 +17,10 @@ interface SenioritySelectorProps {
     onSelect: (level: string, price: number) => void
     defaultPrice?: number
     multipliers?: Record<string, number>
+    compact?: boolean
 }
 
-export function SenioritySelector({ roleName, roleKey, capabilities, serviceRates, onSelect, defaultPrice, multipliers }: SenioritySelectorProps) {
+export function SenioritySelector({ roleName, roleKey, capabilities, serviceRates, onSelect, defaultPrice, multipliers, compact = false }: SenioritySelectorProps) {
     const [open, setOpen] = useState(false)
 
     // Calculate valid options
@@ -44,8 +45,11 @@ export function SenioritySelector({ roleName, roleKey, capabilities, serviceRate
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button size="icon" className="h-8 w-8 rounded-full bg-[#242423] text-[#F5CB5C] border border-[#F5CB5C]/30 hover:bg-[#F5CB5C] hover:text-[#242423]">
-                    <Plus className="w-4 h-4" />
+                <Button size="icon" className={cn(
+                    "rounded-full bg-[#242423] text-[#F5CB5C] border border-[#F5CB5C]/30 hover:bg-[#F5CB5C] hover:text-[#242423] transition-all",
+                    compact ? "h-6 w-6" : "h-8 w-8"
+                )}>
+                    <Plus className={cn(compact ? "w-3 h-3" : "w-4 h-4")} />
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-64 bg-[#242423] border-[#F5CB5C] text-[#E8EDDF] p-3 shadow-xl" side="right" align="start">

@@ -2608,19 +2608,26 @@ graph TD
                                         const isLimitReached = currentCount >= 5
 
                                         return (
-                                            <div key={roleKey} className="group flex items-center justify-between p-3 rounded-xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all shadow-sm hover:shadow-md min-h-[72px] h-auto py-3 relative overflow-hidden">
-                                                <div className="flex items-center gap-3 w-full pr-12">
+                                            <div key={roleKey} className="group relative flex flex-col p-3 rounded-xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all shadow-sm hover:shadow-md h-auto min-h-[120px]">
+                                                {/* TOP: Badge */}
+                                                <div className="flex justify-between items-start w-full">
                                                     <div className="w-8 h-8 rounded-lg bg-[#1E1E1E] flex items-center justify-center border border-[#333533] group-hover:border-[#F5CB5C] transition-colors shadow-inner shrink-0">
                                                         <span className="text-[10px] font-bold text-[#CFDBD5] group-hover:text-[#F5CB5C]">SR</span>
                                                     </div>
-                                                    <div className="min-w-0 flex-1">
-                                                        <div className="text-[#E8EDDF] font-bold text-xs leading-tight truncate" title={role.label}>{role.label}</div>
-                                                        <div className="text-[#CFDBD5] text-[9px] opacity-60 font-mono mt-0.5 truncate">
-                                                            USD {(viewMode === 'annual' ? role.defaultPrice * 12 : role.defaultPrice).toLocaleString()}
-                                                        </div>
+                                                </div>
+
+                                                {/* CENTER: Name & Price */}
+                                                <div className="flex-1 flex flex-col justify-center items-center mt-2 mb-4 px-1">
+                                                    <div className="text-[#E8EDDF] font-bold text-xs leading-tight text-center whitespace-normal mb-1">
+                                                        {role.label}
+                                                    </div>
+                                                    <div className="text-[#CFDBD5] text-[9px] opacity-60 font-mono">
+                                                        USD {(viewMode === 'annual' ? role.defaultPrice * 12 : role.defaultPrice).toLocaleString()}
                                                     </div>
                                                 </div>
-                                                <div className="absolute right-2 top-1/2 -translate-y-1/2">
+
+                                                {/* BOTTOM RIGHT: Add Button */}
+                                                <div className="absolute bottom-2 right-2">
                                                     <SenioritySelector
                                                         roleName={role.label}
                                                         roleKey={roleKey}
@@ -2629,6 +2636,7 @@ graph TD
                                                         onSelect={(level, price) => handleAddProfile(roleKey, level, price)}
                                                         defaultPrice={role.defaultPrice}
                                                         multipliers={SENIORITY_MODIFIERS}
+                                                        compact={true}
                                                     />
                                                 </div>
                                             </div>
