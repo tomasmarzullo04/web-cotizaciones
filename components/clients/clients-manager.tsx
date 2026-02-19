@@ -224,9 +224,9 @@ export function ClientsManager({ initialClients }: { initialClients: any[] }) {
                             Esta acción no se puede deshacer. Se eliminará permanentemente al cliente de tu cartera.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter className="gap-4 sm:space-x-0">
-                        <AlertDialogCancel className="bg-transparent text-[#CFDBD5] hover:bg-[#333533] hover:text-[#E8EDDF] border-none h-12 px-6 text-base font-medium">Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} className="bg-red-500/90 hover:bg-red-600 text-white font-bold border-none h-12 px-6 text-base">
+                    <AlertDialogFooter className="flex-col sm:flex-row gap-4 sm:gap-6 sm:space-x-0">
+                        <AlertDialogCancel className="bg-transparent text-[#CFDBD5] hover:bg-[#333533] hover:text-[#E8EDDF] border-none h-14 px-8 min-w-[130px] text-base font-medium mt-0">Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-red-500/90 hover:bg-red-600 text-white font-bold border-none h-14 px-8 min-w-[130px] text-base">
                             Sí, eliminar
                         </AlertDialogAction>
                     </AlertDialogFooter>
