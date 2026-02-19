@@ -1833,7 +1833,7 @@ graph TD
                                             type="number"
                                             value={state.durationValue}
                                             onChange={(e) => updateState('durationValue', parseFloat(e.target.value) || 0)}
-                                            className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] text-center font-bold"
+                                            className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] text-center font-bold w-20"
                                         />
                                         <Select
                                             value={state.durationUnit}
