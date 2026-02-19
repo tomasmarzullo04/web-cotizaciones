@@ -1732,59 +1732,62 @@ graph TD
                     {/* 1. GENERAL */}
                     <SectionCard number={getSectionNumber('general')} title="Información General" icon={ClipboardList}>
                         <div className="space-y-8">
-                            <div>
-                                <Label className="text-[#CFDBD5] text-sm font-bold uppercase tracking-wider mb-2 block">Cliente / Prospecto</Label>
-                                <ClientSelector
-                                    value={state.clientId}
-                                    clientName={state.clientName}
-                                    onClientSelect={(client, contactId) => {
-                                        // Find Contact Data if selected
-                                        const selectedContact = contactId && client.contacts
-                                            ? client.contacts.find(c => c.id === contactId)
-                                            : null
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                                {/* Left: Client Selector */}
+                                <div>
+                                    <Label className="text-[#CFDBD5] text-sm font-bold uppercase tracking-wider mb-2 block">Cliente / Prospecto</Label>
+                                    <ClientSelector
+                                        value={state.clientId}
+                                        clientName={state.clientName}
+                                        onClientSelect={(client, contactId) => {
+                                            // Find Contact Data if selected
+                                            const selectedContact = contactId && client.contacts
+                                                ? client.contacts.find(c => c.id === contactId)
+                                                : null
 
-                                        // Update basics
-                                        let newState = {
-                                            clientName: client.companyName,
-                                            clientId: client.id,
-                                            contactId: contactId,
-                                            newClientData: client,
-                                            clientLogoUrl: client.clientLogoUrl,
-                                            isNewClient: false
-                                        } as any
+                                            // Update basics
+                                            let newState = {
+                                                clientName: client.companyName,
+                                                clientId: client.id,
+                                                contactId: contactId,
+                                                newClientData: client,
+                                                clientLogoUrl: client.clientLogoUrl,
+                                                isNewClient: false
+                                            } as any
 
-                                        // Update contact details if a contact is selected
-                                        if (selectedContact) {
-                                            newState.clientContact = {
-                                                ...state.clientContact,
-                                                name: selectedContact.name,
-                                                email: selectedContact.email || state.clientContact.email,
-                                                role: selectedContact.role || state.clientContact.role
+                                            // Update contact details if a contact is selected
+                                            if (selectedContact) {
+                                                newState.clientContact = {
+                                                    ...state.clientContact,
+                                                    name: selectedContact.name,
+                                                    email: selectedContact.email || state.clientContact.email,
+                                                    role: selectedContact.role || state.clientContact.role
+                                                }
+                                            } else if (client.contacts && client.contacts.length > 0) {
+                                                // Auto-select first contact if none selected but contacts exist
+                                                const first = client.contacts[0]
+                                                newState.contactId = first.id
+                                                newState.clientContact = {
+                                                    ...state.clientContact,
+                                                    name: first.name,
+                                                    email: first.email || '',
+                                                    role: first.role || ''
+                                                }
                                             }
-                                        } else if (client.contacts && client.contacts.length > 0) {
-                                            // Auto-select first contact if none selected but contacts exist
-                                            const first = client.contacts[0]
-                                            newState.contactId = first.id
-                                            newState.clientContact = {
-                                                ...state.clientContact,
-                                                name: first.name,
-                                                email: first.email || '',
-                                                role: first.role || ''
-                                            }
-                                        }
 
-                                        setState(prev => ({
-                                            ...prev,
-                                            ...newState
-                                        }))
-                                    }}
-                                />
+                                            setState(prev => ({
+                                                ...prev,
+                                                ...newState
+                                            }))
+                                        }}
+                                    />
+                                </div>
 
-                                {/* Contact Selector - Shows only if client has contacts */}
-                                {state.newClientData?.contacts && state.newClientData.contacts.length > 0 && (
-                                    <div className="mt-8 animate-in fade-in slide-in-from-top-2">
-                                        <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider mb-4 block">Contacto Seleccionado</Label>
-                                        <div className="w-full max-w-[300px]">
+                                {/* Right: Contact Selector - Shows only if client has contacts */}
+                                <div className="min-h-[82px] flex items-end">
+                                    {state.newClientData?.contacts && state.newClientData.contacts.length > 0 && (
+                                        <div className="w-full animate-in fade-in slide-in-from-right-4">
+                                            <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider mb-2 block">Contacto Seleccionado</Label>
                                             <Select
                                                 value={state.contactId || undefined}
                                                 onValueChange={(val) => {
@@ -1809,17 +1812,17 @@ graph TD
                                                 <SelectContent className="bg-[#242423] border-[#333533] text-[#E8EDDF]">
                                                     {state.newClientData.contacts.map((contact: any) => (
                                                         <SelectItem key={contact.id} value={contact.id} className="focus:bg-[#333533] focus:text-[#F5CB5C] py-3">
-                                                            <div className="flex flex-col text-left">
+                                                            <span className="flex items-center gap-2">
                                                                 <span className="font-bold text-sm">{contact.name}</span>
-                                                                {contact.role && <span className="text-xs text-[#CFDBD5]/60">{contact.role}</span>}
-                                                            </div>
+                                                                {contact.role && <span className="text-sm text-[#CFDBD5]/60 font-normal">- {contact.role}</span>}
+                                                            </span>
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
