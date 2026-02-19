@@ -2608,36 +2608,36 @@ graph TD
                                         const isLimitReached = currentCount >= 5
 
                                         return (
-                                            <div key={roleKey} className="group relative flex flex-col p-3 rounded-xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all shadow-sm hover:shadow-md h-auto min-h-[120px]">
-                                                {/* TOP: Badge */}
-                                                <div className="flex justify-between items-start w-full">
+                                            <div key={roleKey} className="group relative flex flex-col p-3 rounded-xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all shadow-sm hover:shadow-md h-auto min-h-[100px]">
+                                                {/* TOP ROW: Badge (Left) & Add Button (Right) */}
+                                                <div className="flex justify-between items-start w-full relative z-10">
                                                     <div className="w-8 h-8 rounded-lg bg-[#1E1E1E] flex items-center justify-center border border-[#333533] group-hover:border-[#F5CB5C] transition-colors shadow-inner shrink-0">
                                                         <span className="text-[10px] font-bold text-[#CFDBD5] group-hover:text-[#F5CB5C]">SR</span>
+                                                    </div>
+
+                                                    {/* Button moved to Top-Right */}
+                                                    <div className="absolute top-0 right-0">
+                                                        <SenioritySelector
+                                                            roleName={role.label}
+                                                            roleKey={roleKey}
+                                                            capabilities={['Jr', 'Med', 'Sr']}
+                                                            serviceRates={dbRates}
+                                                            onSelect={(level, price) => handleAddProfile(roleKey, level, price)}
+                                                            defaultPrice={role.defaultPrice}
+                                                            multipliers={SENIORITY_MODIFIERS}
+                                                            compact={true}
+                                                        />
                                                     </div>
                                                 </div>
 
                                                 {/* CENTER: Name & Price */}
-                                                <div className="flex-1 flex flex-col justify-center items-center mt-2 mb-4 px-1">
+                                                <div className="flex-1 flex flex-col justify-center items-center mt-2 px-1">
                                                     <div className="text-[#E8EDDF] font-bold text-xs leading-tight text-center whitespace-normal mb-1">
                                                         {role.label}
                                                     </div>
                                                     <div className="text-[#CFDBD5] text-[9px] opacity-60 font-mono">
                                                         USD {(viewMode === 'annual' ? role.defaultPrice * 12 : role.defaultPrice).toLocaleString()}
                                                     </div>
-                                                </div>
-
-                                                {/* BOTTOM RIGHT: Add Button */}
-                                                <div className="absolute bottom-2 right-2">
-                                                    <SenioritySelector
-                                                        roleName={role.label}
-                                                        roleKey={roleKey}
-                                                        capabilities={['Jr', 'Med', 'Sr']}
-                                                        serviceRates={dbRates}
-                                                        onSelect={(level, price) => handleAddProfile(roleKey, level, price)}
-                                                        defaultPrice={role.defaultPrice}
-                                                        multipliers={SENIORITY_MODIFIERS}
-                                                        compact={true}
-                                                    />
                                                 </div>
                                             </div>
                                         )
