@@ -1782,8 +1782,8 @@ graph TD
 
                                 {/* Contact Selector - Shows only if client has contacts */}
                                 {state.newClientData?.contacts && state.newClientData.contacts.length > 0 && (
-                                    <div className="mt-6 animate-in fade-in slide-in-from-top-2">
-                                        <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider mb-3 block">Contacto Seleccionado</Label>
+                                    <div className="mt-8 animate-in fade-in slide-in-from-top-2">
+                                        <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider mb-4 block">Contacto Seleccionado</Label>
                                         <Select
                                             value={state.contactId || undefined}
                                             onValueChange={(val) => {
@@ -1802,7 +1802,7 @@ graph TD
                                                 }
                                             }}
                                         >
-                                            <SelectTrigger className="w-full bg-[#1E1E1E] border-[#333533] text-[#E8EDDF] h-14 pl-4 rounded-xl focus:ring-[#F5CB5C] transition-all">
+                                            <SelectTrigger className="w-full bg-[#1E1E1E] border-[#333533] text-[#E8EDDF] h-14 pl-6 pr-6 rounded-xl focus:ring-[#F5CB5C] transition-all">
                                                 <SelectValue placeholder="Seleccionar contacto..." />
                                             </SelectTrigger>
                                             <SelectContent className="bg-[#242423] border-[#333533] text-[#E8EDDF]">
