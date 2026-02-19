@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { createClient, updateClient, uploadClientLogo, validateExternalLogoUrl } from '@/lib/actions'
 import { toast } from 'sonner'
-import { Plus, Loader2, Upload, Link2, CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
+import { Plus, Loader2, Upload, Link2, CheckCircle2, XCircle, AlertCircle, Pencil } from 'lucide-react'
 
 export interface ClientData {
     id?: string
@@ -39,9 +39,11 @@ export function ClientFormModal({ initialData, isOpen, onOpenChange, onClientSav
     // Updated State for Multi-Contact
     const [companyName, setCompanyName] = useState('')
     const [clientLogoUrl, setClientLogoUrl] = useState('')
-    const [contacts, setContacts] = useState<{ id?: string, name: string, role: string, email: string }[]>([
-        { name: '', role: '', email: '' }
-    ])
+    const [contacts, setContacts] = useState<{ id?: string, name: string, role: string, email: string }[]>([])
+
+    // Temp Contact State for Add/Edit
+    const [tempContact, setTempContact] = useState({ name: '', role: '', email: '' })
+    const [editingContactIndex, setEditingContactIndex] = useState<number | null>(null)
 
     // Logo upload states
     const [uploadMode, setUploadMode] = useState<UploadMode>('url')
@@ -79,11 +81,15 @@ export function ClientFormModal({ initialData, isOpen, onOpenChange, onClientSav
                     })))
                 } else {
                     // Fallback for legacy single contact
-                    setContacts([{
-                        name: initialData.contactName || '',
-                        role: '',
-                        email: initialData.email || ''
-                    }])
+                    if (initialData.contactName) {
+                        setContacts([{
+                            name: initialData.contactName || '',
+                            role: '',
+                            email: initialData.email || ''
+                        }])
+                    } else {
+                        setContacts([])
+                    }
                 }
 
                 // Set preview if logo exists
@@ -96,7 +102,9 @@ export function ClientFormModal({ initialData, isOpen, onOpenChange, onClientSav
                 // Reset for Create Mode
                 setCompanyName('')
                 setClientLogoUrl('')
-                setContacts([{ name: '', role: '', email: '' }])
+                setContacts([])
+                setTempContact({ name: '', role: '', email: '' })
+                setEditingContactIndex(null)
                 setPreviewUrl(null)
                 setSelectedFile(null)
                 setUploadMode('url')
@@ -199,21 +207,47 @@ export function ClientFormModal({ initialData, isOpen, onOpenChange, onClientSav
         }
     }
 
-    // Contact Management Helpers
-    const handleContactChange = (index: number, field: keyof typeof contacts[0], value: string) => {
-        const newContacts = [...contacts]
-        newContacts[index] = { ...newContacts[index], [field]: value }
-        setContacts(newContacts)
+    // --- Contact Handlers ---
+    const handleSaveContact = () => {
+        if (!tempContact.name.trim()) {
+            toast.error("El nombre del contacto es obligatorio")
+            return
+        }
+
+        if (editingContactIndex !== null) {
+            // Update existing
+            const updated = [...contacts]
+            updated[editingContactIndex] = { ...updated[editingContactIndex], ...tempContact }
+            setContacts(updated)
+            setEditingContactIndex(null)
+            toast.success("Contacto actualizado")
+        } else {
+            // Add new
+            setContacts([...contacts, tempContact])
+            toast.success("Contacto agregado")
+        }
+        // Reset form
+        setTempContact({ name: '', role: '', email: '' })
     }
 
-    const addContact = () => {
-        setContacts([...contacts, { name: '', role: '', email: '' }])
+    const handleEditContact = (index: number) => {
+        setTempContact(contacts[index])
+        setEditingContactIndex(index)
     }
 
-    const removeContact = (index: number) => {
-        if (contacts.length === 1) return // Keep at least one
-        const newContacts = contacts.filter((_, i) => i !== index)
-        setContacts(newContacts)
+    const handleDeleteContact = (index: number) => {
+        const updated = contacts.filter((_, i) => i !== index)
+        setContacts(updated)
+        // If we were editing this one, cancel edit
+        if (editingContactIndex === index) {
+            setEditingContactIndex(null)
+            setTempContact({ name: '', role: '', email: '' })
+        }
+    }
+
+    const handleCancelEdit = () => {
+        setEditingContactIndex(null)
+        setTempContact({ name: '', role: '', email: '' })
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -223,10 +257,9 @@ export function ClientFormModal({ initialData, isOpen, onOpenChange, onClientSav
             return
         }
 
-        // Validate at least one contact name
-        const validContacts = contacts.filter(c => c.name.trim() !== '')
-        if (validContacts.length === 0) {
-            toast.error("Debe agregar al menos un contacto con nombre")
+        // Validate at least one contact
+        if (contacts.length === 0) {
+            toast.error("Debe agregar al menos un contacto a la lista")
             return
         }
 
@@ -240,7 +273,7 @@ export function ClientFormModal({ initialData, isOpen, onOpenChange, onClientSav
                 const uploadFormData = new FormData()
                 uploadFormData.append('file', selectedFile)
 
-                const uploadResult = await uploadClientLogo(uploadFormData, initialData?.clientLogoUrl || '')
+                const uploadResult = await uploadClientLogo(uploadFormData, initialData?.clientLogoUrl || undefined)
                 setIsUploading(false)
 
                 if (!uploadResult.success) {
@@ -267,22 +300,13 @@ export function ClientFormModal({ initialData, isOpen, onOpenChange, onClientSav
                 result = await updateClient(initialData.id, {
                     companyName,
                     clientLogoUrl: finalLogoUrl,
-                    contacts: validContacts.map(c => ({
-                        id: c.id,
-                        name: c.name,
-                        role: c.role,
-                        email: c.email
-                    }))
+                    contacts: contacts
                 })
             } else {
                 result = await createClient({
                     companyName,
                     clientLogoUrl: finalLogoUrl,
-                    contacts: validContacts.map(c => ({
-                        name: c.name,
-                        role: c.role || '',
-                        email: c.email || ''
-                    }))
+                    contacts: contacts
                 })
             }
 
@@ -294,6 +318,7 @@ export function ClientFormModal({ initialData, isOpen, onOpenChange, onClientSav
                 toast.error(result.error || "Error al guardar")
             }
         } catch (error) {
+            console.error(error)
             toast.error("Error de conexión")
         } finally {
             setLoading(false)
@@ -316,198 +341,213 @@ export function ClientFormModal({ initialData, isOpen, onOpenChange, onClientSav
                 )
             )}
 
-            <DialogContent className="bg-[#242423] border-[#333533] text-[#E8EDDF] sm:max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogContent className="bg-[#242423] border-[#333533] text-[#E8EDDF] sm:max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-bold text-[#F5CB5C]">
                         {initialData ? "Editar Cliente" : "Registrar Nuevo Cliente"}
                     </DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-                    <div className="space-y-2">
-                        <Label htmlFor="companyName" className="text-[#CFDBD5]">Empresa / Razón Social</Label>
-                        <Input
-                            id="companyName"
-                            className="bg-[#333533] border-transparent focus:border-[#F5CB5C] text-[#E8EDDF]"
-                            value={companyName}
-                            onChange={(e) => setCompanyName(e.target.value)}
-                        />
-                    </div>
-                    {/* Dynamic Contacts Section */}
-                    <div className="space-y-3">
-                        <Label className="text-[#CFDBD5] flex justify-between items-center">
-                            Contactos
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={addContact}
-                                className="h-6 text-[#F5CB5C] hover:bg-[#F5CB5C]/10 hover:text-[#F5CB5C] text-xs"
-                            >
-                                <Plus className="w-3 h-3 mr-1" />
-                                Agregar Contacto
-                            </Button>
-                        </Label>
+                <form onSubmit={handleSubmit} className="space-y-6 mt-2">
+                    {/* SECTION 1: Company Info */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="companyName" className="text-[#CFDBD5] font-bold uppercase text-xs tracking-wider">Empresa / Razón Social</Label>
+                            <Input
+                                id="companyName"
+                                className="bg-[#333533] border-transparent focus:border-[#F5CB5C] text-[#E8EDDF] h-11"
+                                placeholder="Ej: Tech Solutions S.A."
+                                value={companyName}
+                                onChange={(e) => setCompanyName(e.target.value)}
+                            />
+                        </div>
+                        {/* Logo Upload Section - Compact */}
+                        <div className="space-y-2">
+                            <Label className="text-[#CFDBD5] font-bold uppercase text-xs tracking-wider">Logo del Cliente (Opcional)</Label>
 
-                        <div className="space-y-3 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
-                            {contacts.map((contact, index) => (
-                                <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-[#1E1E1E] rounded-lg border border-[#333533] relative group">
-                                    {/* Delete Button */}
-                                    {contacts.length > 1 && (
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => removeContact(index)}
-                                            className="absolute -right-2 -top-2 h-6 w-6 rounded-full bg-[#242423] border border-[#333533] text-[#CFDBD5] hover:text-red-400 hover:bg-[#242423] opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                                        >
-                                            <XCircle className="w-4 h-4" />
-                                        </Button>
+                            <div className="flex gap-2 items-start">
+                                {/* Preview Box */}
+                                <div className="w-11 h-11 bg-[#1a1a1a] rounded-lg border border-[#333533] flex items-center justify-center overflow-hidden shrink-0">
+                                    {previewUrl ? (
+                                        <img src={previewUrl} alt="Logo" className="w-full h-full object-contain p-1" />
+                                    ) : (
+                                        <Link2 className="w-4 h-4 text-[#CFDBD5]/30" />
                                     )}
-
-                                    {/* Name */}
-                                    <div className="col-span-12 sm:col-span-4 space-y-1">
-                                        <Label className="text-xs text-[#CFDBD5]/50">Nombre *</Label>
-                                        <Input
-                                            value={contact.name}
-                                            onChange={(e) => handleContactChange(index, 'name', e.target.value)}
-                                            placeholder="Nombre Completo"
-                                            className="bg-[#333533] border-transparent focus:border-[#F5CB5C] text-[#E8EDDF] h-8 text-sm"
-                                        />
-                                    </div>
-
-                                    {/* Role */}
-                                    <div className="col-span-12 sm:col-span-4 space-y-1">
-                                        <Label className="text-xs text-[#CFDBD5]/50">Cargo</Label>
-                                        <Input
-                                            value={contact.role}
-                                            onChange={(e) => handleContactChange(index, 'role', e.target.value)}
-                                            placeholder="Ej. Gerente TI"
-                                            className="bg-[#333533] border-transparent focus:border-[#F5CB5C] text-[#E8EDDF] h-8 text-sm"
-                                        />
-                                    </div>
-
-                                    {/* Email */}
-                                    <div className="col-span-12 sm:col-span-4 space-y-1">
-                                        <Label className="text-xs text-[#CFDBD5]/50">Email</Label>
-                                        <Input
-                                            value={contact.email}
-                                            onChange={(e) => handleContactChange(index, 'email', e.target.value)}
-                                            placeholder="correo@empresa.com"
-                                            className="bg-[#333533] border-transparent focus:border-[#F5CB5C] text-[#E8EDDF] h-8 text-sm"
-                                        />
-                                    </div>
                                 </div>
-                            ))}
+
+                                <div className="flex-1 space-y-2">
+                                    <RadioGroup value={uploadMode} onValueChange={(v) => handleModeChange(v as UploadMode)} className="flex gap-3 mb-1">
+                                        <div className="flex items-center space-x-1">
+                                            <RadioGroupItem value="url" id="mode-url" className="text-[#F5CB5C] border-[#F5CB5C] w-3 h-3" />
+                                            <Label htmlFor="mode-url" className="text-xs cursor-pointer text-[#CFDBD5]">URL</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-1">
+                                            <RadioGroupItem value="file" id="mode-file" className="text-[#F5CB5C] border-[#F5CB5C] w-3 h-3" />
+                                            <Label htmlFor="mode-file" className="text-xs cursor-pointer text-[#CFDBD5]">Archivo</Label>
+                                        </div>
+                                    </RadioGroup>
+
+                                    {uploadMode === 'url' ? (
+                                        <div className="relative">
+                                            <Input
+                                                placeholder="https://..."
+                                                className="bg-[#333533] border-transparent focus:border-[#F5CB5C] text-[#E8EDDF] h-8 text-xs pr-8"
+                                                value={clientLogoUrl}
+                                                onChange={(e) => handleUrlChange(e.target.value)}
+                                            />
+                                            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                                                {urlValidationStatus === 'validating' && <Loader2 className="w-3 h-3 animate-spin text-[#CFDBD5]" />}
+                                                {urlValidationStatus === 'valid' && <CheckCircle2 className="w-3 h-3 text-green-500" />}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+                                            <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="w-full h-8 text-xs bg-[#333533] border-[#333533] text-[#CFDBD5]">
+                                                {selectedFile ? selectedFile.name : 'Seleccionar archivo'}
+                                            </Button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Logo Upload Section */}
-                    <div className="space-y-3 pt-2 border-t border-[#333533]">
-                        <Label className="text-[#CFDBD5]">Logo del Cliente (Opcional)</Label>
+                    <div className="border-t border-[#333533] my-4" />
 
-                        {/* Mode Selector */}
-                        <RadioGroup value={uploadMode} onValueChange={(v) => handleModeChange(v as UploadMode)} className="flex gap-4">
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="url" id="mode-url" className="border-[#F5CB5C] text-[#F5CB5C]" />
-                                <Label htmlFor="mode-url" className="text-sm cursor-pointer flex items-center gap-1">
-                                    <Link2 className="w-4 h-4" />
-                                    URL Externa
-                                </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="file" id="mode-file" className="border-[#F5CB5C] text-[#F5CB5C]" />
-                                <Label htmlFor="mode-file" className="text-sm cursor-pointer flex items-center gap-1">
-                                    <Upload className="w-4 h-4" />
-                                    Subir Archivo
-                                </Label>
-                            </div>
-                        </RadioGroup>
+                    {/* SECTION 2: Contact List */}
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <Label className="text-[#CFDBD5] font-bold uppercase text-xs tracking-wider flex items-center gap-2">
+                                Contactos Registrados <span className="bg-[#333533] text-[#F5CB5C] px-2 py-0.5 rounded-full text-[10px]">{contacts.length}</span>
+                            </Label>
+                        </div>
 
-                        {/* URL Input */}
-                        {uploadMode === 'url' && (
-                            <div className="space-y-2">
-                                <div className="relative">
-                                    <Input
-                                        placeholder="https://ejemplo.com/logo.png"
-                                        className="bg-[#333533] border-transparent focus:border-[#F5CB5C] text-[#E8EDDF] pr-10"
-                                        value={clientLogoUrl}
-                                        onChange={(e) => handleUrlChange(e.target.value)}
-                                    />
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                        {urlValidationStatus === 'validating' && <Loader2 className="w-4 h-4 animate-spin text-[#CFDBD5]" />}
-                                        {urlValidationStatus === 'valid' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
-                                        {urlValidationStatus === 'invalid' && <XCircle className="w-4 h-4 text-red-500" />}
+                        {contacts.length > 0 ? (
+                            <div className="grid grid-cols-1 gap-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                                {contacts.map((contact, idx) => (
+                                    <div key={idx} className="group flex items-center justify-between p-3 bg-[#1a1a1a] rounded-lg border border-[#333533] hover:border-[#F5CB5C]/30 transition-all">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+                                            <div className="flex flex-col">
+                                                <span className="text-xs text-[#CFDBD5]/50 uppercase tracking-wider font-bold">Nombre</span>
+                                                <span className="text-sm font-medium text-[#E8EDDF] truncate">{contact.name}</span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-xs text-[#CFDBD5]/50 uppercase tracking-wider font-bold">Cargo</span>
+                                                <span className="text-sm text-[#CFDBD5] truncate">{contact.role || '-'}</span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-xs text-[#CFDBD5]/50 uppercase tracking-wider font-bold">Email</span>
+                                                <span className="text-sm text-[#CFDBD5] truncate">{contact.email || '-'}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 pl-4 border-l border-[#333533] ml-4">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleEditContact(idx)}
+                                                className="h-8 w-8 text-[#F5CB5C] hover:bg-[#F5CB5C]/10"
+                                            >
+                                                <Pencil className="w-4 h-4" /> {/* Edit Icon replacement */}
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleDeleteContact(idx)}
+                                                className="h-8 w-8 text-zinc-500 hover:text-red-400 hover:bg-red-900/10"
+                                            >
+                                                <XCircle className="w-4 h-4" />
+                                            </Button>
+                                        </div>
                                     </div>
-                                </div>
-                                {validationError && (
-                                    <p className="text-xs text-red-400 flex items-center gap-1">
-                                        <AlertCircle className="w-3 h-3" />
-                                        {validationError}
-                                    </p>
-                                )}
+                                ))}
                             </div>
-                        )}
-
-                        {/* File Input */}
-                        {uploadMode === 'file' && (
-                            <div className="space-y-2">
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/png,image/jpeg,image/jpg"
-                                    onChange={handleFileSelect}
-                                    className="hidden"
-                                    id="logo-file-input"
-                                />
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="w-full bg-[#333533] border-[#333533] hover:bg-[#3a3d3a] text-[#E8EDDF]"
-                                >
-                                    <Upload className="w-4 h-4 mr-2" />
-                                    {selectedFile ? selectedFile.name : 'Seleccionar archivo PNG/JPG'}
-                                </Button>
-                                <p className="text-xs text-[#CFDBD5]/70">Máximo 2MB</p>
-                            </div>
-                        )}
-
-                        {/* Preview */}
-                        {previewUrl && (
-                            <div className="mt-3 p-3 bg-[#1a1a1a] rounded-lg border border-dashed border-[#333533]">
-                                <p className="text-xs text-[#CFDBD5] mb-2">Vista Previa:</p>
-                                <div className="flex justify-center items-center min-h-[80px] bg-white/5 rounded p-2">
-                                    <img
-                                        src={previewUrl}
-                                        alt="Preview"
-                                        className="max-h-20 max-w-full object-contain"
-                                        onError={() => {
-                                            setPreviewUrl(null)
-                                            setUrlValidationStatus('invalid')
-                                            setValidationError('Error al cargar la imagen')
-                                        }}
-                                    />
-                                </div>
+                        ) : (
+                            <div className="p-6 text-center border-2 border-dashed border-[#333533] rounded-xl bg-[#1a1a1a]/50">
+                                <p className="text-[#CFDBD5]/40 text-sm">No hay contactos registrados aún.</p>
                             </div>
                         )}
                     </div>
 
-                    <div className="pt-4 flex justify-end gap-2">
+                    {/* SECTION 3: Add/Edit Contact Form */}
+                    <div className="bg-[#1E1E1E] p-4 rounded-xl border border-[#333533] shadow-inner relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-[#F5CB5C]" />
+                        <h4 className="text-sm font-bold text-[#E8EDDF] mb-4 flex items-center gap-2">
+                            {editingContactIndex !== null ? '✏️ Editar Contacto' : '➕ Nuevo Contacto'}
+                            {editingContactIndex !== null && (
+                                <span className="text-[10px] font-normal text-[#F5CB5C] bg-[#F5CB5C]/10 px-2 py-0.5 rounded">Modo Edición</span>
+                            )}
+                        </h4>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs text-[#CFDBD5]/70">Nombre Completo *</Label>
+                                <Input
+                                    value={tempContact.name}
+                                    onChange={(e) => setTempContact({ ...tempContact, name: e.target.value })}
+                                    placeholder="Ej. Juan Pérez"
+                                    className="bg-[#242423] border-[#333533] focus:border-[#F5CB5C] text-[#E8EDDF]"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs text-[#CFDBD5]/70">Cargo / Rol</Label>
+                                <Input
+                                    value={tempContact.role}
+                                    onChange={(e) => setTempContact({ ...tempContact, role: e.target.value })}
+                                    placeholder="Ej. Gerente Comercial"
+                                    className="bg-[#242423] border-[#333533] focus:border-[#F5CB5C] text-[#E8EDDF]"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs text-[#CFDBD5]/70">Email</Label>
+                                <Input
+                                    value={tempContact.email}
+                                    onChange={(e) => setTempContact({ ...tempContact, email: e.target.value })}
+                                    placeholder="juan@empresa.com"
+                                    className="bg-[#242423] border-[#333533] focus:border-[#F5CB5C] text-[#E8EDDF]"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-3 mt-4">
+                            {editingContactIndex !== null && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={handleCancelEdit}
+                                    className="text-[#CFDBD5] hover:text-[#E8EDDF] h-9 text-xs"
+                                >
+                                    Cancelar Edición
+                                </Button>
+                            )}
+                            <Button
+                                type="button"
+                                onClick={handleSaveContact}
+                                className="bg-[#333533] hover:bg-[#F5CB5C] text-[#F5CB5C] hover:text-[#242423] border border-[#F5CB5C]/30 h-9 text-xs font-bold uppercase tracking-wider transition-all"
+                            >
+                                <CheckCircle2 className="w-3.5 h-3.5 mr-2" />
+                                {editingContactIndex !== null ? 'Actualizar Contacto' : 'Guardar Contacto'}
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div className="pt-4 flex justify-end gap-3 border-t border-[#333533] mt-6">
                         <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="text-[#CFDBD5] hover:text-[#E8EDDF] hover:bg-[#333533]">
-                            Cancelar
+                            Cancelar Operación
                         </Button>
                         <Button
                             type="submit"
-                            disabled={loading || isUploading || (uploadMode === 'url' && urlValidationStatus === 'validating')}
-                            className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold"
+                            disabled={loading || isUploading || (uploadMode === 'url' && urlValidationStatus === 'validating') || contacts.length === 0}
+                            className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold h-11 px-8 text-base shadow-[0_0_15px_rgba(245,203,92,0.3)]"
                         >
                             {(loading || isUploading) ? (
                                 <>
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                                     {isUploading ? 'Subiendo...' : 'Guardando...'}
                                 </>
                             ) : (
-                                initialData ? "Actualizar" : "Guardar"
+                                initialData ? "Guardar Cambios del Cliente" : "Registrar Cliente Completado"
                             )}
                         </Button>
                     </div>
