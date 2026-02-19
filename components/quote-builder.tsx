@@ -1784,38 +1784,40 @@ graph TD
                                 {state.newClientData?.contacts && state.newClientData.contacts.length > 0 && (
                                     <div className="mt-8 animate-in fade-in slide-in-from-top-2">
                                         <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider mb-4 block">Contacto Seleccionado</Label>
-                                        <Select
-                                            value={state.contactId || undefined}
-                                            onValueChange={(val) => {
-                                                const contact = state.newClientData?.contacts?.find((c: any) => c.id === val)
-                                                if (contact) {
-                                                    setState(prev => ({
-                                                        ...prev,
-                                                        contactId: val,
-                                                        clientContact: {
-                                                            ...prev.clientContact,
-                                                            name: contact.name,
-                                                            email: contact.email || '',
-                                                            role: contact.role || ''
-                                                        }
-                                                    }))
-                                                }
-                                            }}
-                                        >
-                                            <SelectTrigger className="w-full bg-[#1E1E1E] border-[#333533] text-[#E8EDDF] h-14 pl-6 pr-6 rounded-xl focus:ring-[#F5CB5C] transition-all">
-                                                <SelectValue placeholder="Seleccionar contacto..." />
-                                            </SelectTrigger>
-                                            <SelectContent className="bg-[#242423] border-[#333533] text-[#E8EDDF]">
-                                                {state.newClientData.contacts.map((contact: any) => (
-                                                    <SelectItem key={contact.id} value={contact.id} className="focus:bg-[#333533] focus:text-[#F5CB5C] py-3">
-                                                        <div className="flex flex-col text-left">
-                                                            <span className="font-bold text-sm">{contact.name}</span>
-                                                            {contact.role && <span className="text-xs text-[#CFDBD5]/60">{contact.role}</span>}
-                                                        </div>
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <div className="w-full max-w-[300px]">
+                                            <Select
+                                                value={state.contactId || undefined}
+                                                onValueChange={(val) => {
+                                                    const contact = state.newClientData?.contacts?.find((c: any) => c.id === val)
+                                                    if (contact) {
+                                                        setState(prev => ({
+                                                            ...prev,
+                                                            contactId: val,
+                                                            clientContact: {
+                                                                ...prev.clientContact,
+                                                                name: contact.name,
+                                                                email: contact.email || '',
+                                                                role: contact.role || ''
+                                                            }
+                                                        }))
+                                                    }
+                                                }}
+                                            >
+                                                <SelectTrigger className="w-full bg-[#1E1E1E] border-[#333533] text-[#E8EDDF] h-14 pl-10 pr-6 rounded-xl focus:ring-[#F5CB5C] transition-all">
+                                                    <SelectValue placeholder="Seleccionar contacto..." />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-[#242423] border-[#333533] text-[#E8EDDF]">
+                                                    {state.newClientData.contacts.map((contact: any) => (
+                                                        <SelectItem key={contact.id} value={contact.id} className="focus:bg-[#333533] focus:text-[#F5CB5C] py-3">
+                                                            <div className="flex flex-col text-left">
+                                                                <span className="font-bold text-sm">{contact.name}</span>
+                                                                {contact.role && <span className="text-xs text-[#CFDBD5]/60">{contact.role}</span>}
+                                                            </div>
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
                                     </div>
                                 )}
                             </div>
