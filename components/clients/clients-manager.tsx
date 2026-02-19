@@ -39,9 +39,17 @@ export function ClientsManager({ initialClients }: { initialClients: any[] }) {
         setEditingClient({
             id: client.id,
             companyName: client.companyName,
+            // Pass full contacts list
+            contacts: client.contacts.map((c: any) => ({
+                id: c.id,
+                name: c.name,
+                role: c.role,
+                email: c.email
+            })),
+            clientLogoUrl: client.clientLogoUrl,
+            // Legacy fallbacks (optional but good for safety)
             contactName: client.contactName,
-            email: client.email,
-            clientLogoUrl: client.clientLogoUrl
+            email: client.email
         })
         setIsEditOpen(true)
     }
@@ -110,70 +118,86 @@ export function ClientsManager({ initialClients }: { initialClients: any[] }) {
                             <TableHeader className="bg-[#242423]/50">
                                 <TableRow className="border-[#333533] hover:bg-transparent">
                                     <TableHead className="text-[#F5CB5C] font-bold py-6 pl-10 text-base">Empresa</TableHead>
-                                    <TableHead className="text-[#F5CB5C] font-bold py-6 text-base">Contacto</TableHead>
-                                    <TableHead className="text-[#F5CB5C] font-bold py-6 text-base">Email</TableHead>
+                                    <TableHead className="text-[#F5CB5C] font-bold py-6 text-base">Contactos</TableHead>
+                                    <TableHead className="text-[#F5CB5C] font-bold py-6 text-base">Email Principal</TableHead>
                                     <TableHead className="text-[#F5CB5C] font-bold py-6 text-center text-base">Estatus</TableHead>
                                     <TableHead className="text-[#F5CB5C] font-bold py-6 pr-10 text-right text-base">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {initialClients.map((client) => (
-                                    <TableRow key={client.id} className="border-[#333533] hover:bg-[#333533]/60 transition-colors group">
-                                        <TableCell className="font-medium text-[#E8EDDF] py-6 pl-10 flex items-center gap-4">
-                                            <div className="p-1 rounded-xl bg-[#242423] text-[#CFDBD5] group-hover:text-[#F5CB5C] transition-colors shadow-sm w-12 h-12 flex items-center justify-center overflow-hidden border border-[#333533]">
-                                                {client.clientLogoUrl ? (
-                                                    <img src={client.clientLogoUrl} alt={client.companyName} className="max-w-full max-h-full object-contain" />
-                                                ) : (
-                                                    <Building className="w-5 h-5" />
-                                                )}
-                                            </div>
-                                            <span className="text-lg tracking-tight">{client.companyName}</span>
-                                        </TableCell>
-                                        <TableCell className="text-[#CFDBD5] py-6 text-base">
-                                            <div className="flex items-center gap-3">
-                                                <User className="w-4 h-4 opacity-70" />
-                                                {client.contactName || '-'}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-[#CFDBD5] py-6 text-base">
-                                            <div className="flex items-center gap-3">
-                                                <Mail className="w-4 h-4 opacity-70" />
-                                                {client.email || '-'}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-center py-6">
-                                            <Badge className={`
+                                {initialClients.map((client) => {
+                                    // Determine display values for contacts
+                                    const contactsCount = client.contacts?.length || 0
+                                    const primaryContact = client.contacts?.[0]
+                                    const otherContacts = contactsCount > 1 ? contactsCount - 1 : 0
+
+                                    return (
+                                        <TableRow key={client.id} className="border-[#333533] hover:bg-[#333533]/60 transition-colors group">
+                                            <TableCell className="font-medium text-[#E8EDDF] py-6 pl-10 flex items-center gap-4">
+                                                <div className="p-1 rounded-xl bg-[#242423] text-[#CFDBD5] group-hover:text-[#F5CB5C] transition-colors shadow-sm w-12 h-12 flex items-center justify-center overflow-hidden border border-[#333533]">
+                                                    {client.clientLogoUrl ? (
+                                                        <img src={client.clientLogoUrl} alt={client.companyName} className="max-w-full max-h-full object-contain" />
+                                                    ) : (
+                                                        <Building className="w-5 h-5" />
+                                                    )}
+                                                </div>
+                                                <span className="text-lg tracking-tight">{client.companyName}</span>
+                                            </TableCell>
+                                            <TableCell className="text-[#CFDBD5] py-6 text-base">
+                                                <div className="flex items-center gap-3">
+                                                    <User className="w-4 h-4 opacity-70" />
+                                                    <div className="flex flex-col">
+                                                        <span className="font-medium text-[#E8EDDF]">
+                                                            {primaryContact?.name || client.contactName || 'Sin contacto'}
+                                                        </span>
+                                                        {otherContacts > 0 && (
+                                                            <span className="text-xs text-[#F5CB5C] font-medium opacity-80">
+                                                                + {otherContacts} más
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-[#CFDBD5] py-6 text-base">
+                                                <div className="flex items-center gap-3">
+                                                    <Mail className="w-4 h-4 opacity-70" />
+                                                    {primaryContact?.email || client.email || '-'}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-center py-6">
+                                                <Badge className={`
                                                 ${client.status === 'CLIENTE'
-                                                    ? 'bg-[#F5CB5C]/20 text-[#F5CB5C] border border-[#F5CB5C]/50'
-                                                    : 'bg-[#CFDBD5]/10 text-[#CFDBD5] border border-[#CFDBD5]/30'
-                                                }
+                                                        ? 'bg-[#F5CB5C]/20 text-[#F5CB5C] border border-[#F5CB5C]/50'
+                                                        : 'bg-[#CFDBD5]/10 text-[#CFDBD5] border border-[#CFDBD5]/30'
+                                                    }
                                                 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm backdrop-blur-md
                                             `}>
-                                                {client.status}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right py-6 pr-10">
-                                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => handleEdit(client)}
-                                                    className="h-9 w-9 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-full"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => setDeletingId(client.id)}
-                                                    className="h-9 w-9 text-[#CFDBD5] hover:text-red-400 hover:bg-red-500/10 rounded-full"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                                    {client.status}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right py-6 pr-10">
+                                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleEdit(client)}
+                                                        className="h-9 w-9 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-full"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => setDeletingId(client.id)}
+                                                        className="h-9 w-9 text-[#CFDBD5] hover:text-red-400 hover:bg-red-500/10 rounded-full"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                })}
                             </TableBody>
                         </Table>
                     )}

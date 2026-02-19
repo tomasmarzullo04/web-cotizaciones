@@ -405,16 +405,18 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
     const [viewMode, setViewMode] = useState<'monthly' | 'annual'>('monthly')
     const [isSuggestionLoading, setIsSuggestionLoading] = useState(false)
 
-    const handleAddProfile = (roleKey: RoleKey) => {
+    const handleAddProfile = (roleKey: RoleKey, seniority: string = 'Sr', price?: number) => {
         const role = ROLE_CONFIG[roleKey]
         if (!role) return
 
+        const finalPrice = price !== undefined ? price : (role.defaultPrice * (SENIORITY_MODIFIERS[seniority as keyof typeof SENIORITY_MODIFIERS] || 1.0))
+
         const newProfile = {
             id: crypto.randomUUID(),
-            role: roleKey,
-            seniority: 'Sr',
+            role: role.label,
+            seniority: seniority,
             count: 1,
-            price: role.defaultPrice * SENIORITY_MODIFIERS['Sr'],
+            price: finalPrice,
             skills: '',
             startDate: new Date().toISOString(),
             endDate: new Date().toISOString()
@@ -428,7 +430,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                 profiles: [...prev.staffingDetails.profiles, newProfile]
             }
         }))
-        toast.success(`${role.label} agregado`)
+        toast.success(`${role.label} (${seniority}) agregado`)
     }
 
     const handleUpdateProfileCount = (index: number, newCount: number) => {
@@ -1670,7 +1672,7 @@ graph TD
             )}
 
             {/* ================= LEFT COLUMN: FORM SCROLL ================= */}
-            <div className="w-full lg:w-2/3 h-full overflow-y-auto scrollbar-custom px-4 sm:px-8 lg:px-16 py-8">
+            <div className="w-full lg:w-2/3 h-full overflow-y-auto scrollbar-custom px-4 sm:px-6 lg:px-16 py-8">
                 <div className="space-y-12 max-w-4xl mx-auto pb-32">
 
                     {/* Header */}
@@ -1727,6 +1729,16 @@ graph TD
                                                 email: selectedContact.email || state.clientContact.email,
                                                 role: selectedContact.role || state.clientContact.role
                                             }
+                                        } else if (client.contacts && client.contacts.length > 0) {
+                                            // Auto-select first contact if none selected but contacts exist
+                                            const first = client.contacts[0]
+                                            newState.contactId = first.id
+                                            newState.clientContact = {
+                                                ...state.clientContact,
+                                                name: first.name,
+                                                email: first.email || '',
+                                                role: first.role || ''
+                                            }
                                         }
 
                                         setState(prev => ({
@@ -1735,6 +1747,45 @@ graph TD
                                         }))
                                     }}
                                 />
+
+                                {/* Contact Selector - Shows only if client has contacts */}
+                                {state.newClientData?.contacts && state.newClientData.contacts.length > 0 && (
+                                    <div className="mt-4 animate-in fade-in slide-in-from-top-2">
+                                        <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider mb-2 block">Contacto Seleccionado</Label>
+                                        <Select
+                                            value={state.contactId || undefined}
+                                            onValueChange={(val) => {
+                                                const contact = state.newClientData?.contacts?.find((c: any) => c.id === val)
+                                                if (contact) {
+                                                    setState(prev => ({
+                                                        ...prev,
+                                                        contactId: val,
+                                                        clientContact: {
+                                                            ...prev.clientContact,
+                                                            name: contact.name,
+                                                            email: contact.email || '',
+                                                            role: contact.role || ''
+                                                        }
+                                                    }))
+                                                }
+                                            }}
+                                        >
+                                            <SelectTrigger className="w-full bg-[#1E1E1E] border-[#333533] text-[#E8EDDF] h-12 rounded-xl focus:ring-[#F5CB5C]">
+                                                <SelectValue placeholder="Seleccionar contacto..." />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-[#242423] border-[#333533] text-[#E8EDDF]">
+                                                {state.newClientData.contacts.map((contact: any) => (
+                                                    <SelectItem key={contact.id} value={contact.id} className="focus:bg-[#333533] focus:text-[#F5CB5C] py-3">
+                                                        <div className="flex flex-col text-left">
+                                                            <span className="font-bold text-sm">{contact.name}</span>
+                                                            {contact.role && <span className="text-xs text-[#CFDBD5]/60">{contact.role}</span>}
+                                                        </div>
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -2545,8 +2596,8 @@ graph TD
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {/* LEFT: Available Roles */}
                             <div className="space-y-6">
-                                {/* LISTA GRID DE PERFILES (2 Columnas) */}
-                                <div className="grid grid-cols-2 gap-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-custom content-start">
+                                {/* LISTA GRID DE PERFILES (RESPONSIVE) */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-custom content-start">
                                     {Object.keys(ROLE_CONFIG).map((key) => {
                                         const roleKey = key as RoleKey
                                         const role = ROLE_CONFIG[roleKey]
@@ -2566,13 +2617,15 @@ graph TD
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <button
-                                                    onClick={() => handleAddProfile(roleKey)}
-                                                    disabled={isLimitReached}
-                                                    className="w-7 h-7 rounded-lg bg-[#333533] flex items-center justify-center text-[#F5CB5C] hover:bg-[#F5CB5C] hover:text-[#242423] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg active:scale-95 shrink-0"
-                                                >
-                                                    <Plus className="w-4 h-4" />
-                                                </button>
+                                                <SenioritySelector
+                                                    roleName={role.label}
+                                                    roleKey={roleKey}
+                                                    capabilities={['Jr', 'Med', 'Sr']}
+                                                    serviceRates={dbRates}
+                                                    onSelect={(level, price) => handleAddProfile(roleKey, level, price)}
+                                                    defaultPrice={role.defaultPrice}
+                                                    multipliers={SENIORITY_MODIFIERS}
+                                                />
                                             </div>
                                         )
                                     })}
@@ -2604,45 +2657,40 @@ graph TD
                                                         'border-zinc-500/50 text-zinc-400'
 
                                             return (
-                                                <div key={idx} className="group relative flex items-center justify-between p-3 pl-4 bg-[#242423] rounded-xl border border-[#333533] hover:border-[#F5CB5C]/30 transition-all">
+                                                <div key={idx} className="group relative flex items-center justify-between p-3 bg-[#242423] rounded-lg border border-[#333533] hover:border-[#F5CB5C]/30 transition-all animate-in fade-in slide-in-from-right-2">
 
-                                                    {/* LEFT: Avatar + Name (Protagonist) */}
-                                                    <div className="flex items-center gap-3 overflow-hidden mr-4">
-                                                        <div className={`w-8 h-8 rounded-full border ${badgeColor} bg-[#1E1E1E] flex items-center justify-center text-[9px] font-bold shadow-sm shrink-0`}>
+                                                    {/* LEFT: Role & Seniority */}
+                                                    <div className="flex items-center gap-3 overflow-hidden mr-2">
+                                                        <div className={cn("w-6 h-6 rounded flex items-center justify-center text-[9px] font-black border shrink-0", badgeColor)}>
                                                             {profile.seniority?.substring(0, 2).toUpperCase()}
                                                         </div>
                                                         <div className="min-w-0 flex flex-col justify-center">
-                                                            <h5 className="text-[#E8EDDF] font-bold text-sm truncate leading-none mb-0.5">
+                                                            <div className="text-[#E8EDDF] font-bold text-xs truncate leading-none">
                                                                 {profile.role}
-                                                            </h5>
+                                                            </div>
                                                         </div>
                                                     </div>
 
-                                                    {/* RIGHT: Quantity + Price + Trash */}
-                                                    <div className="flex items-center gap-4 shrink-0">
+                                                    {/* RIGHT: Specs */}
+                                                    <div className="flex items-center gap-3 shrink-0">
 
-                                                        {/* CANT: [N] Text Only */}
-                                                        <div className="flex items-center">
-                                                            <span className="text-[10px] text-zinc-500 font-bold tracking-wider mr-1">CANT:</span>
-                                                            <span className="text-[#E8EDDF] font-bold text-sm tabular-nums">
-                                                                {profile.count}
-                                                            </span>
+                                                        {/* Quantity */}
+                                                        <div className="bg-[#1E1E1E] px-2 py-1 rounded text-[10px] font-mono text-[#CFDBD5] border border-[#333533]">
+                                                            CANT: <span className="text-[#E8EDDF] font-bold">{profile.count}</span>
                                                         </div>
 
-                                                        {/* Price (Yellow) */}
-                                                        <div className="text-right w-[70px]">
-                                                            <div className="text-[#F5CB5C] font-mono font-bold text-sm leading-none tabular-nums">
+                                                        {/* Price */}
+                                                        <div className="text-right">
+                                                            <div className="text-[#F5CB5C] font-mono font-bold text-xs leading-none tabular-nums">
                                                                 ${finalPrice.toLocaleString('en-US', { useGrouping: false }).split('.')[0]}
                                                             </div>
-                                                            <div className="text-[8px] text-zinc-600 font-bold uppercase tracking-wider mt-0.5 opacity-50">
-                                                                {periodLabel === 'ANUAL' ? 'AÑO' : 'MES'}
-                                                            </div>
                                                         </div>
 
-                                                        {/* Trash Action */}
+                                                        {/* Trash Match Height */}
                                                         <button
                                                             className="text-zinc-600 hover:text-red-400 transition-colors p-1"
-                                                            onClick={() => {
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
                                                                 const newProfiles = state.staffingDetails.profiles.filter((_, i) => i !== idx)
                                                                 const roleKey = Object.keys(ROLE_CONFIG).find(key => ROLE_CONFIG[key as RoleKey].label === profile.role) as RoleKey
 

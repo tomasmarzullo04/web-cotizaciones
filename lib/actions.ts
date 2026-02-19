@@ -1110,7 +1110,7 @@ export async function updateQuoteStatus(quoteId: string, status: string) {
     }
 }
 
-export async function updateClient(clientId: string, data: { companyName: string, contactName: string, email: string, clientLogoUrl?: string }) {
+export async function updateClient(clientId: string, data: { companyName: string, contacts: { id?: string, name: string, role?: string, email?: string }[], clientLogoUrl?: string }) {
     const cookieStore = await cookies()
     const userId = cookieStore.get('session_user_id')?.value
 
@@ -1134,15 +1134,63 @@ export async function updateClient(clientId: string, data: { companyName: string
             await deleteClientLogo(existingClient.clientLogoUrl)
         }
 
-        const updatedClient = await prisma.client.update({
-            where: { id: clientId }, // Ownership check removed for globalization
-            data: {
-                companyName: data.companyName,
-                contactName: data.contactName,
-                email: data.email,
-                clientLogoUrl: data.clientLogoUrl
+        // 1. Determine Main Contact (First one) for legacy fields
+        const mainContact = data.contacts[0] || { name: '', role: '', email: '' }
+
+        // 2. Transaction to handle contacts sync
+        const updatedClient = await prisma.$transaction(async (tx) => {
+            // A. Update Client Basic Info
+            const client = await tx.client.update({
+                where: { id: clientId },
+                data: {
+                    companyName: data.companyName,
+                    clientLogoUrl: data.clientLogoUrl,
+                    // Legacy Sync
+                    contactName: mainContact.name,
+                    contactRole: mainContact.role,
+                    email: mainContact.email
+                }
+            })
+
+            // B. Handle Contacts
+            // Get current IDs to keep
+            const keptIds = data.contacts.filter(c => c.id).map(c => c.id as string)
+
+            // Delete removed contacts
+            await tx.contact.deleteMany({
+                where: {
+                    clientId: clientId,
+                    id: { notIn: keptIds }
+                }
+            })
+
+            // Upsert (Update existing, Create new)
+            for (const contact of data.contacts) {
+                if (contact.id) {
+                    await tx.contact.update({
+                        where: { id: contact.id },
+                        data: {
+                            name: contact.name,
+                            role: contact.role,
+                            email: contact.email
+                        }
+                    })
+                } else {
+                    await tx.contact.create({
+                        data: {
+                            clientId: clientId,
+                            name: contact.name,
+                            role: contact.role,
+                            email: contact.email
+                        }
+                    })
+                }
             }
+
+            return client
         })
+
+        revalidatePath('/clients') // Refresh directory
         return { success: true, client: updatedClient }
     } catch (e: any) {
         if (e.code === 'P2002') {

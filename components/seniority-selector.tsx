@@ -13,24 +13,31 @@ interface SenioritySelectorProps {
     roleName: string
     roleKey: string
     capabilities: string[]
-    serviceRates: ServiceRate[] // Or the shape passed from QuoteBuilder
+    serviceRates: ServiceRate[]
     onSelect: (level: string, price: number) => void
+    defaultPrice?: number
+    multipliers?: Record<string, number>
 }
 
-export function SenioritySelector({ roleName, roleKey, capabilities, serviceRates, onSelect }: SenioritySelectorProps) {
+export function SenioritySelector({ roleName, roleKey, capabilities, serviceRates, onSelect, defaultPrice, multipliers }: SenioritySelectorProps) {
     const [open, setOpen] = useState(false)
 
     // Calculate valid options
     const options = capabilities.map(level => {
-        // Find exact rate for this complexity (Seniority)
-        // Note: QuoteBuilder passes filtered rates for the specific role (via 'serviceRates' prop logic in render loop)
-        // Wait, in QuoteBuilder, 'serviceRates' in the loop IS 'serviceRates' (ALL rates).
-        // I need to filter by ROLE and COMPLEXITY.
-        // But the loop in QuoteBuilder (line 1729) does:
-        // const serviceRates = dbRates.filter(rate => rate.roleKey === roleKey)
-        // So 'serviceRates' passed here SHOULD be the filtered list.
-        const rateObj = serviceRates.find(r => r.complexity === level)
-        const price = rateObj ? rateObj.basePrice : 0
+        // 1. Try to find exact rate in DB (Role + Seniority)
+        const rateObj = serviceRates.find(r =>
+            r.service.toLowerCase() === roleName.toLowerCase() &&
+            r.complexity === level
+        )
+
+        // 2. Fallback to default logic if no DB rate
+        let price = rateObj ? rateObj.basePrice : 0
+
+        if (price === 0 && defaultPrice && multipliers) {
+            const multiplier = multipliers[level] || 1.0
+            price = defaultPrice * multiplier
+        }
+
         return { level, price }
     }).filter(o => o.price > 0)
 
