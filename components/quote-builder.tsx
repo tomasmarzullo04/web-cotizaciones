@@ -2602,47 +2602,35 @@ graph TD
                         })()}
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            {/* LEFT: Available Roles */}
                             <div className="space-y-6">
                                 {/* LISTA GRID DE PERFILES (RESPONSIVE) */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-custom content-start">
+                                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-custom content-start">
                                     {Object.keys(ROLE_CONFIG).map((key) => {
                                         const roleKey = key as RoleKey
                                         const role = ROLE_CONFIG[roleKey]
-                                        const currentCount = state.roles[roleKey] || 0
-                                        const isLimitReached = currentCount >= 5
 
                                         return (
-                                            <div key={roleKey} className="group relative flex flex-col p-3 rounded-xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all shadow-sm hover:shadow-md h-auto min-h-[100px]">
-                                                {/* TOP ROW: Badge (Left) & Add Button (Right) */}
-                                                <div className="flex justify-between items-start w-full relative z-10">
-                                                    <div className="w-8 h-8 rounded-lg bg-[#1E1E1E] flex items-center justify-center border border-[#333533] group-hover:border-[#F5CB5C] transition-colors shadow-inner shrink-0">
-                                                        <span className="text-[10px] font-bold text-[#CFDBD5] group-hover:text-[#F5CB5C]">SR</span>
-                                                    </div>
+                                            <div key={roleKey} className="group relative flex flex-col p-3 rounded-xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all shadow-sm hover:shadow-md min-h-[80px] justify-center items-center">
 
-                                                    {/* Button moved to Top-Right */}
-                                                    <div className="absolute top-0 right-0">
-                                                        <SenioritySelector
-                                                            roleName={role.label}
-                                                            roleKey={roleKey}
-                                                            capabilities={['Jr', 'Med', 'Sr']}
-                                                            serviceRates={dbRates}
-                                                            onSelect={(level, price) => handleAddProfile(roleKey, level, price)}
-                                                            defaultPrice={role.defaultPrice}
-                                                            multipliers={SENIORITY_MODIFIERS}
-                                                            compact={true}
-                                                        />
+                                                {/* CENTER: Name */}
+                                                <div className="w-full flex justify-center items-center px-1">
+                                                    <div className="text-[#E8EDDF] font-bold text-xs leading-tight text-center whitespace-normal w-[85%]">
+                                                        {role.label}
                                                     </div>
                                                 </div>
 
-                                                {/* CENTER: Name & Price */}
-                                                <div className="flex-1 flex flex-col justify-center items-center mt-2 px-1">
-                                                    <div className="text-[#E8EDDF] font-bold text-xs leading-tight text-center whitespace-normal mb-1">
-                                                        {role.label}
-                                                    </div>
-                                                    <div className="text-[#CFDBD5] text-[9px] opacity-60 font-mono">
-                                                        USD {(viewMode === 'annual' ? role.defaultPrice * 12 : role.defaultPrice).toLocaleString()}
-                                                    </div>
+                                                {/* Button moved to Bottom-Right */}
+                                                <div className="absolute bottom-1 right-1 opacity-80 hover:opacity-100 transition-opacity">
+                                                    <SenioritySelector
+                                                        roleName={role.label}
+                                                        roleKey={roleKey}
+                                                        capabilities={['Jr', 'Med', 'Sr']}
+                                                        serviceRates={dbRates}
+                                                        onSelect={(level, price) => handleAddProfile(roleKey, level, price)}
+                                                        defaultPrice={role.defaultPrice}
+                                                        multipliers={SENIORITY_MODIFIERS}
+                                                        compact={true}
+                                                    />
                                                 </div>
                                             </div>
                                         )
