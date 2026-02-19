@@ -24,23 +24,34 @@ export function SenioritySelector({ roleName, roleKey, capabilities, serviceRate
     const [open, setOpen] = useState(false)
 
     // Calculate valid options
-    const options = capabilities.map(level => {
-        // 1. Try to find exact rate in DB (Role + Seniority)
-        const rateObj = serviceRates.find(r =>
-            r.service.toLowerCase() === roleName.toLowerCase() &&
-            r.complexity === level
-        )
+    // Standardize seniority order
+    const priority = ['Trainee', 'Jr', 'Junior', 'Ssr', 'Semisenior', 'Med', 'Sr', 'Senior', 'Expert', 'Lead', 'Manager'];
 
-        // 2. Fallback to default logic if no DB rate
-        let price = rateObj ? rateObj.basePrice : 0
+    // Sort function
+    const sortLevels = (a: { level: string }, b: { level: string }) => {
+        const idxA = priority.findIndex(p => p.toLowerCase() === a.level.toLowerCase());
+        const idxB = priority.findIndex(p => p.toLowerCase() === b.level.toLowerCase());
+        // If not found in priority (e.g. unknown), put at end
+        return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+    };
 
-        if (price === 0 && defaultPrice && multipliers) {
-            const multiplier = multipliers[level] || 1.0
-            price = defaultPrice * multiplier
-        }
+    // 1. Get rates from DB strictly
+    const dbOptions = serviceRates
+        .filter(r => r.service.toLowerCase() === roleName.toLowerCase())
+        .map(r => ({ level: r.complexity, price: r.basePrice }))
+        .sort(sortLevels);
 
-        return { level, price }
-    }).filter(o => o.price > 0)
+    // 2. Determine final options
+    // If DB has rates, use ONLY DB rates. If empty, fallback to calculated defaults.
+    let options = dbOptions.length > 0
+        ? dbOptions
+        : capabilities.map(level => {
+            const multiplier = multipliers?.[level] || 1.0
+            return {
+                level,
+                price: (defaultPrice || 0) * multiplier
+            }
+        }).filter(o => o.price > 0);
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
