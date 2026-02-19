@@ -75,7 +75,9 @@ export function createQuoteWordDoc(data: any): Document {
     // Helper for Clean Text
     const cleanText = (str: string) => {
         if (!str) return ""
+        // Remove control characters (0-31 except 10 new line/13 carriage return)
         return str
+            .replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, "")
             .replace(/Ã³/g, 'ó')
             .replace(/Ã¡/g, 'á')
             .replace(/Ã©/g, 'é')
@@ -122,7 +124,7 @@ export function createQuoteWordDoc(data: any): Document {
                                                 relative: VerticalPositionRelativeFrom.PAGE,
                                                 offset: 720 // 0.5 inch absolute
                                             },
-                                            wrap: { type: TextWrappingType.TIGHT },
+                                            wrap: { type: TextWrappingType.SQUARE }, // CHANGED: TIGHT -> SQUARE to avoid corruption
                                             behindDocument: false
                                         }
                                     })

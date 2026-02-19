@@ -19,12 +19,11 @@ export async function POST(req: NextRequest) {
         const filename = `cotizacion_${safeClient}_${date}.docx`
 
         // Return Response
-        return new NextResponse(new Blob([buffer as any]), {
+        return new NextResponse(buffer as any, {
             status: 200,
             headers: {
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 'Content-Disposition': `attachment; filename="${filename}"`,
-                // 'Content-Length': buffer.length.toString() // Blob handles this?
             }
         })
 
