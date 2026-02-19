@@ -240,9 +240,19 @@ export async function registerAction(formData: FormData) {
 
 export async function logoutAction() {
     const cookieStore = await cookies()
+
+    // Clear App Session
     cookieStore.delete('session_role')
     cookieStore.delete('session_user')
     cookieStore.delete('session_user_id')
+
+    // Attempt to clear Supabase Auth cookies (best effort, depends on naming convention)
+    // We can't easily guess the project-id prefixed cookie name server-side without overhead, 
+    // so we rely on the Client component to trigger supabase.auth.signOut() which hits the loopback 
+    // or the middleware to clear them. 
+    // However, we can force expire common ones if we knew them.
+
+    // Force redirect to landing
     redirect('/')
 }
 

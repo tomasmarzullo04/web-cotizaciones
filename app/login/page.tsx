@@ -57,22 +57,24 @@ export default function LoginPage() {
         if (!supabase) return
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            // Log técnico detallado para el equipo
-            console.log("--- AUTH STATE CHANGE ---");
-            console.table({ event, user: session?.user?.email || 'No session' });
+            console.log(`[Auth Listener] Event: ${event} | User: ${session?.user?.email || 'None'}`);
 
-            if (session) {
-                try {
-                    // Detectar rol desde metadata o fallback a syncSessionAction
-                    const role = session.user.user_metadata?.role || await getUserRole(session.user.email)
+            // CRITICAL FIX: Solo redirigir en evento explícito de inicio de sesión o refresh validado.
+            // Ignoramos INITIAL_SESSION si venimos de un error o si el server nos mandó aquí.
+            if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
+                if (session) {
+                    try {
+                        const role = session.user.user_metadata?.role || await getUserRole(session.user.email)
+                        // Force absolute URL to avoid any relative path ambiguity
+                        const target = role === 'ADMIN'
+                            ? 'https://cotizador.thestoreintelligence.com/admin/dashboard'
+                            : 'https://cotizador.thestoreintelligence.com/quote/new';
 
-                    const target = role === 'ADMIN'
-                        ? 'https://cotizador.thestoreintelligence.com/admin/dashboard'
-                        : 'https://cotizador.thestoreintelligence.com/quote/new';
-
-                    window.location.assign(target);
-                } catch (err) {
-                    window.location.assign('https://cotizador.thestoreintelligence.com/quote/new');
+                        console.log(`[Auth Redirect] Redirecting to ${target}`);
+                        window.location.assign(target);
+                    } catch (err) {
+                        console.error("Redirect logic error", err);
+                    }
                 }
             }
         })

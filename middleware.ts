@@ -39,10 +39,13 @@ export async function middleware(request: NextRequest) {
     // 1. Protect /quote/* and /admin/*
     if (
         request.nextUrl.pathname.startsWith("/quote") ||
-        request.nextUrl.pathname.startsWith("/admin")
+        request.nextUrl.pathname.startsWith("/admin") ||
+        request.nextUrl.pathname.startsWith("/dashboard") ||
+        request.nextUrl.pathname.startsWith("/clients")
     ) {
         if (!user) {
-            return NextResponse.redirect(new URL("/login", request.url));
+            // STRICT: Unauthenticated users on protected routes go to Landing Page
+            return NextResponse.redirect(new URL("/", request.url));
         }
     }
 
