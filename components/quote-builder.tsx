@@ -672,6 +672,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             setState(JSON.parse(JSON.stringify(INITIAL_STATE)))
             setChartCode(DEFAULT_DIAGRAM)
             setWizardStep(0)
+            // Force rebuild
         }
     }, [initialData])
 
