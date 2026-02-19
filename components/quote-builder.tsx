@@ -2610,17 +2610,17 @@ graph TD
                                         const role = ROLE_CONFIG[roleKey]
 
                                         return (
-                                            <div key={roleKey} className="group relative flex flex-col p-3 rounded-xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all shadow-sm hover:shadow-md min-h-[80px] justify-center items-center">
+                                            <div key={roleKey} className="group relative flex flex-row p-4 rounded-xl bg-[#242423] border border-[#333533] hover:border-[#F5CB5C]/50 transition-all shadow-sm hover:shadow-md min-h-[80px] items-center justify-between gap-3">
 
-                                                {/* CENTER: Name */}
-                                                <div className="w-full flex justify-center items-center px-1">
-                                                    <div className="text-[#E8EDDF] font-bold text-xs leading-tight text-center whitespace-normal w-[85%]">
+                                                {/* LEFT: Name */}
+                                                <div className="flex-1 flex items-center justify-start">
+                                                    <div className="text-[#E8EDDF] font-bold text-xs leading-tight text-left whitespace-normal">
                                                         {role.label}
                                                     </div>
                                                 </div>
 
-                                                {/* Button moved to Bottom-Right */}
-                                                <div className="absolute bottom-1 right-1 opacity-80 hover:opacity-100 transition-opacity">
+                                                {/* RIGHT: Button (Aligned) */}
+                                                <div className="opacity-80 hover:opacity-100 transition-opacity shrink-0">
                                                     <SenioritySelector
                                                         roleName={role.label}
                                                         roleKey={roleKey}
