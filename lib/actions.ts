@@ -1216,32 +1216,40 @@ export async function deleteClient(clientId: string) {
     }
 
     try {
-        // Implement Logical Delete / Unlink via Transaction
+        // 1. Check if client exists first (Idempotency)
+        const existingClient = await prisma.client.findUnique({
+            where: { id: clientId }
+        })
+
+        if (!existingClient) {
+            // Already deleted or invalid ID. Return success to clear UI state.
+            // Revalidate just in case.
+            revalidatePath('/clients')
+            revalidatePath('/dashboard')
+            return { success: true, message: "El cliente ya no existía." }
+        }
+
+        // 2. Permission Check
+        if (role !== 'ADMIN' && existingClient.userId !== userId) {
+            return { success: false, error: "No tienes permiso para eliminar este cliente." }
+        }
+
+        // 3. Perform Deletion Transaction
         await prisma.$transaction(async (tx) => {
-            // 1. Unlink Quotes (Preserve History)
-            // Instead of deleting, we set linkedClientId to null so they persist
+            // Unlink Quotes (Preserve as history)
             await tx.quote.updateMany({
                 where: { linkedClientId: clientId },
                 data: { linkedClientId: null }
             })
 
-            // 2. Delete associated Contacts
-            // Contacts are strictly children of the Client in this schema, so we delete them.
-            // If the user wants to keep contacts, we'd need a different schema or "Archive" status.
-            // Given "Direcotrio" context, deleting contacts seems correct if the company is gone.
+            // Delete Contacts (Strictly owned by Client)
             await tx.contact.deleteMany({
                 where: { clientId: clientId }
             })
 
-            // 3. Delete the Client
-            // If Admin, can delete any client. If User, only own clients.
-            const deleteWhere: any = { id: clientId }
-            if (role !== 'ADMIN') {
-                deleteWhere.userId = userId
-            }
-
+            // Delete Client
             await tx.client.delete({
-                where: deleteWhere
+                where: { id: clientId }
             })
         })
 
