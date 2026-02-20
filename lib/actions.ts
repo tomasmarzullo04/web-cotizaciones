@@ -1215,13 +1215,33 @@ export async function deleteClient(clientId: string) {
     }
 
     try {
-        await prisma.client.delete({
-            where: { id: clientId, userId: userId } // Ensure ownership
+        // Implement Cascade Delete via Transaction
+        await prisma.$transaction(async (tx) => {
+            // 1. Delete associated Contacts
+            await tx.contact.deleteMany({
+                where: { clientId: clientId }
+            })
+
+            // 2. Delete associated Quotes (or unlink them?)
+            // User requested "borrar todo lo relacionado" (cascade), so we delete quotes too.
+            // If checking for integrity, we could just set clientId = null on quotes, 
+            // but the user explicitly said "eliminación en cascada".
+            await tx.quote.deleteMany({
+                where: { linkedClientId: clientId }
+            })
+
+            // 3. Delete the Client
+            await tx.client.delete({
+                where: { id: clientId, userId: userId } // Ensure ownership
+            })
         })
+
+        revalidatePath('/clients')
+        revalidatePath('/dashboard')
         return { success: true }
-    } catch (e) {
+    } catch (e: any) {
         console.error("Delete Client Failed", e)
-        return { success: false, error: "Error al eliminar cliente" }
+        return { success: false, error: e.message || "Error al eliminar cliente" }
     }
 }
 
