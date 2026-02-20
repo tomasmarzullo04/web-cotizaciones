@@ -5,6 +5,7 @@ import { prisma } from './prisma'
 import { TechnicalParameters, CostBreakdown } from './types'
 import { cookies } from 'next/headers'
 import { revalidatePath, unstable_noStore } from 'next/cache'
+import { getServerSession } from './auth'
 
 // Helper to get rates
 // Helper to get rates
@@ -294,8 +295,8 @@ export async function searchClients(query: string) {
     // if (!query || query.length < 2) return [] 
 
     // 1. Get User ID
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('session_user_id')?.value
+    const session = await getServerSession()
+    const userId = session?.id
     if (!userId) return []
 
     try {
@@ -326,8 +327,8 @@ export async function createClient(data: {
     contacts: { name: string, role: string, email: string }[],
     clientLogoUrl?: string
 }) {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('session_user_id')?.value
+    const session = await getServerSession()
+    const userId = session?.id
 
     if (!userId) {
         return { success: false, error: "Sesión expirada. Recarga la página." }
@@ -362,8 +363,8 @@ export async function createClient(data: {
 }
 
 export async function addContactToClient(clientId: string, contact: { name: string, role: string, email: string }) {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('session_user_id')?.value
+    const session = await getServerSession()
+    const userId = session?.id
 
     if (!userId) {
         return { success: false, error: "Sesión expirada" }
@@ -401,8 +402,8 @@ export async function getClientContacts(clientId: string) {
 // --- CLIENT LOGO MANAGEMENT ---
 
 export async function uploadClientLogo(formData: FormData, oldLogoUrl?: string) {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('session_user_id')?.value
+    const session = await getServerSession()
+    const userId = session?.id
 
     if (!userId) {
         return { success: false, error: "Sesión expirada. Recarga la página." }
@@ -583,8 +584,8 @@ export async function saveQuote(data: {
     status?: string // NEW: Allow overriding status
     contactId?: string // NEW: Contact persistence
 }) {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('session_user_id')?.value
+    const session = await getServerSession()
+    const userId = session?.id
 
     if (!userId) {
         console.error("SaveQuote Error: No User ID in session")
@@ -695,8 +696,8 @@ export async function updateQuote(id: string, data: {
     pdfBase64?: string // NEW: Snapshot
     contactId?: string
 }) {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('session_user_id')?.value
+    const session = await getServerSession()
+    const userId = session?.id
 
     if (!userId) {
         return { success: false, error: "No user logged in" }
@@ -763,8 +764,8 @@ export async function updateQuote(id: string, data: {
 
 
 export async function getUserQuotes() {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('session_user_id')?.value
+    const session = await getServerSession()
+    const userId = session?.id
 
     if (!userId) return []
 
@@ -972,9 +973,9 @@ export async function convertProspectToClient(email: string) {
 }
 
 export async function deleteQuote(quoteId: string) {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('session_user_id')?.value
-    const role = cookieStore.get('session_role')?.value
+    const session = await getServerSession()
+    const userId = session?.id
+    const role = session?.role
 
     if (!userId) return { success: false, error: "Unauthorized" }
 
@@ -997,8 +998,8 @@ export async function deleteQuote(quoteId: string) {
 }
 
 export async function updateQuoteDiagram(quoteId: string, newDiagramCode: string) {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('session_user_id')?.value
+    const session = await getServerSession()
+    const userId = session?.id
 
     if (!userId) throw new Error("Unauthorized")
 
@@ -1045,8 +1046,8 @@ async function sendStatusUpdateToMonday(quote: any, userId: string, userName: st
 }
 
 export async function updateQuoteStatus(quoteId: string, status: string) {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('session_user_id')?.value
+    const session = await getServerSession()
+    const userId = session?.id
 
     if (!userId) throw new Error("Unauthorized")
 
@@ -1069,7 +1070,7 @@ export async function updateQuoteStatus(quoteId: string, status: string) {
         if (!existingQuote) return { success: false, error: "Quote not found" }
 
         // Admin override or Owner check
-        const role = cookieStore.get('session_role')?.value
+        const role = session?.role
         if (existingQuote.userId !== userId && role !== 'ADMIN') {
             return { success: false, error: "Forbidden" }
         }
@@ -1113,8 +1114,8 @@ export async function updateQuoteStatus(quoteId: string, status: string) {
 }
 
 export async function updateClient(clientId: string, data: { companyName: string, contacts: { id?: string, name: string, role?: string, email?: string }[], clientLogoUrl?: string }) {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('session_user_id')?.value
+    const session = await getServerSession()
+    const userId = session?.id
 
     if (!userId) {
         return { success: false, error: "Sesión expirada" }
@@ -1207,9 +1208,9 @@ export async function updateClient(clientId: string, data: { companyName: string
 }
 
 export async function deleteClient(clientId: string) {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('session_user_id')?.value
-    const role = cookieStore.get('session_role')?.value
+    const session = await getServerSession()
+    const userId = session?.id
+    const role = session?.role
 
     if (!userId) {
         return { success: false, error: "Sesión expirada" }
@@ -1283,11 +1284,11 @@ export async function getConsultants() {
 }
 
 export async function reviewQuote(quoteId: string, status: 'APROBADA' | 'RECHAZADA', comment: string) {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('session_user_id')?.value
+    const session = await getServerSession()
+    const userId = session?.id
 
     // Optional: Verify Role
-    // const role = cookieStore.get('session_role')?.value
+    // const role = session?.role
     // if (role !== 'ADMIN') return { success: false, error: "Unauthorized" }
 
     if (!userId) return { success: false, error: "Unauthorized" }
@@ -1351,8 +1352,8 @@ export async function reviewQuote(quoteId: string, status: 'APROBADA' | 'RECHAZA
 }
 
 export async function getQuoteById(id: string) {
-    const cookieStore = await cookies()
-    const role = cookieStore.get('session_role')?.value
+    const session = await getServerSession()
+    const role = session?.role
     // Case insensitive check
     if (role?.toLowerCase() !== 'admin') {
         throw new Error('Unauthorized')
