@@ -117,6 +117,7 @@ interface QuoteState {
         weekendDays: string[]
         weekendSupportHours: string
         hypercarePeriod: string
+        hasHypercare: boolean
         criticalityMatrix: {
             impactOperative: number
             impactFinancial: number
@@ -600,7 +601,8 @@ function createPDFDocument(data: QuoteState & {
         doc.setFont(FONT_REG, "normal")
         doc.setTextColor(COLOR_CHARCOAL)
         doc.text(`${(data.sustainDetails.metrics.updateFrequency || 'daily').toUpperCase()} / ${data.sustainDetails.updateDuration || 'N/A'}`, margin + paddingX, sy)
-        doc.text(data.sustainDetails.hypercarePeriod?.replace('_', ' ').toUpperCase() || "30 DÍAS", col2, sy)
+        const hypercareText = data.sustainDetails.hasHypercare ? "ACTIVADO (+1 MES)" : "NO APLICABLE"
+        doc.text(hypercareText, col2, sy)
 
         // Row 4: Weekend Support
         sy += 8
@@ -608,13 +610,20 @@ function createPDFDocument(data: QuoteState & {
         doc.setTextColor(COLOR_PRIMARY)
         doc.text("SOPORTE FINES DE SEMANA / HORARIO:", margin + paddingX, sy)
 
+        const weekendText = data.sustainDetails.weekendUsage
+            ? `SÍ (+1.5% FEE) - ${(data.sustainDetails.weekendDays || []).join(', ')}`
+            : "NO"
+        doc.text(weekendText, margin + paddingX, sy)
+
+        // Row 5: Monitoring Hours
+        sy += 8
+        doc.setFont(FONT_BOLD, "bold")
+        doc.setTextColor(COLOR_PRIMARY)
+        doc.text("HORAS DE MONITOREO ESTIMADAS:", margin + paddingX, sy)
         sy += 5
         doc.setFont(FONT_REG, "normal")
         doc.setTextColor(COLOR_CHARCOAL)
-        const weekendText = data.sustainDetails.weekendUsage
-            ? `SÍ (${(data.sustainDetails.weekendDays || []).join(', ')}) - ${data.sustainDetails.weekendSupportHours || 'Horario Flexible'}`
-            : "NO"
-        doc.text(weekendText, margin + paddingX, sy)
+        doc.text(`${(data.finalTotal / 160).toFixed(1)} HORAS / MES (BASADO EN CLASE ${data.criticitnessLevel?.label || 'S1'})`, margin + paddingX, sy)
 
         y += boxHeight + 10
 
@@ -632,10 +641,10 @@ function createPDFDocument(data: QuoteState & {
         const levelColor = level === 'ALTA' ? [190, 50, 50] : level === 'BAJA' ? [50, 150, 50] : [220, 180, 0]
 
         doc.setFillColor(levelColor[0], levelColor[1], levelColor[2])
-        doc.rect(margin, y, 40, 10, 'F')
+        doc.rect(margin, y, 45, 10, 'F') // Increased width for "CLASE PREMIUM"
         doc.setTextColor(255)
-        doc.setFontSize(12)
-        doc.text(`NIVEL ${level}`, margin + 20, y + 6.5, { align: 'center' })
+        doc.setFontSize(10)
+        doc.text(`CLASE ${level}`, margin + 22.5, y + 6.5, { align: 'center' })
 
         doc.setTextColor(COLOR_TEXT)
         doc.setFontSize(9)

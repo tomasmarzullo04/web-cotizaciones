@@ -180,6 +180,7 @@ interface QuoteState {
         updateSchedule: string
         secondaryUpdateSchedule?: string // NEW: Optional second slot
         hypercarePeriod: string
+        hasHypercare: boolean // NEW: Mathematical trigger
 
         // Section 3: Criticality Matrix (Values 1, 3, 5)
         criticalityMatrix: {
@@ -290,6 +291,7 @@ const INITIAL_STATE: QuoteState = {
         weekendDays: [],
         weekendSupportHours: '',
         hypercarePeriod: '30_days',
+        hasHypercare: false,
         criticalityMatrix: {
             impactOperative: 1,
             impactFinancial: 1,
@@ -779,17 +781,55 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
     // criticitnessScore and criticitnessLevel REMOVED
 
     // --- SUSTAIN LOGIC ---
-    const sustainScore = useMemo(() => {
-        if (state.serviceType !== 'Sustain') return 0
-        const { impactOperative, impactFinancial, userCoverage, countryCoverage, technicalMaturity, dependencies } = state.sustainDetails.criticalityMatrix
-        return impactOperative + impactFinancial + userCoverage + countryCoverage + technicalMaturity + dependencies
-    }, [state.sustainDetails.criticalityMatrix, state.serviceType])
+    const sustainScores = useMemo(() => {
+        if (state.serviceType !== 'Sustain') return { total: 0, factors: {} }
+
+        const { metrics, criticalityMatrix } = state.sustainDetails
+
+        // 1. Pipelines
+        const p = metrics.pipelinesCount
+        const pScore = p <= 2 ? 1 : p <= 5 ? 2 : p <= 10 ? 3 : p <= 20 ? 4 : 5
+
+        // 2. Notebooks
+        const n = metrics.notebooksCount
+        const nScore = n <= 2 ? 1 : n <= 5 ? 2 : n <= 10 ? 3 : n <= 20 ? 4 : 5
+
+        // 3. Dashboards
+        const d = metrics.dashboardsCount
+        const dScore = d <= 2 ? 1 : d <= 5 ? 2 : d <= 10 ? 3 : d <= 20 ? 4 : 5
+
+        // 4. Modelos DS
+        const ds = metrics.dsModelsCount
+        const dsScore = ds <= 1 ? 1 : ds <= 5 ? 3 : 5
+
+        // 5. Procesos Manuales
+        const mScore = metrics.manualProcess ? 5 : 1
+
+        // 6. Frecuencia de Uso
+        const freq = criticalityMatrix.frequencyOfUse
+        const fScore = freq === 'monthly' ? 1 : freq === 'weekly' ? 2 : freq === 'daily' ? 4 : 5 // intraday fallback
+
+        // 7. Dependencias
+        const depCount = metrics.systemDependencies ? metrics.systemDependencies.split(',').filter(x => x.trim()).length : 0
+        const depScore = depCount <= 2 ? 1 : depCount === 3 ? 3 : depCount === 4 ? 4 : 5
+
+        const total = (pScore + nScore + dScore + dsScore + mScore + fScore + depScore) / 7
+
+        return {
+            total: Number(total.toFixed(2)),
+            factors: { pipelines: pScore, notebooks: nScore, dashboards: dScore, models: dsScore, manual: mScore, frequency: fScore, dependencies: depScore }
+        }
+    }, [state.sustainDetails, state.serviceType])
 
     const sustainLevel = useMemo(() => {
-        if (sustainScore >= 15) return { label: 'ALTA', color: 'bg-red-500/10 text-red-400 border-red-500/20' }
-        if (sustainScore >= 9) return { label: 'MEDIA', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' }
-        return { label: 'BAJA', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' }
-    }, [sustainScore])
+        const score = sustainScores.total
+        if (score >= 4.3) return { label: 'PREMIUM', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20', baseCost: 45000 }
+        if (score >= 3.6) return { label: 'S3 (ALTA)', color: 'bg-red-500/10 text-red-400 border-red-500/20', baseCost: 22000 }
+        if (score >= 2.6) return { label: 'S2 (MEDIA)', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20', baseCost: 12000 }
+        return { label: 'S1 (BAJA)', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', baseCost: 5000 }
+    }, [sustainScores.total])
+
+    const sustainScore = sustainScores.total // For compatibility if used elsewhere
 
     const handleApplyRecommendations = () => {
         pendingRecs.forEach(r => {
@@ -881,7 +921,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
     }, [dbRates])
 
 
-    const { totalMonthlyCost, l2SupportCost, riskCost, totalWithRisk, servicesCost, rolesCost, discountAmount, grossTotal, retentionAmount, finalTotal } = useMemo(() => {
+    const { totalMonthlyCost, l2SupportCost, riskCost, totalWithRisk, servicesCost, rolesCost, discountAmount, grossTotal, retentionAmount, finalTotal, hypercareCost } = useMemo(() => {
         // --- 1. Calculate Roles Cost ---
         let baseRoles = 0
 
@@ -1019,6 +1059,29 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         const retentionVal = state.retention.enabled ? grossTotal * (state.retention.percentage / 100) : 0
         const netTotal = grossTotal - retentionVal // "Inversión Neta Final"
 
+        // --- Sustain Mode: Fixed Class Pricing ---
+        if (state.serviceType === 'Sustain') {
+            const baseCost = sustainLevel.baseCost || 0
+            const weekendSurcharge = state.sustainDetails.weekendUsage ? (baseCost * 0.015) : 0
+            const monthlyTotal = baseCost + weekendSurcharge
+            const hypercareCost = state.sustainDetails.hasHypercare ? baseCost : 0
+
+            return {
+                rolesCost: 0,
+                servicesCost: baseCost,
+                l2SupportCost: 0,
+                riskCost: weekendSurcharge,
+                totalWithRisk: monthlyTotal,
+                discountAmount: 0,
+                grossTotal: monthlyTotal,
+                retentionAmount: 0,
+                finalTotal: monthlyTotal,
+                totalMonthlyCost: monthlyTotal,
+                hypercareCost: hypercareCost // Added for project total
+            }
+        }
+
+        // --- Standard Mode (Proyecto/Staffing) ---
         return {
             rolesCost: baseRoles,
             servicesCost: baseServices,
@@ -1028,13 +1091,14 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             discountAmount: discountVal,
             grossTotal,
             retentionAmount: retentionVal,
-            finalTotal: netTotal, // Renaming used variable to match semantic "Final to Pay"
-            totalMonthlyCost: netTotal
+            finalTotal: netTotal,
+            totalMonthlyCost: netTotal,
+            hypercareCost: 0
         }
     }, [state, dbRates, findDynamicRate, sustainLevel, readOnly, frozenRates])
 
     const durationInMonths = getDurationInMonths()
-    const totalProjectCost = finalTotal * durationInMonths
+    const totalProjectCost = (finalTotal * durationInMonths) + hypercareCost
 
     // Flash effect when Net Total changes
     useEffect(() => {
@@ -1327,6 +1391,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                 weekendDays: [],
                 weekendSupportHours: '',
                 hypercarePeriod: '30_days',
+                hasHypercare: false, // FIXED: Added missing property
                 criticalityMatrix: {
                     impactOperative: 1,
                     impactFinancial: 1,
@@ -2241,16 +2306,15 @@ graph TD
                                             </div>
 
                                             <div>
-                                                <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Periodo Hypercare</Label>
-                                                <Select value={state.sustainDetails.hypercarePeriod} onValueChange={v => updateState('sustainDetails', { ...state.sustainDetails, hypercarePeriod: v })}>
-                                                    <SelectTrigger className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
-                                                    <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                        <SelectItem value="15_days">15 Días</SelectItem>
-                                                        <SelectItem value="30_days">30 Días</SelectItem>
-                                                        <SelectItem value="60_days">60 Días</SelectItem>
-                                                        <SelectItem value="none">No aplica</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
+                                                <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold text-opacity-70">Soporte Hypercare (+1 Mes Base)</Label>
+                                                <div className="flex items-center gap-3 bg-[#242423] p-3 rounded-xl border border-[#4A4D4A]">
+                                                    <Switch
+                                                        checked={state.sustainDetails.hasHypercare}
+                                                        onCheckedChange={v => updateState('sustainDetails', { ...state.sustainDetails, hasHypercare: v })}
+                                                        className="data-[state=checked]:bg-[#F5CB5C]"
+                                                    />
+                                                    <span className="text-xs font-bold text-[#E8EDDF] uppercase">{state.sustainDetails.hasHypercare ? 'ACTIVADO' : 'DESACTIVADO'}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </AccordionContent>
@@ -2268,18 +2332,15 @@ graph TD
                                         {/* SCORECARD BADGE */}
                                         <div className={cn("flex items-center justify-between p-4 rounded-xl border mb-6 transition-all", sustainLevel.color)}>
                                             <div>
-                                                <h4 className="font-black text-2xl tracking-tighter">NIVEL {sustainLevel.label}</h4>
-                                                <p className="text-xs opacity-80">Score Acumulado: {sustainScore} puntos</p>
+                                                <h4 className="font-black text-2xl tracking-tighter">CLASE {sustainLevel.label}</h4>
+                                                <p className="text-[10px] uppercase font-bold opacity-80">Score Técnico: {(sustainScores.factors.pipelines || 0) + (sustainScores.factors.notebooks || 0) + (sustainScores.factors.dashboards || 0) + (sustainScores.factors.models || 0) + (sustainScores.factors.manual || 0)} | Score Operativo: {(sustainScores.factors.frequency || 0) + (sustainScores.factors.dependencies || 0)}</p>
+                                                <p className="text-xs font-bold text-yellow-500">Puntaje Final: {sustainScores.total} / 5.0</p>
                                             </div>
                                             <div className="text-right">
-                                                <span className="text-xs font-bold uppercase tracking-wider block">Recomendación</span>
-                                                <span className="text-sm font-medium">
-                                                    {sustainLevel.label === 'ALTA' ? 'Soporte Dedicado / 24x7' :
-                                                        sustainLevel.label === 'MEDIA' ? 'Soporte Semi-Dedicado' : 'Bolsa de Horas'}
-                                                </span>
+                                                <span className="text-xs font-bold uppercase tracking-wider block text-opacity-70">Costo Base</span>
+                                                <span className="text-lg font-black">{formatMoney(sustainLevel.baseCost)}</span>
                                             </div>
                                         </div>
-
                                         {/* FINANCIAL CRITICALITY TOGGLE */}
                                         <div className="bg-[#333533] p-4 rounded-xl border border-[#4A4D4A] mb-6 flex items-center justify-between">
                                             <div>
@@ -3053,7 +3114,18 @@ graph TD
                                     {viewMode === 'annual' ? 'PROYECTADA ANUAL' : 'COSTO MENSUAL ESTIMADO'}
                                 </span>
                             </div>
-                            <span>{formatMoney(viewMode === 'annual' ? finalTotal * 12 : finalTotal)}</span>
+                            <div className="text-right">
+                                <span>{formatMoney(viewMode === 'annual' ? finalTotal * 12 : finalTotal)}</span>
+                                {state.serviceType === 'Sustain' && (
+                                    <div className="text-[10px] text-yellow-500 font-black uppercase mt-1 drop-shadow-sm flex flex-col items-end">
+                                        <div className="flex items-center gap-1.5 mb-0.5">
+                                            <span className="bg-[#F5CB5C]/10 px-1.5 py-0.5 rounded border border-[#F5CB5C]/20 text-[#F5CB5C]">CLASE {sustainLevel.label}</span>
+                                            <span className="bg-[#333533] px-1.5 py-0.5 rounded border border-[#4A4D4A] text-[#CFDBD5]">SCORE: {sustainScores.total}</span>
+                                        </div>
+                                        <div>{(finalTotal / 160).toFixed(1)} Horas / Mes</div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
