@@ -855,7 +855,14 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         // 7. Dependencias & Alcance
         const depCount = metrics.systemDependencies ? metrics.systemDependencies.split(',').filter(x => x.trim()).length : 0
         const scopeBonus = (criticalityMatrix.marketsImpacted > 1 || criticalityMatrix.usersImpacted > 50) ? 1 : 0
-        const depScore = Math.min(5, (depCount <= 2 ? 1 : depCount === 3 ? 3 : depCount === 4 ? 4 : 5) + scopeBonus)
+
+        // Fix: If no dependencies, score is 0. If 1-2, score is 1.
+        let depScore = 0
+        if (depCount > 0) {
+            depScore = Math.min(5, (depCount <= 2 ? 1 : depCount === 3 ? 3 : depCount === 4 ? 4 : 5) + scopeBonus)
+        } else if (scopeBonus > 0) {
+            depScore = scopeBonus // If only scope is high
+        }
 
         const totalFactors = [pScore, nScore, dScore, dsScore, mScore, fScore, depScore]
         const sum = totalFactors.reduce((a, b) => a + b, 0)
