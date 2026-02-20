@@ -3237,21 +3237,23 @@ graph TD
                 }
 
                 {/* Tech Summary */}
-                <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
-                    <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                        <Cpu className="w-4 h-4 text-[#F5CB5C]" /> Resumen Técnico
-                    </h4>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-[#333533] p-5 rounded-2xl border border-[#4A4D4A] text-center">
-                            <span className="block text-3xl font-black text-[#E8EDDF]">{state.pipelinesCount}</span>
-                            <span className="text-xs text-[#CFDBD5] uppercase tracking-wider font-bold">Pipelines</span>
-                        </div>
-                        <div className="bg-[#333533] p-5 rounded-2xl border border-[#4A4D4A] text-center">
-                            <span className="block text-3xl font-black text-[#E8EDDF]">{state.dashboardsCount + state.reportsCount}</span>
-                            <span className="text-xs text-[#CFDBD5] uppercase tracking-wider font-bold">Visualizaciones</span>
+                {state.serviceType !== 'Staffing' && (
+                    <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
+                        <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                            <Cpu className="w-4 h-4 text-[#F5CB5C]" /> Resumen Técnico
+                        </h4>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-[#333533] p-5 rounded-2xl border border-[#4A4D4A] text-center">
+                                <span className="block text-3xl font-black text-[#E8EDDF]">{state.pipelinesCount}</span>
+                                <span className="text-xs text-[#CFDBD5] uppercase tracking-wider font-bold">Pipelines</span>
+                            </div>
+                            <div className="bg-[#333533] p-5 rounded-2xl border border-[#4A4D4A] text-center">
+                                <span className="block text-3xl font-black text-[#E8EDDF]">{state.dashboardsCount + state.reportsCount}</span>
+                                <span className="text-xs text-[#CFDBD5] uppercase tracking-wider font-bold">Visualizaciones</span>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* Suggestion Modal */}
                 <Dialog open={isSuggestionModalOpen} onOpenChange={setIsSuggestionModalOpen}>
