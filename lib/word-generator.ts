@@ -233,10 +233,25 @@ export function createQuoteWordDoc(data: any): Document {
                                 })
                             ]
                         }),
+                        // Sustain: Base Service Fee (Class Cost)
+                        ...(data.serviceType === 'Sustain' && (data.servicesCost || 0) > 0 ? [
+                            new TableRow({
+                                children: [
+                                    new TableCell({ children: [new Paragraph(`Complejidad del Servicio (Clase ${data.criticitnessLevel?.label || 'S1'})`)] }),
+                                    new TableCell({ children: [new Paragraph(fmt(data.servicesCost || 0))] }),
+                                    new TableCell({ children: [new Paragraph(fmt((data.servicesCost || 0) * (data.viewMode === 'annual' ? 12 : data.durationMonths)))] })
+                                ]
+                            })
+                        ] : []),
+
                         ...(data.staffingDetails?.profiles || []).filter((p: any) => (p.count || 0) > 0).map((p: any) => {
                             const rate = p.price || p.cost || 0
-                            const monthlySub = rate * (p.allocationPercentage || 100) / 100 * p.count
-                            const displayName = ROLE_CONFIG[p.role]?.label || p.role.replace(/_/g, ' ').toUpperCase()
+                            const allocation = (p.allocationPercentage ?? 100) / 100
+                            const monthlySub = rate * allocation * p.count
+                            let displayName = ROLE_CONFIG[p.role]?.label || p.role.replace(/_/g, ' ').toUpperCase()
+                            if (data.serviceType === 'Sustain') {
+                                displayName = `Recurso: ${displayName}`
+                            }
                             const rowTotal = data.viewMode === 'annual' ? monthlySub * 12 : monthlySub * data.durationMonths
                             return new TableRow({
                                 children: [
@@ -270,9 +285,14 @@ export function createQuoteWordDoc(data: any): Document {
                                 }).filter(Boolean) : []
                         ) as TableRow[],
 
-                        // Services
+                        // Services / Surcharges
                         ...(data.l2SupportCost > 0 ? [new TableRow({ children: [new TableCell({ children: [new Paragraph("Soporte L2")] }), new TableCell({ children: [new Paragraph("10%")] }), new TableCell({ children: [new Paragraph(fmt(data.l2SupportCost * (data.viewMode === 'annual' ? 12 : data.durationMonths)))] })] })] : []),
-                        ...(data.riskCost > 0 ? [new TableRow({ children: [new TableCell({ children: [new Paragraph("Fee de Gestión y Riesgo")] }), new TableCell({ children: [new Paragraph(`${((data.criticitnessLevel?.margin || 0) * 100).toFixed(0)}%`)] }), new TableCell({ children: [new Paragraph(fmt(data.riskCost * (data.viewMode === 'annual' ? 12 : data.durationMonths)))] })] })] : []),
+                        ... (data.serviceType === 'Sustain' ? [
+                            ...(data.riskCost > 0 ? [new TableRow({ children: [new TableCell({ children: [new Paragraph("Soporte Fines de Semana")] }), new TableCell({ children: [new Paragraph("1.5% Base")] }), new TableCell({ children: [new Paragraph(fmt(data.riskCost * (data.viewMode === 'annual' ? 12 : data.durationMonths)))] })] })] : []),
+                            ...(data.hypercareCost > 0 ? [new TableRow({ children: [new TableCell({ children: [new Paragraph("Periodo Hypercare")] }), new TableCell({ children: [new Paragraph("1 Mes Full")] }), new TableCell({ children: [new Paragraph(fmt(data.hypercareCost))] })] })] : [])
+                        ] : [
+                            ...(data.riskCost > 0 ? [new TableRow({ children: [new TableCell({ children: [new Paragraph("Fee de Gestión y Riesgo")] }), new TableCell({ children: [new Paragraph(`${((data.criticitnessLevel?.margin || 0) * 100).toFixed(0)}%`)] }), new TableCell({ children: [new Paragraph(fmt(data.riskCost * (data.viewMode === 'annual' ? 12 : data.durationMonths)))] })] })] : [])
+                        ]),
                         ...(data.discountAmount > 0 ? [new TableRow({ children: [new TableCell({ children: [new Paragraph("Descuento Comercial")] }), new TableCell({ children: [new Paragraph(`${data.commercialDiscount || 0}%`)] }), new TableCell({ children: [new Paragraph(`-${fmt(data.discountAmount * (data.viewMode === 'annual' ? 12 : data.durationMonths))}`)] })] })] : [])
                     ],
                     width: { size: 100, type: WidthType.PERCENTAGE },

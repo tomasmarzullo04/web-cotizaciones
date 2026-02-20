@@ -1109,12 +1109,13 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         // --- Sustain Mode: Fixed Class Pricing ---
         if (state.serviceType === 'Sustain') {
             const baseCost = sustainLevel.baseCost || 0
+            const rolesCost = baseRoles // Profiles cost including support window multiplier
             const weekendSurcharge = state.sustainDetails.weekendUsage ? (baseCost * 0.015) : 0
-            const monthlyTotal = baseCost + weekendSurcharge
-            const hypercareCost = state.sustainDetails.hasHypercare ? baseCost : 0
+            const monthlyTotal = baseCost + rolesCost + weekendSurcharge
+            const hypercareCost = state.sustainDetails.hasHypercare ? (baseCost + rolesCost) : 0 // Hypercare is 1 month of total service
 
             return {
-                rolesCost: 0,
+                rolesCost: rolesCost,
                 servicesCost: baseCost,
                 l2SupportCost: 0,
                 riskCost: weekendSurcharge,
@@ -1124,7 +1125,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                 retentionAmount: 0,
                 finalTotal: monthlyTotal,
                 totalMonthlyCost: monthlyTotal,
-                hypercareCost: hypercareCost // Added for project total
+                hypercareCost: hypercareCost
             }
         }
 
@@ -1532,7 +1533,9 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     clientLogoBase64,
                     viewMode,
                     currency, // Passed correctly
-                    exchangeRate: exchangeRates[currency] || 1.0
+                    exchangeRate: exchangeRates[currency] || 1.0,
+                    servicesCost,
+                    hypercareCost
                 })
             } else {
                 await exportToWord({
@@ -1553,7 +1556,9 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     clientLogoBase64: clientLogoBase64,
                     viewMode,
                     currency,
-                    exchangeRate: exchangeRates[currency] || 1.0
+                    exchangeRate: exchangeRates[currency] || 1.0,
+                    servicesCost,
+                    hypercareCost
                 })
             }
         } catch (e) {
@@ -3090,12 +3095,12 @@ graph TD
 
                 <div className="bg-[#333533] rounded-[2rem] p-8 text-sm space-y-5 border border-[#4A4D4A] shadow-xl relative overflow-hidden">
                     <div className="flex justify-between items-center text-[#E8EDDF]">
-                        <span className="text-[#CFDBD5]">Servicios (Infra/Data)</span>
-                        <span className="font-mono text-xl">{formatMoney(servicesCost * durationInMonths)}</span>
+                        <span className="text-[#CFDBD5]">{state.serviceType === 'Sustain' ? 'Complejidad del Servicio (Clase)' : 'Servicios (Infra/Data)'}</span>
+                        <span className="font-mono text-xl">{formatMoney(servicesCost * (viewMode === 'annual' ? 12 : 1))}</span>
                     </div>
                     <div className="flex justify-between items-center text-[#E8EDDF]">
-                        <span className="text-[#CFDBD5]">Equipo (Roles)</span>
-                        <span className="font-mono text-xl">{formatMoney(rolesCost * durationInMonths)}</span>
+                        <span className="text-[#CFDBD5]">{state.serviceType === 'Sustain' ? 'Recursos Asignados' : 'Equipo (Roles)'}</span>
+                        <span className="font-mono text-xl">{formatMoney(rolesCost * (viewMode === 'annual' ? 12 : 1))}</span>
                     </div>
                     {l2SupportCost > 0 && (
                         <div className="flex justify-between items-center text-[#F5CB5C] bg-[#F5CB5C]/10 p-3 rounded-xl -mx-2 border border-[#F5CB5C]/20">

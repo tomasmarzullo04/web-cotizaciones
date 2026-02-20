@@ -177,7 +177,9 @@ function createPDFDocument(data: QuoteState & {
     durationMonths: number,
     grossTotal?: number,
     retentionAmount?: number,
-    viewMode?: 'monthly' | 'annual'
+    viewMode?: 'monthly' | 'annual',
+    servicesCost?: number,
+    hypercareCost?: number
 }) {
     const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true })
 
@@ -437,15 +439,27 @@ function createPDFDocument(data: QuoteState & {
         y += 7
     }
 
+    // Sustain: Base Service Fee (Class Cost)
+    if (data.serviceType === 'Sustain' && (data.servicesCost || 0) > 0) {
+        const classLabel = data.criticitnessLevel?.label || 'PENDIENTE'
+        const monthlyBase = data.servicesCost || 0
+        const totalBase = data.viewMode === 'annual' ? monthlyBase * 12 : monthlyBase * data.durationMonths
+        drawRow(`Complejidad del Servicio (Clase ${classLabel})`, "Tarifa Base", fmt(monthlyBase), fmt(totalBase))
+    }
+
     const profiles = data.staffingDetails?.profiles || []
     if (profiles.length > 0) {
         profiles.forEach(p => {
             if ((p.count || 0) <= 0) return
             const rate = p.price || p.cost || 0
-            const monthlySub = rate * (p.allocationPercentage || 100) / 100 * p.count
+            const allocation = (p.allocationPercentage ?? 100) / 100
+            const monthlySub = rate * allocation * p.count
 
             // Resolve Display Name
             let displayName = ROLE_CONFIG[p.role]?.label || p.role.replace(/_/g, ' ').toUpperCase()
+            if (data.serviceType === 'Sustain') {
+                displayName = `Recurso: ${displayName}`
+            }
 
             // Adjust totals for viewMode
             const displayMonthly = fmt(monthlySub)
@@ -474,7 +488,17 @@ function createPDFDocument(data: QuoteState & {
     }
 
     if (data.serviceType !== 'Staffing' && data.l2SupportCost > 0) drawRow("Soporte L2", "10%", fmt(data.l2SupportCost), fmt(data.l2SupportCost * data.durationMonths))
-    if (data.riskCost > 0) drawRow("Fee de Gestión y Riesgo", `${((data.criticitnessLevel?.margin || 0) * 100).toFixed(0)}%`, fmt(data.riskCost), fmt(data.riskCost * data.durationMonths))
+
+    // Sustain Surcharges
+    if (data.serviceType === 'Sustain') {
+        if (data.riskCost > 0) drawRow("Soporte Fines de Semana", "1.5% Base", fmt(data.riskCost), fmt(data.riskCost * data.durationMonths))
+        if ((data.hypercareCost || 0) > 0) {
+            const hCost = data.hypercareCost || 0
+            drawRow("Periodo Hypercare", "1 Mes Full", fmt(0), fmt(hCost))
+        }
+    } else {
+        if (data.riskCost > 0) drawRow("Fee de Gestión y Riesgo", `${((data.criticitnessLevel?.margin || 0) * 100).toFixed(0)}%`, fmt(data.riskCost), fmt(data.riskCost * data.durationMonths))
+    }
     if (data.discountAmount > 0) drawRow("Descuento Comercial", `${data.commercialDiscount || 0}%`, `-${fmt(data.discountAmount)}`, `-${fmt(data.discountAmount * data.durationMonths)}`)
 
     // Totals Box
@@ -514,9 +538,9 @@ function createPDFDocument(data: QuoteState & {
         ty += 7
         doc.setTextColor(255, 255, 255)
         doc.setFontSize(8)
-        doc.text(`Retención (${data.retention.percentage}%):`, pageWidth - margin - boxWidth + boxPadding, ty)
+        doc.text(`Retención(${data.retention.percentage} %): `, pageWidth - margin - boxWidth + boxPadding, ty)
         doc.setFontSize(9)
-        doc.text(`- ${fmt(displayRetention)}`, pageWidth - margin - boxPadding, ty, { align: 'right' })
+        doc.text(`- ${fmt(displayRetention)} `, pageWidth - margin - boxPadding, ty, { align: 'right' })
         ty += 8
         doc.setFontSize(9)
         doc.setTextColor(255, 255, 255)
@@ -540,7 +564,7 @@ function createPDFDocument(data: QuoteState & {
     doc.text("* Valores no incluyen impuestos aplicables.", margin, y)
     if (data.retention?.enabled) {
         y += 4
-        doc.text(`* Retención financiera interna del ${data.retention.percentage}% aplicada pro-forma.`, margin, y)
+        doc.text(`* Retención financiera interna del ${data.retention.percentage}% aplicada pro - forma.`, margin, y)
     }
     y += 10
 
