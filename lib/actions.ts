@@ -1215,19 +1215,21 @@ export async function deleteClient(clientId: string) {
     }
 
     try {
-        // Implement Cascade Delete via Transaction
+        // Implement Logical Delete / Unlink via Transaction
         await prisma.$transaction(async (tx) => {
-            // 1. Delete associated Contacts
-            await tx.contact.deleteMany({
-                where: { clientId: clientId }
+            // 1. Unlink Quotes (Preserve History)
+            // Instead of deleting, we set linkedClientId to null so they persist
+            await tx.quote.updateMany({
+                where: { linkedClientId: clientId },
+                data: { linkedClientId: null }
             })
 
-            // 2. Delete associated Quotes (or unlink them?)
-            // User requested "borrar todo lo relacionado" (cascade), so we delete quotes too.
-            // If checking for integrity, we could just set clientId = null on quotes, 
-            // but the user explicitly said "eliminación en cascada".
-            await tx.quote.deleteMany({
-                where: { linkedClientId: clientId }
+            // 2. Delete associated Contacts
+            // Contacts are strictly children of the Client in this schema, so we delete them.
+            // If the user wants to keep contacts, we'd need a different schema or "Archive" status.
+            // Given "Direcotrio" context, deleting contacts seems correct if the company is gone.
+            await tx.contact.deleteMany({
+                where: { clientId: clientId }
             })
 
             // 3. Delete the Client
