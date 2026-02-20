@@ -216,34 +216,44 @@ interface QuoteState {
 const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "", className = "" }: { label: string, value: number, onChange: (val: number) => void, min?: number, max?: number, unit?: string, className?: string }) => (
     <div className={cn("space-y-1.5", className)}>
         <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">{label}</Label>
-        <div className="flex items-center gap-1 bg-[#242423] p-1 rounded-xl border border-[#4A4D4A] hover:border-[#F5CB5C]/30 transition-all w-full group">
+        <div className="flex items-center bg-[#242423] rounded-xl border border-[#4A4D4A] hover:border-[#F5CB5C]/30 transition-all w-full h-10 px-1 relative group">
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-lg transition-colors disabled:opacity-30"
+                className="h-8 w-8 text-[#CFDBD5]/50 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-lg transition-colors disabled:opacity-30 z-10"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.max(min, value - 1)); }}
                 disabled={value <= min}
             >
-                <Minus className="w-3.5 h-3.5" />
+                <Minus className="w-4 h-4" />
             </Button>
-            <div className="flex-1 flex items-center justify-center">
-                <input
-                    type="number"
-                    value={value}
-                    onChange={e => onChange(Math.max(min, Math.min(max, parseInt(e.target.value) || 0)))}
-                    className="w-full bg-transparent border-0 text-center font-black text-[#E8EDDF] focus:ring-0 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-                {unit && <span className="text-[10px] text-[#7C7F7C] font-bold mr-2 uppercase">{unit}</span>}
+
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="flex items-baseline gap-1">
+                    <span className="font-black text-[#E8EDDF] text-sm tabular-nums">{value}</span>
+                    {unit && <span className="text-[9px] text-[#7C7F7C] font-bold uppercase">{unit}</span>}
+                </div>
             </div>
+
+            <div className="flex-1" />
+
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-lg transition-colors disabled:opacity-30"
+                className="h-8 w-8 text-[#CFDBD5]/50 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-lg transition-colors disabled:opacity-30 z-10"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.min(max, value + 1)); }}
                 disabled={value >= max}
             >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-4 h-4" />
             </Button>
+
+            {/* Hidden input for accessibility/state if needed, though we use the buttons. 
+                Keep it for direct typing if the user clicks the center area */}
+            <input
+                type="number"
+                value={value}
+                onChange={e => onChange(Math.max(min, Math.min(max, parseInt(e.target.value) || 0)))}
+                className="absolute inset-x-10 inset-y-0 bg-transparent border-0 text-center font-black text-[#E8EDDF] focus:ring-0 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none opacity-0 focus:opacity-100 transition-opacity pointer-events-auto"
+            />
         </div>
     </div>
 )
@@ -309,7 +319,7 @@ const INITIAL_STATE: QuoteState = {
             automationLevel: 0,
             manualProcess: false,
             systemDependencies: '',
-            updateFrequency: 'daily'
+            updateFrequency: ''
         },
         businessOwner: '',
         devHours: 0,
@@ -332,7 +342,7 @@ const INITIAL_STATE: QuoteState = {
             countryCoverage: 1,
             technicalMaturity: 1,
             dependencies: 1,
-            frequencyOfUse: 'daily',
+            frequencyOfUse: '',
             hasCriticalDates: false,
             criticalDatesDescription: '',
             marketsImpacted: 1,
@@ -821,32 +831,35 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
 
         // 1. Pipelines
         const p = metrics.pipelinesCount
-        const pScore = p <= 2 ? 1 : p <= 5 ? 2 : p <= 10 ? 3 : p <= 20 ? 4 : 5
+        const pScore = p === 0 ? 0 : p <= 2 ? 1 : p <= 5 ? 2 : p <= 10 ? 3 : p <= 20 ? 4 : 5
 
         // 2. Notebooks
         const n = metrics.notebooksCount
-        const nScore = n <= 2 ? 1 : n <= 5 ? 2 : n <= 10 ? 3 : n <= 20 ? 4 : 5
+        const nScore = n === 0 ? 0 : n <= 2 ? 1 : n <= 5 ? 2 : n <= 10 ? 3 : n <= 20 ? 4 : 5
 
         // 3. Dashboards
-        const d = metrics.dashboardsCount
-        const dScore = d <= 2 ? 1 : d <= 5 ? 2 : d <= 10 ? 3 : d <= 20 ? 4 : 5
+        const d = metrics.reportsCount || 0 // Sustain uses reportsCount
+        const dScore = d === 0 ? 0 : d <= 2 ? 1 : d <= 5 ? 2 : d <= 10 ? 3 : d <= 20 ? 4 : 5
 
         // 4. Modelos DS
         const ds = metrics.dsModelsCount
-        const dsScore = ds <= 1 ? 1 : ds <= 5 ? 3 : 5
+        const dsScore = ds === 0 ? 0 : ds <= 1 ? 1 : ds <= 5 ? 3 : 5
 
         // 5. Procesos Manuales
-        const mScore = metrics.manualProcess ? 5 : 1
+        const mScore = metrics.manualProcess ? 5 : 0
 
         // 6. Frecuencia de Uso
         const freq = criticalityMatrix.frequencyOfUse
-        const fScore = freq === 'monthly' ? 1 : freq === 'weekly' ? 2 : freq === 'daily' ? 4 : 5 // intraday fallback
+        const fScore = !freq ? 0 : freq === 'monthly' ? 1 : freq === 'weekly' ? 2 : freq === 'daily' ? 4 : 5
 
-        // 7. Dependencias
+        // 7. Dependencias & Alcance
         const depCount = metrics.systemDependencies ? metrics.systemDependencies.split(',').filter(x => x.trim()).length : 0
-        const depScore = depCount <= 2 ? 1 : depCount === 3 ? 3 : depCount === 4 ? 4 : 5
+        const scopeBonus = (criticalityMatrix.marketsImpacted > 1 || criticalityMatrix.usersImpacted > 50) ? 1 : 0
+        const depScore = Math.min(5, (depCount <= 2 ? 1 : depCount === 3 ? 3 : depCount === 4 ? 4 : 5) + scopeBonus)
 
-        const total = (pScore + nScore + dScore + dsScore + mScore + fScore + depScore) / 7
+        const totalFactors = [pScore, nScore, dScore, dsScore, mScore, fScore, depScore]
+        const sum = totalFactors.reduce((a, b) => a + b, 0)
+        const total = sum > 0 ? sum / 7 : 0
 
         return {
             total: Number(total.toFixed(2)),
@@ -856,6 +869,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
 
     const sustainLevel = useMemo(() => {
         const score = sustainScores.total
+        if (score === 0) return { label: 'PENDIENTE', color: 'bg-gray-500/10 text-gray-400 border-gray-500/20', baseCost: 0 }
         if (score >= 4.3) return { label: 'PREMIUM', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20', baseCost: 45000 }
         if (score >= 3.6) return { label: 'S3 (ALTA)', color: 'bg-red-500/10 text-red-400 border-red-500/20', baseCost: 22000 }
         if (score >= 2.6) return { label: 'S2 (MEDIA)', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20', baseCost: 12000 }
@@ -2107,8 +2121,8 @@ graph TD
 
                                             {/* Metrics Grid - FIXED VOLUMETRICS */}
                                             <div>
-                                                <Label className="text-[#CFDBD5] mb-4 block text-xs uppercase font-bold tracking-tight">Métricas Volumetría (Mensual)</Label>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start bg-[#333533]/30 p-4 rounded-2xl border border-[#4A4D4A]/50">
+                                                <Label className="text-[#CFDBD5] mb-3 block text-xs uppercase font-bold tracking-tight ml-1">Métricas Volumetría (Mensual)</Label>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 items-start bg-[#333533]/20 p-3 rounded-2xl border border-[#4A4D4A]/30">
                                                     <NumericStepper
                                                         label="Nº Pipelines"
                                                         value={state.sustainDetails.metrics.pipelinesCount}
@@ -2355,7 +2369,7 @@ graph TD
                                                 )}
                                             </div>
 
-                                            <div className="flex flex-col h-full justify-end">
+                                            <div className="flex flex-col h-full justify-end bg-[#333533]/20 p-3 rounded-xl border border-[#4A4D4A]/30 transition-all">
                                                 <NumericStepper
                                                     label="Incidentabilidad Esperada"
                                                     value={state.sustainDetails.incidentRate}
@@ -2493,9 +2507,9 @@ graph TD
 
                                             {/* NEW FIELD: Scope (Markets & Users) */}
                                             {/* NEW FIELD: Scope (Markets & Users) */}
-                                            <div className="bg-[#333533]/50 border border-[#4A4D4A] p-4 rounded-xl space-y-3 col-span-1 md:col-span-2">
-                                                <Label className="text-[#CFDBD5] text-xs uppercase font-bold">Alcance (Mercados / Usuarios)</Label>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="bg-[#333533]/20 border border-[#4A4D4A]/30 p-3 rounded-xl space-y-3 col-span-1 md:col-span-2 transition-all">
+                                                <Label className="text-[#CFDBD5] text-[10px] uppercase font-bold tracking-wider ml-1">Alcance (Mercados / Usuarios)</Label>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                     <div className="relative">
                                                         <NumericStepper
                                                             label="Mercados Impactados"
