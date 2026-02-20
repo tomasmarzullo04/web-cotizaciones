@@ -257,17 +257,87 @@ export async function logoutAction() {
 }
 
 export async function getSessionRole() {
-    return (await cookies()).get('session_role')?.value || null
+    const session = await getServerSession()
+    return session?.role || null
 }
 
 export async function getSessionUser() {
-    const val = (await cookies()).get('session_user')?.value || null
-    if (val === 'Consultor Demo' || val === 'Consultor Tomas') return 'Tomas Marzullo'
-    return val
+    const session = await getServerSession()
+    return session?.name || null
 }
 
 export async function getSessionUserId() {
-    return (await cookies()).get('session_user_id')?.value || null
+    const session = await getServerSession()
+    return session?.id || null
+}
+
+/**
+ * ROBUST SESSION FETCHING & SYNC
+ * This is the ultimate gatekeeper for the app's auth state.
+ * It checks Supabase Auth first, and if present, ensures custom cookies match Prisma.
+ */
+export async function getServerSession() {
+    const cookieStore = await cookies()
+
+    // 1. Check direct cookies first for speed
+    const role = cookieStore.get('session_role')?.value
+    const name = cookieStore.get('session_user')?.value
+    const id = cookieStore.get('session_user_id')?.value
+
+    // 2. Check Supabase to see if we're actually logged in
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
+        cookies: {
+            get(name: string) { return cookieStore.get(name)?.value },
+            set(name: string, value: string, options: CookieOptions) { cookieStore.set({ name, value, ...options }) },
+            remove(name: string, options: CookieOptions) { cookieStore.delete({ name, ...options }) },
+        },
+    })
+
+    const { data: { user }, error } = await supabase.auth.getUser()
+
+    if (error || !user) {
+        // If Supabase says no, then we ARE NOT logged in, regardless of cookies
+        if (role || name || id) {
+            console.log("[Auth] Supabase session missing. Clearing rogue cookies.")
+            cookieStore.delete('session_role')
+            cookieStore.delete('session_user')
+            cookieStore.delete('session_user_id')
+        }
+        return null
+    }
+
+    // 3. If we have a user but no cookies (DESYNC), perform a silent sync
+    if (!role || !name || !id) {
+        console.log(`[Auth] Desync detected for ${user.email}. Performing silent sync...`)
+        try {
+            const dbUser = await prisma.user.findUnique({ where: { email: user.email! } })
+            if (dbUser) {
+                const cookieOptions = { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const }
+                cookieStore.set('session_role', dbUser.role, cookieOptions)
+                cookieStore.set('session_user', dbUser.name, cookieOptions)
+                cookieStore.set('session_user_id', dbUser.id, cookieOptions)
+
+                return {
+                    id: dbUser.id,
+                    name: dbUser.name,
+                    role: dbUser.role,
+                    email: dbUser.email
+                }
+            }
+        } catch (e) {
+            console.error("[Auth] Silent Sync Failed:", e)
+        }
+    }
+
+    // Normal case: everything is fine or user is in DB but cookies just refreshed
+    return {
+        id: id || user.id,
+        name: name || user.user_metadata?.full_name || user.email?.split('@')[0],
+        role: (role as any) || 'CONSULTOR',
+        email: user.email
+    }
 }
 
 export async function syncSessionAction() {

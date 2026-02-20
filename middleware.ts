@@ -35,22 +35,38 @@ export async function middleware(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser();
 
-    // ROUTE PROTECTION
-    // 1. Protect /quote/* and /admin/*
-    if (
-        request.nextUrl.pathname.startsWith("/quote") ||
-        request.nextUrl.pathname.startsWith("/admin") ||
-        request.nextUrl.pathname.startsWith("/dashboard") ||
-        request.nextUrl.pathname.startsWith("/clients")
-    ) {
-        if (!user) {
-            // STRICT: Unauthenticated users on protected routes go to Landing Page
-            return NextResponse.redirect(new URL("/", request.url));
-        }
+    const url = request.nextUrl.clone();
+
+    // BLINDAJE: Verification of protected routes
+    const isProtectedRoute =
+        url.pathname.startsWith("/quote") ||
+        url.pathname.startsWith("/admin") ||
+        url.pathname.startsWith("/dashboard") ||
+        url.pathname.startsWith("/clients");
+
+    if (isProtectedRoute && !user) {
+        return NextResponse.redirect(new URL("/", request.url));
     }
 
-    // 2. Allow public access to / and /login always
-    // No redirects for authenticated users continuously to allow "Landing Page" visibility
+    // SYNC: Ensure custom session cookies are present if user is authenticated
+    if (user) {
+        const sessionRole = request.cookies.get('session_role')?.value;
+        const sessionUser = request.cookies.get('session_user')?.value;
+
+        if (!sessionRole || !sessionUser) {
+            console.log(`[Middleware] Desync detected for ${user.email}. Syncing cookies...`);
+
+            // We use the internal API or a direct DB fetch if possible.
+            // Since Middleware is Edge/Server, we can't easily use Prisma if it's not edge-ready,
+            // but we can let the next request (Layout) handle the heavy lifting, 
+            // OR we can trigger a sync via an internal call if needed.
+
+            // Optimization: If it's a page request, we let app/layout handle it.
+            // But to "shield" the Navbar immediately, we'd want cookies now.
+            // For now, if we're in middleware and have a user but no cookies,
+            // we'll proceed, but app/layout.tsx MUST be updated to sync them.
+        }
+    }
 
     return response;
 }
@@ -63,7 +79,6 @@ export const config = {
          * - _next/image (image optimization files)
          * - favicon.ico (favicon file)
          * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
-         * Feel free to modify this pattern to include more paths.
          */
         "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
     ],
