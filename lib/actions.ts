@@ -1209,6 +1209,7 @@ export async function updateClient(clientId: string, data: { companyName: string
 export async function deleteClient(clientId: string) {
     const cookieStore = await cookies()
     const userId = cookieStore.get('session_user_id')?.value
+    const role = cookieStore.get('session_role')?.value
 
     if (!userId) {
         return { success: false, error: "Sesión expirada" }
@@ -1233,8 +1234,14 @@ export async function deleteClient(clientId: string) {
             })
 
             // 3. Delete the Client
+            // If Admin, can delete any client. If User, only own clients.
+            const deleteWhere: any = { id: clientId }
+            if (role !== 'ADMIN') {
+                deleteWhere.userId = userId
+            }
+
             await tx.client.delete({
-                where: { id: clientId, userId: userId } // Ensure ownership
+                where: deleteWhere
             })
         })
 
