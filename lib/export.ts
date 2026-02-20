@@ -111,8 +111,7 @@ interface QuoteState {
         criticalHours: string
         criticalDays: string
         updateDuration: string
-        updateSchedule: string
-        secondaryUpdateSchedule: string
+        updateSchedules: string[]
         weekendUsage: boolean
         weekendDays: string[]
         weekendSupportHours: string
@@ -577,18 +576,18 @@ function createPDFDocument(data: QuoteState & {
         doc.text(cleanText(data.sustainDetails.solutionName || "N/A"), margin + paddingX, sy)
         doc.text(cleanText(data.sustainDetails.businessOwner || "Pendiente"), col2, sy)
 
-        // Row 2: Schedules
         sy += 8
         doc.setFont(FONT_BOLD, "bold")
         doc.setTextColor(COLOR_PRIMARY)
-        doc.text("HORARIO PRINCIPAL:", margin + paddingX, sy)
-        doc.text("HORARIO SECUNDARIO:", col2, sy)
+        doc.text("HORARIOS DE ACTUALIZACIÓN:", margin + paddingX, sy)
 
         sy += 5
         doc.setFont(FONT_REG, "normal")
         doc.setTextColor(COLOR_CHARCOAL)
-        doc.text(data.sustainDetails.updateSchedule || "No definido", margin + paddingX, sy)
-        doc.text(data.sustainDetails.secondaryUpdateSchedule || "N/A", col2, sy)
+        const schedulesText = (data.sustainDetails.updateSchedules || [])
+            .filter(s => s)
+            .join(' | ') || "No definido"
+        doc.text(schedulesText.substring(0, 80), margin + paddingX, sy) // Cap length just in case
 
         // Row 3: Freq & Hypercare
         sy += 8

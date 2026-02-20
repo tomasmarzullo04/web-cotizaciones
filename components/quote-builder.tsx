@@ -177,8 +177,7 @@ interface QuoteState {
         weekendUsage: boolean
         weekendDays: string[] // NEW: ['Saturday', 'Sunday']
         weekendSupportHours: string
-        updateSchedule: string
-        secondaryUpdateSchedule?: string // NEW: Optional second slot
+        updateSchedules: string[] // NEW: Support multiple slots
         hypercarePeriod: string
         hasHypercare: boolean // NEW: Mathematical trigger
 
@@ -213,6 +212,41 @@ interface QuoteState {
     }
 
 }
+
+const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "", className = "" }: { label: string, value: number, onChange: (val: number) => void, min?: number, max?: number, unit?: string, className?: string }) => (
+    <div className={cn("space-y-1.5", className)}>
+        <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">{label}</Label>
+        <div className="flex items-center gap-1 bg-[#242423] p-1 rounded-xl border border-[#4A4D4A] hover:border-[#F5CB5C]/30 transition-all w-full group">
+            <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-lg transition-colors disabled:opacity-30"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.max(min, value - 1)); }}
+                disabled={value <= min}
+            >
+                <Minus className="w-3.5 h-3.5" />
+            </Button>
+            <div className="flex-1 flex items-center justify-center">
+                <input
+                    type="number"
+                    value={value}
+                    onChange={e => onChange(Math.max(min, Math.min(max, parseInt(e.target.value) || 0)))}
+                    className="w-full bg-transparent border-0 text-center font-black text-[#E8EDDF] focus:ring-0 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                {unit && <span className="text-[10px] text-[#7C7F7C] font-bold mr-2 uppercase">{unit}</span>}
+            </div>
+            <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-[#CFDBD5] hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-lg transition-colors disabled:opacity-30"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.min(max, value + 1)); }}
+                disabled={value >= max}
+            >
+                <Plus className="w-3.5 h-3.5" />
+            </Button>
+        </div>
+    </div>
+)
 
 const INITIAL_STATE: QuoteState = {
     clientName: '',
@@ -285,8 +319,7 @@ const INITIAL_STATE: QuoteState = {
 
         criticalDays: '',
         updateDuration: '',
-        updateSchedule: '',
-        secondaryUpdateSchedule: '',
+        updateSchedules: ['', ''],
         weekendUsage: false,
         weekendDays: [],
         weekendSupportHours: '',
@@ -1385,8 +1418,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                 criticalHours: '',
                 criticalDays: '',
                 updateDuration: '',
-                updateSchedule: '',
-                secondaryUpdateSchedule: '',
+                updateSchedules: ['', ''], // FIXED: Array for multiple slots
                 weekendUsage: false,
                 weekendDays: [],
                 weekendSupportHours: '',
@@ -2075,52 +2107,52 @@ graph TD
 
                                             {/* Metrics Grid - FIXED VOLUMETRICS */}
                                             <div>
-                                                <Label className="text-[#CFDBD5] mb-3 block text-xs uppercase font-bold">Métricas Volumetría (Mensual)</Label>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-8 items-start">
-                                                    <div className="space-y-0 text-left">
-                                                        <Label className="text-[#7C7F7C] text-[10px] uppercase block mb-2">Nº Pipelines</Label>
-                                                        <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-10 w-full"
-                                                            value={state.sustainDetails.metrics.pipelinesCount} onChange={e => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, pipelinesCount: parseInt(e.target.value) || 0 } })} />
-                                                    </div>
-                                                    <div className="space-y-0 text-left">
-                                                        <Label className="text-[#7C7F7C] text-[10px] uppercase block mb-2">Nº Fuentes Datos</Label>
-                                                        <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-10 w-full"
-                                                            value={state.sustainDetails.metrics.dataSourcesCount} onChange={e => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dataSourcesCount: parseInt(e.target.value) || 0 } })} />
-                                                    </div>
-                                                    <div className="space-y-0 text-left">
-                                                        <Label className="text-[#7C7F7C] text-[10px] uppercase block mb-2">Nº Notebooks</Label>
-                                                        <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-10 w-full"
-                                                            value={state.sustainDetails.metrics.notebooksCount} onChange={e => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, notebooksCount: parseInt(e.target.value) || 0 } })} />
-                                                    </div>
-                                                    <div className="space-y-0 text-left">
-                                                        <Label className="text-[#7C7F7C] text-[10px] uppercase block mb-2">Nº Dashboards</Label>
-                                                        <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-10 w-full"
-                                                            value={state.sustainDetails.metrics.dashboardsCount} onChange={e => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dashboardsCount: parseInt(e.target.value) || 0 } })} />
-                                                    </div>
-                                                    <div className="space-y-0 text-left">
-                                                        <Label className="text-[#7C7F7C] text-[10px] uppercase block mb-2">Nº Modelos DS</Label>
-                                                        <Input type="number" className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-10 w-full"
-                                                            value={state.sustainDetails.metrics.dsModelsCount} onChange={e => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dsModelsCount: parseInt(e.target.value) || 0 } })} />
-                                                    </div>
-                                                    <div className="space-y-0 text-left">
-                                                        <Label className="text-[#7C7F7C] text-[10px] uppercase block mb-2">¿Procesos Manuales?</Label>
+                                                <Label className="text-[#CFDBD5] mb-4 block text-xs uppercase font-bold tracking-tight">Métricas Volumetría (Mensual)</Label>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start bg-[#333533]/30 p-4 rounded-2xl border border-[#4A4D4A]/50">
+                                                    <NumericStepper
+                                                        label="Nº Pipelines"
+                                                        value={state.sustainDetails.metrics.pipelinesCount}
+                                                        onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, pipelinesCount: val } })}
+                                                    />
+                                                    <NumericStepper
+                                                        label="Nº Fuentes Datos"
+                                                        value={state.sustainDetails.metrics.dataSourcesCount}
+                                                        onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dataSourcesCount: val } })}
+                                                    />
+                                                    <NumericStepper
+                                                        label="Nº Notebooks"
+                                                        value={state.sustainDetails.metrics.notebooksCount}
+                                                        onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, notebooksCount: val } })}
+                                                    />
+                                                    <NumericStepper
+                                                        label="Nº Dashboards"
+                                                        value={state.sustainDetails.metrics.dashboardsCount}
+                                                        onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dashboardsCount: val } })}
+                                                    />
+                                                    <NumericStepper
+                                                        label="Nº Modelos DS"
+                                                        value={state.sustainDetails.metrics.dsModelsCount}
+                                                        onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dsModelsCount: val } })}
+                                                    />
+                                                    <div className="space-y-1.5 text-left">
+                                                        <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">¿Procesos Manuales?</Label>
                                                         <ToggleGroup
                                                             type="single"
                                                             value={state.sustainDetails.metrics.manualProcess ? 'yes' : 'no'}
                                                             onValueChange={(val) => {
                                                                 if (val) updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, manualProcess: val === 'yes' } })
                                                             }}
-                                                            className="justify-start gap-0 h-10"
+                                                            className="justify-start gap-0 h-10 w-full"
                                                         >
                                                             <ToggleGroupItem
                                                                 value="yes"
-                                                                className="w-20 rounded-l-lg rounded-r-none border border-r-0 border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-transparent data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-bold text-xs"
+                                                                className="flex-1 rounded-l-xl rounded-r-none border border-r-0 border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-[#242423] data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-black text-[10px]"
                                                             >
                                                                 SÍ
                                                             </ToggleGroupItem>
                                                             <ToggleGroupItem
                                                                 value="no"
-                                                                className="w-20 rounded-r-lg rounded-l-none border border-l-0 border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-transparent data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-bold text-xs"
+                                                                className="flex-1 rounded-r-xl rounded-l-none border border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-[#242423] data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-black text-[10px]"
                                                             >
                                                                 NO
                                                             </ToggleGroupItem>
@@ -2223,25 +2255,53 @@ graph TD
                                                     </SelectContent>
                                                 </Select>
                                             </div>
-                                            {/* Schedule Inputs - Side by Side */}
-                                            <div className="md:col-span-2 flex flex-wrap gap-6 items-end mt-2">
-                                                <div className="space-y-2">
-                                                    <Label className="text-[#CFDBD5] text-xs uppercase font-bold block">Horario 1</Label>
-                                                    <Input
-                                                        type="time"
-                                                        value={state.sustainDetails.updateSchedule}
-                                                        onChange={e => updateState('sustainDetails', { ...state.sustainDetails, updateSchedule: e.target.value })}
-                                                        className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF] focus:border-[#F5CB5C] w-[150px] [color-scheme:dark]"
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label className="text-[#CFDBD5] text-xs uppercase font-bold block text-opacity-70">Horario 2</Label>
-                                                    <Input
-                                                        type="time"
-                                                        value={state.sustainDetails.secondaryUpdateSchedule}
-                                                        onChange={e => updateState('sustainDetails', { ...state.sustainDetails, secondaryUpdateSchedule: e.target.value })}
-                                                        className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF] focus:border-[#F5CB5C] border-dashed w-[150px] [color-scheme:dark]"
-                                                    />
+                                            {/* Schedule Inputs - Dynamic Array */}
+                                            <div className="md:col-span-2 space-y-3 mt-2">
+                                                <Label className="text-[#CFDBD5] text-xs uppercase font-bold block">Horarios de Actualización</Label>
+                                                <div className="flex flex-wrap gap-4 items-start">
+                                                    {state.sustainDetails.updateSchedules.map((sched, idx) => (
+                                                        <div key={idx} className="space-y-2 group relative">
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-[10px] text-[#CFDBD5]/50 font-bold uppercase">Slot {idx + 1}</span>
+                                                                {idx >= 2 && (
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            const newSchedules = [...state.sustainDetails.updateSchedules]
+                                                                            newSchedules.splice(idx, 1)
+                                                                            updateState('sustainDetails', { ...state.sustainDetails, updateSchedules: newSchedules })
+                                                                        }}
+                                                                        className="text-red-400 hover:text-red-300 transition-colors opacity-0 group-hover:opacity-100"
+                                                                    >
+                                                                        <X className="w-3 h-3" />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                            <Input
+                                                                type="time"
+                                                                value={sched}
+                                                                onChange={e => {
+                                                                    const newSchedules = [...state.sustainDetails.updateSchedules]
+                                                                    newSchedules[idx] = e.target.value
+                                                                    updateState('sustainDetails', { ...state.sustainDetails, updateSchedules: newSchedules })
+                                                                }}
+                                                                className={cn(
+                                                                    "bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF] focus:border-[#F5CB5C] w-[140px] [color-scheme:dark]",
+                                                                    idx >= 2 ? "border-dashed" : ""
+                                                                )}
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                    <Button
+                                                        variant="ghost"
+                                                        onClick={() => updateState('sustainDetails', {
+                                                            ...state.sustainDetails,
+                                                            updateSchedules: [...state.sustainDetails.updateSchedules, '']
+                                                        })}
+                                                        className="h-[40px] mt-[18px] border border-[#4A4D4A] border-dashed text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-xl px-4 flex items-center gap-2 group transition-all"
+                                                    >
+                                                        <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                                        <span className="text-[10px] uppercase font-bold tracking-widest">Agregar Horario</span>
+                                                    </Button>
                                                 </div>
                                             </div>
 
@@ -2295,13 +2355,12 @@ graph TD
                                                 )}
                                             </div>
 
-                                            <div>
-                                                <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Incidentabilidad Esperada</Label>
-                                                <Input type="number"
+                                            <div className="flex flex-col h-full justify-end">
+                                                <NumericStepper
+                                                    label="Incidentabilidad Esperada"
                                                     value={state.sustainDetails.incidentRate}
-                                                    onChange={e => updateState('sustainDetails', { ...state.sustainDetails, incidentRate: parseInt(e.target.value) || 0 })}
-                                                    className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF] focus:border-[#F5CB5C]"
-                                                    placeholder="Tickets/mes"
+                                                    onChange={val => updateState('sustainDetails', { ...state.sustainDetails, incidentRate: val })}
+                                                    unit="Tickets/mes"
                                                 />
                                             </div>
 
@@ -2438,30 +2497,20 @@ graph TD
                                                 <Label className="text-[#CFDBD5] text-xs uppercase font-bold">Alcance (Mercados / Usuarios)</Label>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div className="relative">
-                                                        <Input
-                                                            type="number"
-                                                            placeholder="Mercados"
+                                                        <NumericStepper
+                                                            label="Mercados Impactados"
                                                             value={state.sustainDetails.criticalityMatrix.marketsImpacted}
-                                                            onChange={(e) => updateState('sustainDetails', {
-                                                                ...state.sustainDetails,
-                                                                criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, marketsImpacted: parseInt(e.target.value) || 0 }
-                                                            })}
-                                                            className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF] pr-24 focus:border-[#F5CB5C]"
+                                                            onChange={val => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, marketsImpacted: val } })}
+                                                            unit="MKTS"
                                                         />
-                                                        <span className="absolute right-14 top-2.5 text-[#F5CB5C] text-[10px] font-bold">MKTS</span>
                                                     </div>
                                                     <div className="relative">
-                                                        <Input
-                                                            type="number"
-                                                            placeholder="Usuarios"
+                                                        <NumericStepper
+                                                            label="Usuarios Impactados"
                                                             value={state.sustainDetails.criticalityMatrix.usersImpacted}
-                                                            onChange={(e) => updateState('sustainDetails', {
-                                                                ...state.sustainDetails,
-                                                                criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, usersImpacted: parseInt(e.target.value) || 0 }
-                                                            })}
-                                                            className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF] pr-24 focus:border-[#F5CB5C]"
+                                                            onChange={val => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, usersImpacted: val } })}
+                                                            unit="USRS"
                                                         />
-                                                        <span className="absolute right-14 top-2.5 text-[#F5CB5C] text-[10px] font-bold">USRS</span>
                                                     </div>
                                                 </div>
                                             </div>
