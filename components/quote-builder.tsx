@@ -1031,13 +1031,13 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             return base * mod
         }
 
-        // Calculation: Prioritize Explicit Profiles (New Dynamic Logic)
         if (state.staffingDetails.profiles && state.staffingDetails.profiles.length > 0) {
             state.staffingDetails.profiles.forEach(p => {
                 // Use stored snapshot price if available (Exact Price), else calculate
                 const cost = p.price !== undefined ? p.price : getRate(p.role, p.seniority)
-                const allocation = (p.allocationPercentage ?? 100) / 100
-                baseRoles += cost * (p.count || 1) * allocation
+                const allocPct = (p.allocationPercentage ?? 100) / 100
+                // Math verified: Monthly Team Cost = SUM(Unit Rate * Count * Allocation)
+                baseRoles += cost * (p.count || 1) * allocPct
             })
         } else {
             // Fallback: Legacy Counters (e.g. old quotes or if empty)
@@ -3103,11 +3103,11 @@ graph TD
                         )}
                     </div>
                     <div className="text-3xl md:text-3xl lg:text-4xl font-mono font-bold tracking-tighter text-[#E8EDDF] drop-shadow-[0_0_15px_rgba(245,203,92,0.1)] truncate">
-                        {formatMoney(totalProjectCost)}
+                        {formatMoney(finalTotal * (viewMode === 'annual' ? 12 : 1))}
                     </div>
                     <p className="text-[#CFDBD5] mt-2 font-medium flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-[#F5CB5C] animate-pulse" />
-                        Total proyecto ({state.durationValue} {state.durationUnit === 'days' ? 'días' : state.durationUnit === 'weeks' ? 'semanas' : 'meses'})
+                        Inversión {viewMode === 'annual' ? 'Anual' : 'Mensual'} Estimada
                     </p>
                 </div >
 

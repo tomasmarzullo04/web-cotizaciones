@@ -25,6 +25,7 @@ interface SenioritySelectorProps {
 export function SenioritySelector({ roleName, roleKey, capabilities, serviceRates, onSelect, defaultPrice, multipliers, compact = false }: SenioritySelectorProps) {
     const [open, setOpen] = useState(false)
     const [allocation, setAllocation] = useState(100)
+    const [isEditable, setIsEditable] = useState(false)
 
     // Calculate valid options
     // Standardize seniority order
@@ -88,11 +89,25 @@ export function SenioritySelector({ roleName, roleKey, capabilities, serviceRate
                                 <div className="flex items-center justify-between mb-3">
                                     <span className="text-[10px] font-bold text-[#CFDBD5] uppercase tracking-wider">Asignación</span>
                                     <div className="relative flex items-center gap-2">
-                                        <Pencil className="w-3 h-3 text-[#F5CB5C]/40" />
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setIsEditable(true);
+                                            }}
+                                            className={cn(
+                                                "p-1.5 rounded-md transition-all hover:bg-[#F5CB5C]/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#F5CB5C]/50",
+                                                isEditable ? "text-[#F5CB5C] bg-[#F5CB5C]/10 shadow-[0_0_10px_rgba(245,203,92,0.2)]" : "text-[#F5CB5C]/40 hover:text-[#F5CB5C]"
+                                            )}
+                                            title="Editar asignación"
+                                        >
+                                            <Pencil className={cn("w-3.5 h-3.5 transition-transform", isEditable && "scale-110")} />
+                                        </button>
                                         <Input
                                             type="text"
                                             inputMode="numeric"
                                             pattern="[0-9]*"
+                                            readOnly={!isEditable}
+                                            autoFocus={isEditable}
                                             value={allocation === 0 ? '' : allocation.toString()}
                                             onChange={(e) => {
                                                 const valStr = e.target.value.replace(/[^0-9]/g, '')
@@ -107,10 +122,19 @@ export function SenioritySelector({ roleName, roleKey, capabilities, serviceRate
                                             }}
                                             onBlur={() => {
                                                 if (allocation < 1) setAllocation(1)
+                                                setIsEditable(false)
                                             }}
-                                            className="w-[4.5rem] h-7 text-center bg-[#F5CB5C]/10 border-[#F5CB5C]/30 text-[#F5CB5C] font-mono font-bold text-xs p-0 focus-visible:ring-1 focus-visible:ring-[#F5CB5C] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.currentTarget.blur()
+                                                }
+                                            }}
+                                            className={cn(
+                                                "w-20 h-7 text-center bg-[#F5CB5C]/10 border-[#F5CB5C]/30 text-[#F5CB5C] font-mono font-bold text-xs p-0 focus-visible:ring-1 focus-visible:ring-[#F5CB5C] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all",
+                                                !isEditable ? "opacity-90 cursor-default border-transparent" : "opacity-100 ring-1 ring-[#F5CB5C]/50 border-[#F5CB5C]"
+                                            )}
                                         />
-                                        <span className="text-[10px] font-bold text-[#F5CB5C]">%</span>
+                                        <span className="text-[10px] font-bold text-[#F5CB5C] opacity-70">%</span>
                                     </div>
                                 </div>
                                 <Slider
