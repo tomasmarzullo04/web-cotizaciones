@@ -95,12 +95,12 @@ export function SenioritySelector({ roleName, roleKey, capabilities, serviceRate
                                                 setIsEditable(true);
                                             }}
                                             className={cn(
-                                                "p-1.5 rounded-md transition-all hover:bg-[#F5CB5C]/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#F5CB5C]/50",
-                                                isEditable ? "text-[#F5CB5C] bg-[#F5CB5C]/10 shadow-[0_0_10px_rgba(245,203,92,0.2)]" : "text-[#F5CB5C]/40 hover:text-[#F5CB5C]"
+                                                "p-1.5 rounded-lg transition-all hover:bg-[#F5CB5C]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5CB5C]/50",
+                                                isEditable ? "text-[#F5CB5C] bg-[#F5CB5C]/10 shadow-[0_0_15px_rgba(245,203,92,0.3)] border border-[#F5CB5C]/30" : "text-[#F5CB5C]/40 hover:text-[#F5CB5C] border border-transparent"
                                             )}
                                             title="Editar asignación"
                                         >
-                                            <Pencil className={cn("w-3.5 h-3.5 transition-transform", isEditable && "scale-110")} />
+                                            <Pencil className={cn("w-4 h-4 transition-transform duration-300", isEditable ? "scale-110 rotate-12" : "group-hover/input:scale-110")} />
                                         </button>
                                         <Input
                                             type="text"

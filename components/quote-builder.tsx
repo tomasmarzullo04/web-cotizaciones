@@ -2875,9 +2875,13 @@ graph TD
                                         <span className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider">Total Estimado</span>
                                         <div className="text-right">
                                             <div className="text-2xl font-black text-[#F5CB5C] tracking-tight">
-                                                USD {state.staffingDetails.profiles.reduce((acc, p) => acc + ((p.price || 0) * p.count), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                USD {state.staffingDetails.profiles.reduce((acc, p) => {
+                                                    const alloc = (p.allocationPercentage ?? 100) / 100
+                                                    const base = (p.price || 0) * (p.count || 1) * alloc
+                                                    return acc + (viewMode === 'annual' ? base * 12 : base)
+                                                }, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </div>
-                                            <div className="text-[10px] text-[#CFDBD5]/50 font-medium">+ IVA si corresponde</div>
+                                            <div className="text-[10px] text-[#CFDBD5]/50 font-medium uppercase">Total {viewMode === 'annual' ? 'Anual' : 'Mensual'} + IVA si corresponde</div>
                                         </div>
                                     </div>
                                 )}
