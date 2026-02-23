@@ -450,15 +450,19 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
     const [viewMode, setViewMode] = useState<'monthly' | 'annual'>('monthly')
     const [isSuggestionLoading, setIsSuggestionLoading] = useState(false)
 
-    const handleAddProfile = (roleKey: RoleKey, seniority: string = 'Sr', price?: number) => {
+    const handleAddProfile = (roleKey: RoleKey, seniority: string = 'Sr', price?: number, allocation: number = 100) => {
         const role = ROLE_CONFIG[roleKey]
         if (!role) return
 
         const finalPrice = price !== undefined ? price : (role.defaultPrice * (SENIORITY_MODIFIERS[seniority as keyof typeof SENIORITY_MODIFIERS] || 1.0))
 
         setState(prev => {
-            // Check for existing profile with SAME Role AND Seniority
-            const existingIndex = prev.staffingDetails.profiles.findIndex(p => p.role === role.label && p.seniority === seniority)
+            // Check for existing profile with SAME Role AND Seniority AND Allocation
+            const existingIndex = prev.staffingDetails.profiles.findIndex(p =>
+                p.role === role.label &&
+                p.seniority === seniority &&
+                (p.allocationPercentage ?? 100) === allocation
+            )
 
             if (existingIndex >= 0) {
                 // UPDATE EXISTING
@@ -487,7 +491,8 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     price: finalPrice,
                     skills: '',
                     startDate: new Date().toISOString(),
-                    endDate: new Date().toISOString()
+                    endDate: new Date().toISOString(),
+                    allocationPercentage: allocation
                 }
 
                 return {
@@ -500,7 +505,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                 }
             }
         })
-        toast.success(`${role.label} (${seniority}) agregado`)
+        toast.success(`${role.label} (${seniority}) - ${allocation}% agregado`)
     }
 
     const handleUpdateProfileCount = (index: number, newCount: number) => {
@@ -2764,7 +2769,7 @@ graph TD
                                                         roleKey={roleKey}
                                                         capabilities={['Jr', 'Med', 'Sr']}
                                                         serviceRates={dbRates}
-                                                        onSelect={(level, price) => handleAddProfile(roleKey, level, price)}
+                                                        onSelect={(level, price, allocation) => handleAddProfile(roleKey, level, price, allocation)}
                                                         defaultPrice={role.defaultPrice}
                                                         multipliers={SENIORITY_MODIFIERS}
                                                         compact={true}
@@ -2812,6 +2817,11 @@ graph TD
                                                             <div className="text-[#E8EDDF] font-bold text-xs truncate leading-none">
                                                                 {profile.role}
                                                             </div>
+                                                            {profile.allocationPercentage !== undefined && profile.allocationPercentage < 100 && (
+                                                                <div className="text-[10px] text-[#F5CB5C] font-black mt-1">
+                                                                    {profile.allocationPercentage}% ASIGNACIÓN
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
 

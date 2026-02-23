@@ -467,7 +467,12 @@ function createPDFDocument(data: QuoteState & {
                 ? fmt(monthlySub * 12)
                 : fmt(monthlySub * data.durationMonths)
 
-            drawRow(`${displayName} (${p.seniority || 'Ssr'})`, `${p.count} Rec.`, displayMonthly, displayPeriodTotal)
+            // Include allocation percentage in label if less than 100%
+            const allocationSuffix = p.allocationPercentage && p.allocationPercentage < 100
+                ? ` (${p.allocationPercentage}%)`
+                : ""
+
+            drawRow(`${displayName} (${p.seniority || 'Ssr'})${allocationSuffix}`, `${p.count} Rec.`, displayMonthly, displayPeriodTotal)
         })
     } else {
         Object.entries(data.roles || {}).forEach(([role, count]) => {

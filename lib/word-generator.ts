@@ -252,10 +252,16 @@ export function createQuoteWordDoc(data: any): Document {
                             if (data.serviceType === 'Sustain') {
                                 displayName = `Recurso: ${displayName}`
                             }
+
+                            // Include allocation percentage in label if less than 100%
+                            const allocationSuffix = p.allocationPercentage && p.allocationPercentage < 100
+                                ? ` (${p.allocationPercentage}%)`
+                                : ""
+
                             const rowTotal = data.viewMode === 'annual' ? monthlySub * 12 : monthlySub * data.durationMonths
                             return new TableRow({
                                 children: [
-                                    new TableCell({ children: [new Paragraph(`${displayName} (${p.seniority || 'Ssr'})`)] }),
+                                    new TableCell({ children: [new Paragraph(`${displayName} (${p.seniority || 'Ssr'})${allocationSuffix}`)] }),
                                     new TableCell({ children: [new Paragraph(fmt(monthlySub))] }),
                                     new TableCell({ children: [new Paragraph(fmt(rowTotal))] })
                                 ]

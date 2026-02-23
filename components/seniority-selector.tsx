@@ -5,6 +5,7 @@ import { Plus, ShieldAlert, Check } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
 import { ServiceRate } from "@prisma/client"
 import { toast } from "sonner"
@@ -14,7 +15,7 @@ interface SenioritySelectorProps {
     roleKey: string
     capabilities: string[]
     serviceRates: ServiceRate[]
-    onSelect: (level: string, price: number) => void
+    onSelect: (level: string, price: number, allocation: number) => void
     defaultPrice?: number
     multipliers?: Record<string, number>
     compact?: boolean
@@ -22,6 +23,7 @@ interface SenioritySelectorProps {
 
 export function SenioritySelector({ roleName, roleKey, capabilities, serviceRates, onSelect, defaultPrice, multipliers, compact = false }: SenioritySelectorProps) {
     const [open, setOpen] = useState(false)
+    const [allocation, setAllocation] = useState(100)
 
     // Calculate valid options
     // Standardize seniority order
@@ -79,26 +81,57 @@ export function SenioritySelector({ roleName, roleKey, capabilities, serviceRate
                             </Badge>
                         </div>
                     ) : (
-                        options.map(({ level, price }) => (
-                            <button
-                                key={level}
-                                onClick={() => {
-                                    onSelect(level, price)
-                                    setOpen(false)
-                                }}
-                                className="w-full flex items-center justify-between px-3 py-2 hover:bg-[#333533] rounded-lg text-sm transition-all group/item text-left border border-transparent hover:border-[#F5CB5C]/30"
-                            >
-                                <span className="font-medium flex items-center gap-2">
-                                    <div className={cn("w-2 h-2 rounded-full",
-                                        level === 'Expert' ? "bg-amber-500" :
-                                            level === 'Sr' ? "bg-purple-500" :
-                                                level === 'Med' ? "bg-blue-500" : "bg-emerald-500"
-                                    )} />
-                                    {level}
-                                </span>
-                                <span className="text-[#F5CB5C] font-mono text-xs font-bold">${price.toLocaleString()}</span>
-                            </button>
-                        ))
+                        <>
+                            {/* Allocation Slider Section */}
+                            <div className="px-1 py-3 mb-2 border-b border-[#333533]/50">
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="text-[10px] font-bold text-[#CFDBD5] uppercase tracking-wider">Asignación</span>
+                                    <Badge variant="outline" className="bg-[#F5CB5C]/10 border-[#F5CB5C]/30 text-[#F5CB5C] font-mono font-bold text-xs h-5">
+                                        {allocation}%
+                                    </Badge>
+                                </div>
+                                <Slider
+                                    defaultValue={[100]}
+                                    max={100}
+                                    min={1}
+                                    step={1}
+                                    value={[allocation]}
+                                    onValueChange={(vals) => setAllocation(vals[0])}
+                                    className="my-4"
+                                />
+                                <div className="flex justify-between text-[8px] text-[#7C7F7C] font-bold uppercase tracking-tighter">
+                                    <span>Part-Time</span>
+                                    <span>Full-Time</span>
+                                </div>
+                            </div>
+
+                            {options.map(({ level, price }) => {
+                                const finalPrice = price * (allocation / 100)
+                                return (
+                                    <button
+                                        key={level}
+                                        onClick={() => {
+                                            onSelect(level, price, allocation)
+                                            setOpen(false)
+                                            // Reset allocation for next time? Or keep? 
+                                            // User usually wants to reset to 100 for next profile
+                                            setAllocation(100)
+                                        }}
+                                        className="w-full flex items-center justify-between px-3 py-2 hover:bg-[#333533] rounded-lg text-sm transition-all group/item text-left border border-transparent hover:border-[#F5CB5C]/30"
+                                    >
+                                        <span className="font-medium flex items-center gap-2">
+                                            <div className={cn("w-2 h-2 rounded-full",
+                                                level === 'Expert' ? "bg-amber-500" :
+                                                    level === 'Sr' ? "bg-purple-500" :
+                                                        level === 'Med' ? "bg-blue-500" : "bg-emerald-500"
+                                            )} />
+                                            {level}
+                                        </span>
+                                        <span className="text-[#F5CB5C] font-mono text-xs font-bold">${finalPrice.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                    </button>
+                                )
+                            })}
+                        </>
                     )}
                 </div>
             </PopoverContent>
