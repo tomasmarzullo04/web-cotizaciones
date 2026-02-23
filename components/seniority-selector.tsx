@@ -89,18 +89,25 @@ export function SenioritySelector({ roleName, roleKey, capabilities, serviceRate
                                     <span className="text-[10px] font-bold text-[#CFDBD5] uppercase tracking-wider">Asignación</span>
                                     <div className="relative flex items-center gap-1">
                                         <Input
-                                            type="number"
-                                            value={allocation === 0 ? '' : allocation}
+                                            type="text"
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
+                                            value={allocation === 0 ? '' : allocation.toString()}
                                             onChange={(e) => {
-                                                const val = e.target.value === '' ? 0 : parseInt(e.target.value)
+                                                const valStr = e.target.value.replace(/[^0-9]/g, '')
+                                                if (valStr === '') {
+                                                    setAllocation(0)
+                                                    return
+                                                }
+                                                const val = parseInt(valStr, 10)
                                                 if (!isNaN(val)) {
-                                                    setAllocation(Math.max(0, Math.min(100, val)))
+                                                    setAllocation(Math.min(100, val))
                                                 }
                                             }}
                                             onBlur={() => {
                                                 if (allocation < 1) setAllocation(1)
                                             }}
-                                            className="w-14 h-7 text-center bg-[#F5CB5C]/10 border-[#F5CB5C]/30 text-[#F5CB5C] font-mono font-bold text-xs p-0 focus-visible:ring-1 focus-visible:ring-[#F5CB5C] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            className="w-16 h-7 text-center bg-[#F5CB5C]/10 border-[#F5CB5C]/30 text-[#F5CB5C] font-mono font-bold text-xs p-0 focus-visible:ring-1 focus-visible:ring-[#F5CB5C] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         />
                                         <span className="text-[10px] font-bold text-[#F5CB5C]">%</span>
                                     </div>
