@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge"
 interface QuoteDetailsSheetProps {
     quote: {
         id: string
+        quoteNumber?: number
         clientName: string
         projectType: string
         estimatedCost: number
@@ -133,7 +134,10 @@ export function QuoteDetailsSheet({ quote, onQuoteUpdated }: QuoteDetailsSheetPr
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 pl-5 pr-24">
                         {/* Title Container */}
                         <div className="space-y-3 pt-1 flex-1 flex flex-col justify-center">
-                            <SheetTitle className="text-xl font-black text-[#E8EDDF] tracking-tight text-center md:text-left">
+                            <SheetTitle className="text-xl font-black text-[#E8EDDF] tracking-tight text-center md:text-left flex items-center gap-3">
+                                <span className="text-[#F5CB5C] font-mono font-bold text-sm bg-[#F5CB5C]/10 px-2 py-0.5 rounded border border-[#F5CB5C]/20 shrink-0">
+                                    #{quote.quoteNumber ? quote.quoteNumber.toString().padStart(6, '0') : '[NUEVA]'}
+                                </span>
                                 Detalle de Cotización
                             </SheetTitle>
                             {/* Description Box */}

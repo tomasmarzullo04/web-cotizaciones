@@ -193,6 +193,9 @@ export function DashboardQuotesList({ serverQuotes = [] }: { serverQuotes?: any[
                                 <div className="w-full md:col-span-3 flex justify-between md:block items-start">
                                     <div>
                                         <div className="flex items-center gap-3">
+                                            <span className="text-[#F5CB5C] font-mono font-bold text-xs bg-[#F5CB5C]/10 px-2 py-0.5 rounded border border-[#F5CB5C]/20 shrink-0">
+                                                #{quote.quoteNumber ? quote.quoteNumber.toString().padStart(6, '0') : '[NUEVA]'}
+                                            </span>
                                             <h4 className="text-[#E8EDDF] font-bold text-lg md:text-base truncate max-w-[200px] md:max-w-[180px]" title={quote.clientName}>{quote.clientName || 'Sin Nombre'}</h4>
                                         </div>
                                         <div className="text-[#CFDBD5] text-sm md:text-xs opacity-70 mt-1 truncate max-w-[200px] md:max-w-[180px]" title={quote.projectType}>

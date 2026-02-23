@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 
 type Quote = {
     id: string
+    quoteNumber?: number
     clientName: string
     projectType: string
     estimatedCost: number
@@ -349,7 +350,8 @@ export function AdminHistory({ quotes: serverQuotes, consultants: serverConsulta
                     <Table>
                         <TableHeader className="bg-[#1F1F1F]">
                             <TableRow className="border-[#2D2D2D] hover:bg-transparent">
-                                <TableHead className="text-[#CFDBD5] font-bold uppercase tracking-wider pl-8 h-12 w-[250px]">Cliente</TableHead>
+                                <TableHead className="text-[#CFDBD5] font-bold uppercase tracking-wider pl-8 h-12 w-[100px]">ID</TableHead>
+                                <TableHead className="text-[#CFDBD5] font-bold uppercase tracking-wider h-12 w-[250px]">Cliente</TableHead>
                                 <TableHead className="text-[#CFDBD5] font-bold uppercase tracking-wider h-12">Tipo</TableHead>
                                 <TableHead className="text-[#CFDBD5] font-bold uppercase tracking-wider h-12">
                                     {activeTab === 'Staffing' ? 'Perfiles' :
@@ -376,8 +378,13 @@ export function AdminHistory({ quotes: serverQuotes, consultants: serverConsulta
                                             setIsReviewModalOpen(true)
                                         }}
                                     >
+                                        {/* ID */}
+                                        <TableCell className="font-mono font-bold text-[#F5CB5C] pl-8 py-5 text-xs">
+                                            #{quote.quoteNumber ? quote.quoteNumber.toString().padStart(6, '0') : '[NUEV]'}
+                                        </TableCell>
+
                                         {/* Client */}
-                                        <TableCell className="font-bold text-[#E8EDDF] pl-8 py-5">
+                                        <TableCell className="font-bold text-[#E8EDDF] py-5">
                                             {quote.clientName || 'Sin Nombre'}
                                             <span className="block text-xs text-[#CFDBD5] font-normal mt-1 truncate max-w-[200px]">{quote.projectType}</span>
                                         </TableCell>
