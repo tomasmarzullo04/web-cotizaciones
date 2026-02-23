@@ -90,19 +90,17 @@ export function SenioritySelector({ roleName, roleKey, capabilities, serviceRate
                                     <div className="relative flex items-center gap-1">
                                         <Input
                                             type="number"
-                                            value={allocation}
+                                            value={allocation === 0 ? '' : allocation}
                                             onChange={(e) => {
-                                                const val = parseInt(e.target.value)
+                                                const val = e.target.value === '' ? 0 : parseInt(e.target.value)
                                                 if (!isNaN(val)) {
-                                                    setAllocation(Math.max(1, Math.min(100, val)))
-                                                } else if (e.target.value === '') {
-                                                    setAllocation(0) // Allow clearing, but prices will use 0
+                                                    setAllocation(Math.max(0, Math.min(100, val)))
                                                 }
                                             }}
                                             onBlur={() => {
                                                 if (allocation < 1) setAllocation(1)
                                             }}
-                                            className="w-14 h-6 text-center bg-[#F5CB5C]/10 border-[#F5CB5C]/30 text-[#F5CB5C] font-mono font-bold text-xs p-0 focus-visible:ring-1 focus-visible:ring-[#F5CB5C]"
+                                            className="w-14 h-7 text-center bg-[#F5CB5C]/10 border-[#F5CB5C]/30 text-[#F5CB5C] font-mono font-bold text-xs p-0 focus-visible:ring-1 focus-visible:ring-[#F5CB5C] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         />
                                         <span className="text-[10px] font-bold text-[#F5CB5C]">%</span>
                                     </div>
