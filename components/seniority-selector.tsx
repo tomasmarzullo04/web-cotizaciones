@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
+import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { ServiceRate } from "@prisma/client"
 import { toast } from "sonner"
@@ -86,19 +87,40 @@ export function SenioritySelector({ roleName, roleKey, capabilities, serviceRate
                             <div className="px-1 py-3 mb-2 border-b border-[#333533]/50">
                                 <div className="flex items-center justify-between mb-3">
                                     <span className="text-[10px] font-bold text-[#CFDBD5] uppercase tracking-wider">Asignación</span>
-                                    <Badge variant="outline" className="bg-[#F5CB5C]/10 border-[#F5CB5C]/30 text-[#F5CB5C] font-mono font-bold text-xs h-5">
-                                        {allocation}%
-                                    </Badge>
+                                    <div className="relative flex items-center gap-1">
+                                        <Input
+                                            type="number"
+                                            value={allocation}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value)
+                                                if (!isNaN(val)) {
+                                                    setAllocation(Math.max(1, Math.min(100, val)))
+                                                } else if (e.target.value === '') {
+                                                    setAllocation(0) // Allow clearing, but prices will use 0
+                                                }
+                                            }}
+                                            onBlur={() => {
+                                                if (allocation < 1) setAllocation(1)
+                                            }}
+                                            className="w-14 h-6 text-center bg-[#F5CB5C]/10 border-[#F5CB5C]/30 text-[#F5CB5C] font-mono font-bold text-xs p-0 focus-visible:ring-1 focus-visible:ring-[#F5CB5C]"
+                                        />
+                                        <span className="text-[10px] font-bold text-[#F5CB5C]">%</span>
+                                    </div>
                                 </div>
                                 <Slider
                                     defaultValue={[100]}
                                     max={100}
                                     min={1}
                                     step={1}
-                                    value={[allocation]}
+                                    value={[allocation || 1]}
                                     onValueChange={(vals) => setAllocation(vals[0])}
-                                    className="my-4"
+                                    className="my-5 cursor-pointer"
+                                // Custom colors for visibility inside SenioritySelector
                                 />
+                                <style jsx global>{`
+                                    [data-slot="slider-track"] { background-color: #333533 !important; }
+                                    [data-slot="slider-range"] { background-color: #F5CB5C !important; }
+                                `}</style>
                                 <div className="flex justify-between text-[8px] text-[#7C7F7C] font-bold uppercase tracking-tighter">
                                     <span>Part-Time</span>
                                     <span>Full-Time</span>
