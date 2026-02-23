@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { Plus, ShieldAlert, Check } from 'lucide-react'
+import { Plus, ShieldAlert, Check, Minus, Users, Pencil } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -87,7 +87,8 @@ export function SenioritySelector({ roleName, roleKey, capabilities, serviceRate
                             <div className="px-1 py-3 mb-2 border-b border-[#333533]/50">
                                 <div className="flex items-center justify-between mb-3">
                                     <span className="text-[10px] font-bold text-[#CFDBD5] uppercase tracking-wider">Asignación</span>
-                                    <div className="relative flex items-center gap-1">
+                                    <div className="relative flex items-center gap-2">
+                                        <Pencil className="w-3 h-3 text-[#F5CB5C]/40" />
                                         <Input
                                             type="text"
                                             inputMode="numeric"
@@ -107,7 +108,7 @@ export function SenioritySelector({ roleName, roleKey, capabilities, serviceRate
                                             onBlur={() => {
                                                 if (allocation < 1) setAllocation(1)
                                             }}
-                                            className="w-16 h-7 text-center bg-[#F5CB5C]/10 border-[#F5CB5C]/30 text-[#F5CB5C] font-mono font-bold text-xs p-0 focus-visible:ring-1 focus-visible:ring-[#F5CB5C] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            className="w-[4.5rem] h-7 text-center bg-[#F5CB5C]/10 border-[#F5CB5C]/30 text-[#F5CB5C] font-mono font-bold text-xs p-0 focus-visible:ring-1 focus-visible:ring-[#F5CB5C] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         />
                                         <span className="text-[10px] font-bold text-[#F5CB5C]">%</span>
                                     </div>

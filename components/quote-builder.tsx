@@ -2794,7 +2794,8 @@ graph TD
                                         </div>
                                     ) : (
                                         state.staffingDetails.profiles.map((profile, idx) => {
-                                            const displayPrice = (profile.price || 0) * (profile.count || 1)
+                                            const allocation = (profile.allocationPercentage ?? 100) / 100
+                                            const displayPrice = (profile.price || 0) * (profile.count || 1) * allocation
                                             // Handle Monthly/Annual Toggle
                                             const finalPrice = viewMode === 'annual' ? displayPrice * 12 : displayPrice
                                             const periodLabel = viewMode === 'annual' ? 'ANUAL' : 'MENSUAL'
