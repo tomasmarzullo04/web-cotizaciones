@@ -941,6 +941,34 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
 
     const sustainScore = sustainScores.total // For compatibility if used elsewhere
 
+    const handleManualSuggestion = () => {
+        if (!state.techStack || state.techStack.length === 0) {
+            toast.error("Selecciona al menos una tecnología para recibir sugerencias.")
+            return
+        }
+
+        const recommendations: any[] = []
+        state.techStack.forEach(tech => {
+            const mapped = RECOMENDACIONES_MAPPING[tech]
+            if (mapped) {
+                mapped.forEach(rec => {
+                    // Avoid duplicates if same role and seniority
+                    if (!recommendations.some(r => r.role === rec.role && r.seniority === rec.seniority)) {
+                        recommendations.push(rec)
+                    }
+                })
+            }
+        })
+
+        if (recommendations.length === 0) {
+            toast.error("No se encontraron recomendaciones específicas para este stack.")
+            return
+        }
+
+        setPendingRecs(recommendations)
+        setIsSuggestionModalOpen(true)
+    }
+
     const handleApplyRecommendations = () => {
         pendingRecs.forEach(r => {
             const roleKey = r.role as RoleKey
@@ -2787,9 +2815,17 @@ graph TD
 
 
 
-                        {/* =====================================================================================
-                            LEGACY SUGGESTION BUTTON REMOVED - NOW REACTIVE
-                           ===================================================================================== */}
+                        {(state.serviceType === 'Staffing' || state.serviceType === 'Proyecto') && (
+                            <div className="flex justify-start mb-6 -mt-2">
+                                <Button
+                                    onClick={handleManualSuggestion}
+                                    className="h-10 bg-[#171717] hover:bg-[#242423] text-[#F5CB5C] border border-[#F5CB5C]/30 rounded-xl font-black transition-all px-6 shadow-sm group"
+                                >
+                                    <Sparkles className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+                                    Sugerencia Automática de Equipo
+                                </Button>
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <div className="space-y-6">
