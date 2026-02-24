@@ -217,46 +217,48 @@ interface QuoteState {
 const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "", className = "", maxWidth = "100%" }: { label: string, value: number, onChange: (val: number) => void, min?: number, max?: number, unit?: string, className?: string, maxWidth?: string }) => (
     <div className={cn("space-y-1.5", className)} style={{ maxWidth }}>
         {label && <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">{label}</Label>}
-        <div className="flex items-center bg-[#242423] rounded-xl border border-[#4A4D4A] hover:border-[#F5CB5C]/30 transition-all w-full h-10 relative overflow-hidden group">
+        <div className="flex items-center bg-[#242423] rounded-xl border border-[#4A4D4A] hover:border-[#F5CB5C]/30 transition-all w-full h-11 relative overflow-hidden group">
             {/* Minus Button */}
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-full w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute left-0 shrink-0"
+                className="h-full w-9 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute left-0 shrink-0 border-r border-[#4A4D4A]/30"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.max(min, value - 1)); }}
                 disabled={value <= min}
             >
-                <Minus className="w-3 h-3" />
+                <Minus className="w-4 h-4" />
             </Button>
 
             {/* Input Area */}
-            <div className="flex-1 flex items-center justify-center h-full px-7 min-w-0">
-                <input
-                    type="text"
-                    inputMode="numeric"
-                    value={value}
-                    onChange={e => {
-                        const raw = e.target.value.replace(/[^0-9]/g, '');
-                        const val = parseInt(raw || '0');
-                        onChange(Math.max(min, Math.min(max, val)));
-                    }}
-                    onBlur={() => {
-                        if (isNaN(value)) onChange(min);
-                    }}
-                    className="bg-transparent text-[#E8EDDF] text-xl font-black text-center w-full focus:outline-none border-0 p-0 leading-none h-full min-w-0"
-                />
-                {unit && <span className="text-[8px] text-[#7C7F7C] font-bold uppercase select-none ml-1 shrink-0">{unit}</span>}
+            <div className="flex-1 flex items-center justify-center h-full px-10 min-w-0">
+                <div className="flex items-baseline justify-center gap-1 w-full">
+                    <input
+                        type="text"
+                        inputMode="numeric"
+                        value={value}
+                        onChange={e => {
+                            const raw = e.target.value.replace(/[^0-9]/g, '');
+                            const val = parseInt(raw || '0');
+                            onChange(Math.max(min, Math.min(max, val)));
+                        }}
+                        onBlur={() => {
+                            if (isNaN(value)) onChange(min);
+                        }}
+                        className="bg-transparent text-[#E8EDDF] text-2xl font-black text-center w-full focus:outline-none border-0 p-0 leading-none h-full min-w-0"
+                    />
+                    {unit && <span className="text-[10px] text-[#7C7F7C] font-bold uppercase select-none shrink-0">{unit}</span>}
+                </div>
             </div>
 
             {/* Plus Button */}
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-full w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute right-0 shrink-0"
+                className="h-full w-9 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute right-0 shrink-0 border-l border-[#4A4D4A]/30"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.min(max, value + 1)); }}
                 disabled={value >= max}
             >
-                <Plus className="w-3 h-3" />
+                <Plus className="w-4 h-4" />
             </Button>
         </div>
     </div>
@@ -2853,26 +2855,55 @@ graph TD
                                                         </div>
 
                                                         {/* Trash Match Height */}
-                                                        <button
-                                                            className="text-zinc-600 hover:text-red-400 transition-colors p-1"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                const newProfiles = state.staffingDetails.profiles.filter((_, i) => i !== idx)
-                                                                const roleKey = Object.keys(ROLE_CONFIG).find(key => ROLE_CONFIG[key as RoleKey].label === profile.role) as RoleKey
+                                                        <div className="flex items-center gap-1">
+                                                            <SenioritySelector
+                                                                roleName={profile.role}
+                                                                roleKey={Object.keys(ROLE_CONFIG).find(k => ROLE_CONFIG[k as RoleKey].label === profile.role) || ''}
+                                                                capabilities={['Jr', 'Med', 'Sr', 'Expert']}
+                                                                serviceRates={dbRates}
+                                                                onSelect={(level, price, allocation) => {
+                                                                    setState(prev => {
+                                                                        const newProfiles = [...prev.staffingDetails.profiles]
+                                                                        newProfiles[idx] = {
+                                                                            ...newProfiles[idx],
+                                                                            seniority: level,
+                                                                            price: price,
+                                                                            allocationPercentage: allocation,
+                                                                            isManual: true // Lock as manual after edit
+                                                                        }
+                                                                        return {
+                                                                            ...prev,
+                                                                            staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
+                                                                        }
+                                                                    })
+                                                                    toast.success("Perfil actualizado")
+                                                                }}
+                                                                defaultPrice={Object.values(ROLE_CONFIG).find(r => r.label === profile.role)?.defaultPrice}
+                                                                multipliers={SENIORITY_MODIFIERS}
+                                                                compact={true}
+                                                            />
 
-                                                                setState(prev => ({
-                                                                    ...prev,
-                                                                    roles: {
-                                                                        ...prev.roles,
-                                                                        [roleKey]: Math.max(0, (prev.roles[roleKey] || 0) - profile.count)
-                                                                    },
-                                                                    staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
-                                                                }))
-                                                                toast.success("Perfil eliminado")
-                                                            }}
-                                                        >
-                                                            <Trash2 className="w-4 h-4 opacity-70 hover:opacity-100" />
-                                                        </button>
+                                                            <button
+                                                                className="text-zinc-600 hover:text-red-400 transition-colors p-1"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
+                                                                    const newProfiles = state.staffingDetails.profiles.filter((_, i) => i !== idx)
+                                                                    const roleKey = Object.keys(ROLE_CONFIG).find(key => ROLE_CONFIG[key as RoleKey].label === profile.role) as RoleKey
+
+                                                                    setState(prev => ({
+                                                                        ...prev,
+                                                                        roles: {
+                                                                            ...prev.roles,
+                                                                            [roleKey]: Math.max(0, (prev.roles[roleKey] || 0) - profile.count)
+                                                                        },
+                                                                        staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
+                                                                    }))
+                                                                    toast.success("Perfil eliminado")
+                                                                }}
+                                                            >
+                                                                <Trash2 className="w-4 h-4 opacity-70 hover:opacity-100" />
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             )

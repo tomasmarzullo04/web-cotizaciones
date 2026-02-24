@@ -378,16 +378,18 @@ export function createQuoteWordDoc(data: any): Document {
                             const rate = p.price || p.cost || 0
                             const allocation = (p.allocationPercentage ?? 100) / 100
                             const monthlySub = rate * allocation * p.count
-                            let displayName = ROLE_CONFIG[p.role]?.label || p.role.replace(/_/g, ' ').toUpperCase()
-                            if (data.serviceType === 'Sustain') displayName = `Recurso: ${displayName}`
 
-                            const allocationSuffix = p.allocationPercentage && p.allocationPercentage < 100 ? ` (${p.allocationPercentage}%)` : ""
+                            // Requested format: Role Seniority (%)
+                            const seniorityStr = p.seniority || 'Ssr'
+                            const allocationSuffix = (p.allocationPercentage && p.allocationPercentage < 100) ? ` (${p.allocationPercentage}%)` : ""
+                            const fullProfileLabel = `${p.role} ${seniorityStr}${allocationSuffix}`
+
                             const rowMonthly = monthlySub
-                            const rowTotal = data.viewMode === 'annual' ? monthlySub * 12 : monthlySub * data.durationMonths
+                            const rowTotal = data.viewMode === 'annual' ? monthlySub * 12 : monthlySub * (data.durationMonths || 1)
 
                             return new TableRow({
                                 children: [
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `${displayName} (${p.seniority || 'Ssr'})${allocationSuffix}`, size: 17 })] })], margins: { left: 120 } }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fullProfileLabel, size: 17 })] })], margins: { left: 120 } }),
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `${p.count}`, size: 17 })], alignment: AlignmentType.CENTER })] }),
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt(rowMonthly), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } }),
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt(rowTotal), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } })
