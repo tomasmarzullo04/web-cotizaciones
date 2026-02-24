@@ -1,11 +1,11 @@
 import QuoteBuilder from "@/components/quote-builder"
 import { prisma } from "@/lib/prisma"
-import { cookies } from "next/headers"
+import { getServerSession } from "@/lib/auth"
 import { redirect } from "next/navigation"
 
 export default async function EditQuotePage({ params }: { params: Promise<{ id: string }> }) {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('session_user_id')?.value
+    const session = await getServerSession()
+    const userId = session?.id
 
     if (!userId) {
         redirect('/login')
@@ -21,7 +21,7 @@ export default async function EditQuotePage({ params }: { params: Promise<{ id: 
             where: { id }
         })
 
-        const role = cookieStore.get('session_role')?.value
+        const role = session?.role
 
         if (!quote || (quote.userId !== userId && role !== 'ADMIN')) {
             console.error(`Quote not found or unauthorized: ${id}`)

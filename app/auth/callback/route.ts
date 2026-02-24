@@ -59,7 +59,7 @@ export async function GET(request: Request) {
 
                 cookieStore.set('session_role', dbUser.role, cookieOptions)
                 cookieStore.set('session_user', dbUser.name, cookieOptions)
-                cookieStore.set('session_user_id', dbUser.id, cookieOptions)
+                // REMOVED: session_user_id
 
                 const target = dbUser.role === 'ADMIN' ? '/admin/dashboard' : '/quote/new'
                 return NextResponse.redirect(`${productionOrigin}${target}`)

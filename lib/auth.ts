@@ -102,7 +102,7 @@ export async function loginAction(formData: FormData) {
                     // Note: We need 'retry.data.user' here
                     cookieStore.set('session_role', legacyUser.role, cookieOptions)
                     cookieStore.set('session_user', legacyUser.name, cookieOptions)
-                    cookieStore.set('session_user_id', legacyUser.id, cookieOptions)
+                    // REMOVED: session_user_id
 
                     console.log(`[AUTH] Login Exitoso (Post-Migración): ${email}`)
                     // Return URL for client-side navigation
@@ -139,11 +139,10 @@ export async function loginAction(formData: FormData) {
     }
 
     // 3. Set App Session Cookies
-    // We keep our own cookies for the app's logic (Multitenancy)
     const cookieOptions = { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const }
     cookieStore.set('session_role', user.role, cookieOptions)
     cookieStore.set('session_user', user.name, cookieOptions)
-    cookieStore.set('session_user_id', user.id, cookieOptions)
+    // REMOVED: session_user_id
 
     console.log(`[AUTH] Login Exitoso: ${email}, Rol: ${user.role}`)
 
@@ -244,7 +243,7 @@ export async function logoutAction() {
     // Clear App Session
     cookieStore.delete('session_role')
     cookieStore.delete('session_user')
-    cookieStore.delete('session_user_id')
+    // REMOVED: session_user_id
 
     // Attempt to clear Supabase Auth cookies (best effort, depends on naming convention)
     // We can't easily guess the project-id prefixed cookie name server-side without overhead, 
@@ -279,12 +278,7 @@ export async function getSessionUserId() {
 export async function getServerSession() {
     const cookieStore = await cookies()
 
-    // 1. Check direct cookies first for speed
-    const role = cookieStore.get('session_role')?.value
-    const name = cookieStore.get('session_user')?.value
-    const id = cookieStore.get('session_user_id')?.value
-
-    // 2. Check Supabase to see if we're actually logged in
+    // 1. Supabase Auth is the absolute source of truth
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
@@ -298,44 +292,38 @@ export async function getServerSession() {
     const { data: { user }, error } = await supabase.auth.getUser()
 
     if (error || !user) {
-        // If Supabase says no, then we ARE NOT logged in, regardless of cookies
-        if (role || name || id) {
-            console.log("[Auth] Supabase session missing. Clearing rogue cookies.")
-            cookieStore.delete('session_role')
-            cookieStore.delete('session_user')
-            cookieStore.delete('session_user_id')
-        }
+        // If Supabase says no, then we ARE NOT logged in. Redirect logic handles this.
         return null
     }
 
-    // 3. If we have a user but no cookies (DESYNC), perform a silent sync
-    if (!role || !name || !id) {
-        console.log(`[Auth] Desync detected for ${user.email}. Performing silent sync...`)
-        try {
-            const dbUser = await prisma.user.findUnique({ where: { email: user.email! } })
-            if (dbUser) {
+    // 2. Fetch User from DB to get the latest Role/Name
+    try {
+        const dbUser = await prisma.user.findUnique({ where: { email: user.email! } })
+        if (dbUser) {
+            // Optional: Sync UI cookies if missing (Best Effort)
+            const role = cookieStore.get('session_role')?.value
+            if (!role) {
                 const cookieOptions = { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const }
                 cookieStore.set('session_role', dbUser.role, cookieOptions)
                 cookieStore.set('session_user', dbUser.name, cookieOptions)
-                cookieStore.set('session_user_id', dbUser.id, cookieOptions)
-
-                return {
-                    id: dbUser.id,
-                    name: dbUser.name,
-                    role: dbUser.role,
-                    email: dbUser.email
-                }
             }
-        } catch (e) {
-            console.error("[Auth] Silent Sync Failed:", e)
+
+            return {
+                id: dbUser.id,
+                name: dbUser.name,
+                role: dbUser.role,
+                email: dbUser.email
+            }
         }
+    } catch (e) {
+        console.error("[Auth] Session DB Fetch Failed:", e)
     }
 
-    // Normal case: everything is fine or user is in DB but cookies just refreshed
+    // Fallback to Auth metadata if DB fetch fails
     return {
-        id: id || user.id,
-        name: name || user.user_metadata?.full_name || user.email?.split('@')[0],
-        role: (role as any) || 'CONSULTOR',
+        id: user.id,
+        name: user.user_metadata?.full_name || user.email?.split('@')[0],
+        role: 'CONSULTOR',
         email: user.email
     }
 }
@@ -376,7 +364,7 @@ export async function syncSessionAction() {
         const cookieOptions = { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const }
         cookieStore.set('session_role', dbUser.role, cookieOptions)
         cookieStore.set('session_user', dbUser.name, cookieOptions)
-        cookieStore.set('session_user_id', dbUser.id, cookieOptions)
+        // REMOVED: session_user_id
 
         return { success: true, role: dbUser.role }
     } catch (e) {
