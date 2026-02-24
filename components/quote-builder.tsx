@@ -2274,17 +2274,59 @@ graph TD
                                                     <span className="absolute right-3 top-2.5 text-[#7C7F7C] text-xs">min/hs</span>
                                                 </div>
                                             </div>
-                                            <div>
-                                                <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Frecuencia Actualización Datos</Label>
-                                                <Select value={state.sustainDetails.metrics.updateFrequency} onValueChange={v => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, updateFrequency: v } })}>
-                                                    <SelectTrigger className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
-                                                    <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                        <SelectItem value="realtime">Real-time / Streaming</SelectItem>
-                                                        <SelectItem value="daily">Diaria</SelectItem>
-                                                        <SelectItem value="weekly">Semanal</SelectItem>
-                                                        <SelectItem value="monthly">Mensual</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
+                                            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Frecuencia Actualización Datos</Label>
+                                                    <ToggleGroup
+                                                        type="single"
+                                                        value={state.sustainDetails.metrics.updateFrequency}
+                                                        onValueChange={v => {
+                                                            if (v) updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, updateFrequency: v } })
+                                                        }}
+                                                        className="justify-start gap-1 h-10 w-full"
+                                                    >
+                                                        <ToggleGroupItem value="realtime" className="flex-1 rounded-lg border border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-[#242423] data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-black text-[9px] uppercase">
+                                                            REAL-TIME
+                                                        </ToggleGroupItem>
+                                                        <ToggleGroupItem value="daily" className="flex-1 rounded-lg border border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-[#242423] data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-black text-[9px] uppercase">
+                                                            DIARIA
+                                                        </ToggleGroupItem>
+                                                        <ToggleGroupItem value="weekly" className="flex-1 rounded-lg border border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-[#242423] data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-black text-[9px] uppercase">
+                                                            SEMANAL
+                                                        </ToggleGroupItem>
+                                                        <ToggleGroupItem value="monthly" className="flex-1 rounded-lg border border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-[#242423] data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-black text-[9px] uppercase">
+                                                            MENSUAL
+                                                        </ToggleGroupItem>
+                                                    </ToggleGroup>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Frecuencia de Uso Solution</Label>
+                                                    <ToggleGroup
+                                                        type="single"
+                                                        value={state.sustainDetails.criticalityMatrix.frequencyOfUse}
+                                                        onValueChange={(v) => {
+                                                            if (v) updateState('sustainDetails', {
+                                                                ...state.sustainDetails,
+                                                                criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, frequencyOfUse: v }
+                                                            })
+                                                        }}
+                                                        className="justify-start gap-1 h-10 w-full"
+                                                    >
+                                                        <ToggleGroupItem value="daily" className="flex-1 rounded-lg border border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-[#242423] data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-black text-[9px] uppercase">
+                                                            DIARIO
+                                                        </ToggleGroupItem>
+                                                        <ToggleGroupItem value="weekly" className="flex-1 rounded-lg border border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-[#242423] data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-black text-[9px] uppercase">
+                                                            SEMANAL
+                                                        </ToggleGroupItem>
+                                                        <ToggleGroupItem value="monthly" className="flex-1 rounded-lg border border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-[#242423] data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-black text-[9px] uppercase">
+                                                            MENSUAL
+                                                        </ToggleGroupItem>
+                                                        <ToggleGroupItem value="monthend" className="flex-1 rounded-lg border border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-[#242423] data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-black text-[9px] uppercase">
+                                                            CIERRE
+                                                        </ToggleGroupItem>
+                                                    </ToggleGroup>
+                                                </div>
                                             </div>
                                             {/* Schedule Inputs - Dynamic Array */}
                                             <div className="md:col-span-2 space-y-3 mt-2">
@@ -2448,24 +2490,6 @@ graph TD
 
                                             {/* NEW FIELD: Frequency of Use */}
                                             {/* NEW FIELD: Frequency of Use */}
-                                            <div className="bg-[#333533]/50 border border-[#4A4D4A] p-4 rounded-xl space-y-2">
-                                                <Label className="text-[#CFDBD5] text-xs uppercase font-bold">Frecuencia de Uso</Label>
-                                                <Select
-                                                    value={state.sustainDetails.criticalityMatrix.frequencyOfUse}
-                                                    onValueChange={(v) => updateState('sustainDetails', {
-                                                        ...state.sustainDetails,
-                                                        criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, frequencyOfUse: v }
-                                                    })}
-                                                >
-                                                    <SelectTrigger className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF] focus:border-[#F5CB5C]"><SelectValue /></SelectTrigger>
-                                                    <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                        <SelectItem value="daily">Diario</SelectItem>
-                                                        <SelectItem value="weekly">Semanal</SelectItem>
-                                                        <SelectItem value="monthly">Mensual</SelectItem>
-                                                        <SelectItem value="monthend">Cierre de Mes</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
 
                                             {/* NEW FIELD: Critical Dates */}
                                             <div className="bg-[#333533]/50 border border-[#4A4D4A] p-4 rounded-xl space-y-4">
