@@ -216,44 +216,44 @@ interface QuoteState {
 const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "", className = "" }: { label: string, value: number, onChange: (val: number) => void, min?: number, max?: number, unit?: string, className?: string }) => (
     <div className={cn("space-y-1.5", className)}>
         <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">{label}</Label>
-        <div className="flex items-center bg-[#242423] rounded-xl border border-[#4A4D4A] hover:border-[#F5CB5C]/30 transition-all w-full h-10 px-1 relative group">
+        <div className="flex items-center bg-[#242423] rounded-xl border border-[#4A4D4A] hover:border-[#F5CB5C]/30 transition-all w-full h-10 relative overflow-hidden group">
+            {/* Minus Button */}
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-[#CFDBD5]/50 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-lg transition-colors disabled:opacity-30 z-10"
+                className="h-full w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute left-0"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.max(min, value - 1)); }}
                 disabled={value <= min}
             >
                 <Minus className="w-4 h-4" />
             </Button>
 
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="flex items-baseline gap-1">
-                    <span className="font-black text-[#E8EDDF] text-sm tabular-nums">{value}</span>
-                    {unit && <span className="text-[9px] text-[#7C7F7C] font-bold uppercase">{unit}</span>}
+            {/* Input Area */}
+            <div className="flex-1 flex flex-col items-center justify-center h-full relative px-8">
+                <div className="flex items-baseline justify-center gap-1 w-full">
+                    <input
+                        type="number"
+                        value={value}
+                        onChange={e => {
+                            const val = parseInt(e.target.value);
+                            onChange(isNaN(val) ? 0 : Math.max(min, Math.min(max, val)));
+                        }}
+                        className="bg-transparent text-[#F5CB5C] text-sm font-black text-center w-full focus:outline-none appearance-none [&::-webkit-inner-spin-button]:appearance-none border-0 p-0"
+                    />
+                    {unit && <span className="text-[9px] text-[#7C7F7C] font-bold uppercase select-none">{unit}</span>}
                 </div>
             </div>
 
-            <div className="flex-1" />
-
+            {/* Plus Button */}
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-[#CFDBD5]/50 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-lg transition-colors disabled:opacity-30 z-10"
+                className="h-full w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute right-0"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.min(max, value + 1)); }}
                 disabled={value >= max}
             >
                 <Plus className="w-4 h-4" />
             </Button>
-
-            {/* Hidden input for accessibility/state if needed, though we use the buttons. 
-                Keep it for direct typing if the user clicks the center area */}
-            <input
-                type="number"
-                value={value}
-                onChange={e => onChange(Math.max(min, Math.min(max, parseInt(e.target.value) || 0)))}
-                className="absolute inset-x-10 inset-y-0 bg-transparent border-0 text-center font-black text-[#E8EDDF] focus:ring-0 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none opacity-0 focus:opacity-100 transition-opacity pointer-events-auto"
-            />
         </div>
     </div>
 )
