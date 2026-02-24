@@ -229,18 +229,24 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
             </Button>
 
             {/* Input Area */}
-            <div className="flex-1 flex flex-col items-center justify-center h-full relative px-8">
-                <div className="flex items-baseline justify-center gap-1 w-full">
+            <div className="flex-1 flex flex-col items-center justify-center h-full relative px-6">
+                <div className="flex items-center justify-center gap-0.5 w-full h-full">
                     <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
                         value={value}
                         onChange={e => {
-                            const val = parseInt(e.target.value);
-                            onChange(isNaN(val) ? 0 : Math.max(min, Math.min(max, val)));
+                            // Extract digits and parse, naturally removing leading zeros via parseInt
+                            const raw = e.target.value.replace(/[^0-9]/g, '');
+                            const val = parseInt(raw || '0');
+                            onChange(Math.max(min, Math.min(max, val)));
                         }}
-                        className="bg-transparent text-[#F5CB5C] text-sm font-black text-center w-full focus:outline-none appearance-none [&::-webkit-inner-spin-button]:appearance-none border-0 p-0"
+                        onBlur={() => {
+                            if (isNaN(value)) onChange(min);
+                        }}
+                        className="bg-transparent text-[#F5CB5C] text-lg font-black text-center w-full focus:outline-none border-0 p-0 leading-[1] h-full"
                     />
-                    {unit && <span className="text-[9px] text-[#7C7F7C] font-bold uppercase select-none">{unit}</span>}
+                    {unit && <span className="text-[8px] text-[#7C7F7C] font-bold uppercase select-none mt-1">{unit}</span>}
                 </div>
             </div>
 
