@@ -222,31 +222,36 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-full w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute left-0 shrink-0 border-r border-[#4A4D4A]/10"
+                className="h-full w-9 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute left-0 shrink-0 border-r border-[#4A4D4A]/30"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.max(min, value - 1)); }}
                 disabled={value <= min}
             >
-                <Minus className="w-3.5 h-3.5" />
+                <Minus className="w-4 h-4" />
             </Button>
 
-            {/* Input Area */}
-            <div className="flex-1 flex items-center justify-center h-full px-8 min-w-0">
-                <div className="flex items-baseline justify-center gap-0.5 w-full">
+            {/* Input Area - Centered Number */}
+            <div className="flex-1 flex items-center justify-center h-full px-9 min-w-0 relative">
+                <div className="flex items-center justify-center w-full h-full relative">
                     <input
                         type="text"
                         inputMode="numeric"
-                        value={value === 0 ? '0' : value.toString()}
+                        value={value}
                         onChange={e => {
                             const raw = e.target.value.replace(/[^0-9]/g, '');
-                            const val = parseInt(raw || '0');
+                            const cleaned = raw.replace(/^0+/, '') || '0';
+                            const val = parseInt(cleaned);
                             onChange(Math.max(min, Math.min(max, val)));
                         }}
                         onBlur={() => {
                             if (isNaN(value)) onChange(min);
                         }}
-                        className="bg-transparent text-[#E8EDDF] text-lg font-black text-center w-full focus:outline-none border-0 p-0 leading-none h-full min-w-0"
+                        className="bg-transparent text-[#E8EDDF] text-lg font-black text-center w-full focus:outline-none border-0 p-0 leading-none h-full min-w-0 z-10"
                     />
-                    {unit && <span className="text-[9px] text-[#7C7F7C] font-bold uppercase select-none shrink-0">{unit}</span>}
+                    {unit && (
+                        <span className="absolute right-0 text-[9px] text-[#7C7F7C] font-bold uppercase select-none pointer-events-none pr-1">
+                            {unit}
+                        </span>
+                    )}
                 </div>
             </div>
 
@@ -254,11 +259,11 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-full w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute right-0 shrink-0 border-l border-[#4A4D4A]/10"
+                className="h-full w-9 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute right-0 shrink-0 border-l border-[#4A4D4A]/30"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.min(max, value + 1)); }}
                 disabled={value >= max}
             >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-4 h-4" />
             </Button>
         </div>
     </div>
