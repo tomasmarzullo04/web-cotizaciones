@@ -214,52 +214,49 @@ interface QuoteState {
 
 }
 
-const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "", className = "" }: { label: string, value: number, onChange: (val: number) => void, min?: number, max?: number, unit?: string, className?: string }) => (
-    <div className={cn("space-y-1.5", className)}>
-        <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">{label}</Label>
+const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "", className = "", maxWidth = "100%" }: { label: string, value: number, onChange: (val: number) => void, min?: number, max?: number, unit?: string, className?: string, maxWidth?: string }) => (
+    <div className={cn("space-y-1.5", className)} style={{ maxWidth }}>
+        {label && <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">{label}</Label>}
         <div className="flex items-center bg-[#242423] rounded-xl border border-[#4A4D4A] hover:border-[#F5CB5C]/30 transition-all w-full h-10 relative overflow-hidden group">
             {/* Minus Button */}
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-full w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute left-0"
+                className="h-full w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute left-0 shrink-0"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.max(min, value - 1)); }}
                 disabled={value <= min}
             >
-                <Minus className="w-4 h-4" />
+                <Minus className="w-3 h-3" />
             </Button>
 
             {/* Input Area */}
-            <div className="flex-1 flex flex-col items-center justify-center h-full relative px-6">
-                <div className="flex items-center justify-center gap-0.5 w-full h-full">
-                    <input
-                        type="text"
-                        inputMode="numeric"
-                        value={value}
-                        onChange={e => {
-                            // Extract digits and parse, naturally removing leading zeros via parseInt
-                            const raw = e.target.value.replace(/[^0-9]/g, '');
-                            const val = parseInt(raw || '0');
-                            onChange(Math.max(min, Math.min(max, val)));
-                        }}
-                        onBlur={() => {
-                            if (isNaN(value)) onChange(min);
-                        }}
-                        className="bg-transparent text-[#E8EDDF] text-lg font-black text-center w-full focus:outline-none border-0 p-0 leading-[1] h-full"
-                    />
-                    {unit && <span className="text-[8px] text-[#7C7F7C] font-bold uppercase select-none mt-1">{unit}</span>}
-                </div>
+            <div className="flex-1 flex items-center justify-center h-full px-7 min-w-0">
+                <input
+                    type="text"
+                    inputMode="numeric"
+                    value={value}
+                    onChange={e => {
+                        const raw = e.target.value.replace(/[^0-9]/g, '');
+                        const val = parseInt(raw || '0');
+                        onChange(Math.max(min, Math.min(max, val)));
+                    }}
+                    onBlur={() => {
+                        if (isNaN(value)) onChange(min);
+                    }}
+                    className="bg-transparent text-[#E8EDDF] text-xl font-black text-center w-full focus:outline-none border-0 p-0 leading-none h-full min-w-0"
+                />
+                {unit && <span className="text-[8px] text-[#7C7F7C] font-bold uppercase select-none ml-1 shrink-0">{unit}</span>}
             </div>
 
             {/* Plus Button */}
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-full w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute right-0"
+                className="h-full w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute right-0 shrink-0"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.min(max, value + 1)); }}
                 disabled={value >= max}
             >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3 h-3" />
             </Button>
         </div>
     </div>
@@ -2351,6 +2348,7 @@ graph TD
                                                 value={parseInt(state.sustainDetails.updateDuration) || 0}
                                                 onChange={val => updateState('sustainDetails', { ...state.sustainDetails, updateDuration: val.toString() })}
                                                 unit="HS"
+                                                maxWidth="160px"
                                             />
                                             <div className="md:col-span-2">
                                                 <div className="space-y-2">
@@ -2474,18 +2472,43 @@ graph TD
                                                     value={state.sustainDetails.incidentRate}
                                                     onChange={val => updateState('sustainDetails', { ...state.sustainDetails, incidentRate: val })}
                                                     unit="Tickets/mes"
+                                                    maxWidth="160px"
                                                 />
                                             </div>
 
-                                            <div>
-                                                <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold text-opacity-70">Soporte Hypercare (+1 Mes Base)</Label>
-                                                <div className="flex items-center gap-3 bg-[#242423] p-3 rounded-xl border border-[#4A4D4A]">
-                                                    <Switch
-                                                        checked={state.sustainDetails.hasHypercare}
-                                                        onCheckedChange={v => updateState('sustainDetails', { ...state.sustainDetails, hasHypercare: v })}
-                                                        className="data-[state=checked]:bg-[#F5CB5C]"
-                                                    />
-                                                    <span className="text-xs font-bold text-[#E8EDDF] uppercase">{state.sustainDetails.hasHypercare ? 'ACTIVADO' : 'DESACTIVADO'}</span>
+                                            <div className="flex flex-col gap-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold text-opacity-70">Soporte Hypercare (+1 Mes Base)</Label>
+                                                        <div className="flex items-center gap-3 bg-[#1A1A1A] p-2 rounded-xl border border-[#333533]">
+                                                            <Switch
+                                                                checked={state.sustainDetails.hasHypercare}
+                                                                onCheckedChange={v => updateState('sustainDetails', { ...state.sustainDetails, hasHypercare: v })}
+                                                            />
+                                                            <span className="text-xs font-bold text-[#E8EDDF] uppercase">{state.sustainDetails.hasHypercare ? 'ACTIVADO' : 'DESACTIVADO'}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {state.sustainDetails.hasHypercare && (
+                                                        <div className="space-y-2 flex-1 animate-in fade-in slide-in-from-left-4 duration-300">
+                                                            <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">Periodo Hypercare</Label>
+                                                            <Select
+                                                                value={state.sustainDetails.hypercarePeriod || '30_days'}
+                                                                onValueChange={v => updateState('sustainDetails', { ...state.sustainDetails, hypercarePeriod: v })}
+                                                            >
+                                                                <SelectTrigger className="w-full h-10 bg-[#242423] border-[#4A4D4A] text-white rounded-xl">
+                                                                    <SelectValue placeholder="Periodo" />
+                                                                </SelectTrigger>
+                                                                <SelectContent className="bg-[#242423] border-[#4A4D4A] text-white">
+                                                                    <SelectItem value="15_days">15 días</SelectItem>
+                                                                    <SelectItem value="30_days">30 días</SelectItem>
+                                                                    <SelectItem value="60_days">60 días</SelectItem>
+                                                                    <SelectItem value="90_days">90 días</SelectItem>
+                                                                    <SelectItem value="+90_days">+ días</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -2597,6 +2620,7 @@ graph TD
                                                             value={state.sustainDetails.criticalityMatrix.marketsImpacted}
                                                             onChange={val => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, marketsImpacted: val } })}
                                                             unit="MKTS"
+                                                            maxWidth="140px"
                                                         />
                                                     </div>
                                                     <div className="relative">
@@ -2605,6 +2629,7 @@ graph TD
                                                             value={state.sustainDetails.criticalityMatrix.usersImpacted}
                                                             onChange={val => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, usersImpacted: val } })}
                                                             unit="USRS"
+                                                            maxWidth="140px"
                                                         />
                                                     </div>
                                                 </div>

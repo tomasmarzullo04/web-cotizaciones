@@ -629,7 +629,13 @@ function createPDFDocument(data: QuoteState & {
         doc.setFont(FONT_REG, "normal")
         doc.setTextColor(COLOR_CHARCOAL)
         doc.text(`${(data.sustainDetails.metrics.updateFrequency || 'daily').toUpperCase()} / ${data.sustainDetails.updateDuration || 'N/A'}`, margin + paddingX, sy)
-        const hypercareText = data.sustainDetails.hasHypercare ? "ACTIVADO (+1 MES)" : "NO APLICABLE"
+        const formatHypercare = (val: string) => {
+            if (!val) return "30 días"
+            return val.replace('_', ' ').replace('days', 'días')
+        }
+        const hypercareText = data.sustainDetails.hasHypercare
+            ? `ACTIVADO (${formatHypercare(data.sustainDetails.hypercarePeriod)})`
+            : "NO APLICABLE"
         doc.text(hypercareText, col2, sy)
 
         // Row 4: Weekend Support

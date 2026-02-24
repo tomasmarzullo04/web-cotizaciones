@@ -523,7 +523,19 @@ export function createQuoteWordDoc(data: any): Document {
                                         shading: { fill: COLOR_ROW_ALT }, margins: { top: 100, bottom: 100, left: 120 }
                                     }),
                                     new TableCell({
-                                        children: [new Paragraph({ children: [new TextRun({ text: "PERIODO HYPERCARE:", bold: true, size: 16, color: COLOR_PRIMARY })] }), new Paragraph({ children: [new TextRun({ text: data.sustainDetails.hasHypercare ? "ACTIVADO (+1 MES)" : "NO APLICABLE", size: 17 })] })],
+                                        children: [
+                                            new Paragraph({ children: [new TextRun({ text: "PERIODO HYPERCARE:", bold: true, size: 16, color: COLOR_PRIMARY })] }),
+                                            new Paragraph({
+                                                children: [
+                                                    new TextRun({
+                                                        text: data.sustainDetails.hasHypercare
+                                                            ? `ACTIVADO (${(data.sustainDetails.hypercarePeriod || '30_days').replace('_', ' ').replace('days', 'días')})`
+                                                            : "NO APLICABLE",
+                                                        size: 17
+                                                    })
+                                                ]
+                                            })
+                                        ],
                                         shading: { fill: COLOR_ROW_ALT }, margins: { top: 100, bottom: 100, left: 120 }
                                     })
                                 ]
