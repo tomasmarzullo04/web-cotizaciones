@@ -785,6 +785,9 @@ export async function getUserQuotes() {
 // --- SERVICE RATES MANAGEMENT ---
 
 export async function getServiceRates() {
+    const session = await getServerSession()
+    if (!session) return []
+
     try {
         const rates = await prisma.serviceRate.findMany({
             orderBy: { service: 'asc' }
@@ -856,6 +859,9 @@ export async function updateRoleRate(role: string, newMonthlyRate: number) {
 }
 
 export async function getAllQuotes() {
+    const session = await getServerSession()
+    if (!session) return []
+
     try {
         return await prisma.quote.findMany({
             where: {
@@ -875,6 +881,16 @@ export async function getAllQuotes() {
 
 
 export async function getAdminStats() {
+    const session = await getServerSession()
+    if (!session || session.role?.toLowerCase() !== 'admin') {
+        return {
+            monthlyQuotesCount: 0,
+            pipelineValue: 0,
+            activeUsersCount: 0,
+            conversionRate: 0,
+            statusCounts: { 'NUEVA': 0, 'ENVIADA': 0, 'APROBADA': 0, 'RECHAZADA': 0 }
+        }
+    }
     unstable_noStore()
     try {
         const totalQuotes = await prisma.quote.count()

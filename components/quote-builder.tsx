@@ -144,6 +144,7 @@ interface QuoteState {
             startDate: string
             endDate: string
             allocationPercentage?: number
+            isManual?: boolean // NEW: Prevents auto-overwrite
         }>
     }
     // Sustain Specific Data (New)
@@ -244,7 +245,7 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
                         onBlur={() => {
                             if (isNaN(value)) onChange(min);
                         }}
-                        className="bg-transparent text-[#F5CB5C] text-lg font-black text-center w-full focus:outline-none border-0 p-0 leading-[1] h-full"
+                        className="bg-transparent text-[#E8EDDF] text-lg font-black text-center w-full focus:outline-none border-0 p-0 leading-[1] h-full"
                     />
                     {unit && <span className="text-[8px] text-[#7C7F7C] font-bold uppercase select-none mt-1">{unit}</span>}
                 </div>
@@ -425,29 +426,68 @@ const DEFAULT_DIAGRAM = `graph TD
     class Source,User default
     class Pipe,Store,Vis highlight
 `
-const RECOMENDACIONES_MAPPING: Record<string, Array<{ role: RoleKey, seniority: string, rationale: string }>> = {
-    // Project Techs
-    'azure': [{ role: 'data_engineer', seniority: 'Sr', rationale: 'Implementación de pipelines de datos y orquestación.' }],
-    'databricks': [{ role: 'data_engineer', seniority: 'Sr', rationale: 'Procesamiento Spark y optimización de Lakehouse.' }],
-    'synapse': [{ role: 'data_engineer', seniority: 'Sr', rationale: 'Modelado de datos y Analytics Pools.' }],
-    'snowflake': [{ role: 'data_engineer', seniority: 'Sr', rationale: 'Gestión de almacén de datos nube.' }],
-    'powerbi': [{ role: 'bi_visualization_developer', seniority: 'Med', rationale: 'Modelado de métricas DAX y visualización de tableros.' }],
-    'sqlserver': [{ role: 'data_engineer', seniority: 'Med', rationale: 'Optimización de consultas y gestión de DB relacionales.' }],
-    'logicapps': [{ role: 'azure_developer', seniority: 'Med', rationale: 'Integraciones serverless y flujos de eventos.' }],
-    'tableau': [{ role: 'bi_visualization_developer', seniority: 'Med', rationale: 'Desarrollo de historias visuales y dashboards complejos.' }],
-    'python': [{ role: 'data_scientist', seniority: 'Sr', rationale: 'Scripts de automatización y modelos analíticos.' }],
-    'n8n': [{ role: 'azure_developer', seniority: 'Med', rationale: 'Automatización de flujos con herramientas Low-Code.' }],
-    'antigravity': [{ role: 'data_scientist', seniority: 'Expert', rationale: 'Implementación de Agentes IA y RAG.' }],
-    'lovable': [{ role: 'low_code_developer', seniority: 'Med', rationale: 'Desarrollo de interfaces aceleradas con No-Code.' }],
-    'powerapps': [{ role: 'power_app_streamlit_developer', seniority: 'Med', rationale: 'Aplicaciones de negocio y personalización corporativa.' }],
+const RECOMENDACIONES_MAPPING: Record<string, Array<{ role: RoleKey, seniority: string, rationale: string, domain?: 'data' | 'vis' | 'sci' }>> = {
+    // Shared & Project Techs
+    'azure': [
+        { role: 'data_engineer', seniority: 'Sr', rationale: 'Implementación de pipelines de datos y orquestación.' },
+        { role: 'data_engineer', seniority: 'Sr', rationale: 'Mantenimiento de infraestructura Azure.', domain: 'data' }
+    ],
+    'databricks': [
+        { role: 'data_engineer', seniority: 'Sr', rationale: 'Procesamiento Spark y optimización de Lakehouse.' },
+        { role: 'data_engineer', seniority: 'Med', rationale: 'Soporte a notebooks y clusters Databricks.', domain: 'data' }
+    ],
+    'synapse': [
+        { role: 'data_engineer', seniority: 'Sr', rationale: 'Modelado de datos y Analytics Pools.' },
+        { role: 'data_engineer', seniority: 'Sr', rationale: 'Mantenimiento de Synapse Analytics.', domain: 'data' }
+    ],
+    'snowflake': [
+        { role: 'data_engineer', seniority: 'Sr', rationale: 'Gestión de almacén de datos nube.' },
+        { role: 'data_engineer', seniority: 'Sr', rationale: 'Mantenimiento de Warehouse Snowflake.', domain: 'data' }
+    ],
+    'powerbi': [
+        { role: 'bi_visualization_developer', seniority: 'Med', rationale: 'Modelado de métricas DAX y visualización de tableros.' },
+        { role: 'bi_visualization_developer', seniority: 'Med', rationale: 'Mantenimiento de tableros Power BI.', domain: 'vis' }
+    ],
+    'sqlserver': [
+        { role: 'data_engineer', seniority: 'Med', rationale: 'Optimización de consultas y gestión de DB relacionales.' },
+        { role: 'data_engineer', seniority: 'Med', rationale: 'Mantenimiento de bases SQL Server.', domain: 'data' }
+    ],
+    'logicapps': [
+        { role: 'azure_developer', seniority: 'Med', rationale: 'Integraciones serverless y flujos de eventos.' },
+        { role: 'azure_developer', seniority: 'Med', rationale: 'Mantenimiento de Logic Apps.', domain: 'data' }
+    ],
+    'tableau': [
+        { role: 'bi_visualization_developer', seniority: 'Med', rationale: 'Desarrollo de historias visuales y dashboards complejos.' },
+        { role: 'bi_visualization_developer', seniority: 'Med', rationale: 'Mantenimiento de dashboards Tableau.', domain: 'vis' }
+    ],
+    'python': [
+        { role: 'data_scientist', seniority: 'Sr', rationale: 'Scripts de automatización y modelos analíticos.' },
+        { role: 'data_scientist', seniority: 'Sr', rationale: 'Mantenimiento de scripts y modelos Python.', domain: 'sci' }
+    ],
+    'n8n': [
+        { role: 'azure_developer', seniority: 'Med', rationale: 'Automatización de flujos con herramientas Low-Code.' },
+        { role: 'azure_developer', seniority: 'Med', rationale: 'Mantenimiento de integraciones n8n.', domain: 'data' }
+    ],
+    'antigravity': [
+        { role: 'data_scientist', seniority: 'Expert', rationale: 'Implementación de Agentes IA y RAG.' },
+        { role: 'data_scientist', seniority: 'Expert', rationale: 'Soporte a agentes Antigravity.', domain: 'sci' }
+    ],
+    'lovable': [
+        { role: 'low_code_developer', seniority: 'Med', rationale: 'Desarrollo de interfaces aceleradas con No-Code.' },
+        { role: 'low_code_developer', seniority: 'Med', rationale: 'Soporte a aplicaciones Lovable.', domain: 'vis' }
+    ],
+    'powerapps': [
+        { role: 'power_app_streamlit_developer', seniority: 'Med', rationale: 'Aplicaciones de negocio y personalización corporativa.' },
+        { role: 'power_app_streamlit_developer', seniority: 'Med', rationale: 'Soporte a Power Apps corporativas.', domain: 'vis' }
+    ],
 
-    // Sustain Techs
-    'azure_df': [{ role: 'data_engineer', seniority: 'Sr', rationale: 'Soporte y mantenimiento de pipelines ADF.' }],
-    'sql': [{ role: 'data_operations_analyst', seniority: 'Med', rationale: 'Mantenimiento de bases de datos y consultas SQL.' }],
-    'dotnet': [{ role: 'azure_developer', seniority: 'Med', rationale: 'Mantenimiento de aplicaciones backend .NET.' }],
-    'react': [{ role: 'azure_developer', seniority: 'Med', rationale: 'Mantenimiento de frontend React.' }], // Mapped to Generic Dev
-    'streamlit': [{ role: 'power_app_streamlit_developer', seniority: 'Med', rationale: 'Soporte a aplicaciones de datos Streamlit.' }],
-    'datascience': [{ role: 'data_scientist', seniority: 'Sr', rationale: 'Mantenimiento de modelos ML productivos.' }],
+    // Specific Sustain Techs
+    'azure_df': [{ role: 'data_engineer', seniority: 'Med', rationale: 'Soporte y mantenimiento de pipelines ADF.', domain: 'data' }],
+    'sql': [{ role: 'data_engineer', seniority: 'Med', rationale: 'Mantenimiento de bases de datos y consultas SQL.', domain: 'data' }],
+    'dotnet': [{ role: 'azure_developer', seniority: 'Med', rationale: 'Mantenimiento de aplicaciones backend .NET.', domain: 'data' }],
+    'react': [{ role: 'azure_developer', seniority: 'Med', rationale: 'Mantenimiento de frontend React.', domain: 'vis' }],
+    'streamlit': [{ role: 'power_app_streamlit_developer', seniority: 'Med', rationale: 'Soporte a aplicaciones de datos Streamlit.', domain: 'vis' }],
+    'datascience': [{ role: 'data_scientist', seniority: 'Sr', rationale: 'Mantenimiento de modelos ML productivos.', domain: 'sci' }],
     'other': []
 }
 
@@ -498,7 +538,8 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     skills: '',
                     startDate: new Date().toISOString(),
                     endDate: new Date().toISOString(),
-                    allocationPercentage: allocation
+                    allocationPercentage: allocation,
+                    isManual: true // NEW: Manually added profile
                 }
 
                 return {
@@ -1718,67 +1759,104 @@ graph TD
         toast.success("Dependencia eliminada")
     }
 
-    // Intelligent Logic for Sustain (Auto-Staffing)
+    // --- DOMAIN-BASED AUTO-ASSIGNMENT ENGINE (Sustain) ---
     useEffect(() => {
-        if (state.serviceType === 'Sustain') {
-            const { pipelinesCount, notebooksCount, dsModelsCount } = state.sustainDetails.metrics
+        if (state.serviceType !== 'Sustain') return
 
-            // Heuristic: If complex (>10 pipelines or >10 notebooks or >5 models), suggest Data Engineer
-            if (pipelinesCount > 10 || notebooksCount > 10 || dsModelsCount > 5) {
-                const hasDataEngineer = state.staffingDetails.profiles.some(p => p.role === 'Data Engineer')
+        const { techStack, metrics, criticalityMatrix } = state.sustainDetails
+        const { updateFrequency } = metrics
 
-                if (!hasDataEngineer) {
-                    // Find Data Engineer config
-                    const deConfigEntry = Object.entries(ROLE_CONFIG).find(([k, v]) => v.label === 'Data Engineer')
-                    if (deConfigEntry) {
-                        const [roleKey, config] = deConfigEntry
-                        const basePrice = config.defaultPrice
+        // 1. Identify Required Profiles by Domain
+        const domainProfiles: Array<{ roleKey: RoleKey, domain: 'data' | 'vis' | 'sci', seniority: string }> = []
+        techStack.forEach(t => {
+            const suggestions = RECOMENDACIONES_MAPPING[t] || []
+            suggestions.filter(s => s.domain).forEach(s => {
+                if (!domainProfiles.some(p => p.roleKey === s.role && p.seniority === s.seniority)) {
+                    domainProfiles.push({ roleKey: s.role, domain: s.domain as any, seniority: s.seniority })
+                }
+            })
+        })
 
-                        const newProfile = {
-                            id: crypto.randomUUID(),
-                            role: 'Data Engineer',
-                            seniority: 'SSR',
-                            qty: 1,
-                            count: 1,
-                            hours: 160,
-                            price: basePrice,
-                            skills: 'Python, SQL, Spark',
-                            startDate: new Date().toISOString().split('T')[0],
-                            endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
-                            allocationPercentage: 100
-                        }
+        if (domainProfiles.length === 0) return
 
-                        // Use functional update to avoid dependency loops, but be careful with 'state' dependency
-                        // actually we can't easily use functional update if we need 'state' props inside.
-                        // But since we are inside useEffect depending on metrics, we should be fine calling setState.
-                        setState(prev => ({
-                            ...prev,
-                            staffingDetails: {
-                                ...prev.staffingDetails,
-                                profiles: [...prev.staffingDetails.profiles, newProfile]
-                            }
-                        }))
+        // 2. Scoring & Multipliers
+        const getScore = (val: number) => {
+            if (val <= 0) return 0
+            if (val <= 2) return 1
+            if (val <= 5) return 2
+            if (val <= 10) return 3
+            if (val <= 20) return 4
+            return 5
+        }
 
-                        toast.success("Sugerencia: Se agregó un Data Engineer por volumen de datos.")
+        const freqMult = updateFrequency === 'realtime' ? 1.25 :
+            updateFrequency === 'monthly' ? 0.75 : 1.0
+
+        // Formulas
+        const dataScore = (getScore(metrics.pipelinesCount) + getScore(metrics.notebooksCount) + (metrics.manualProcess ? 5 : 0)) * freqMult
+        const biScore = (getScore(metrics.dashboardsCount) + getScore(criticalityMatrix.usersImpacted)) * freqMult
+        const sciScore = getScore(metrics.dsModelsCount) * freqMult
+
+        const mapScoreToAlloc = (score: number) => Math.min(100, Math.ceil(score * 10))
+
+        setState(prev => {
+            let hasChanged = false
+            const newProfiles = [...prev.staffingDetails.profiles]
+            const newRoles = { ...prev.roles }
+
+            domainProfiles.forEach(dp => {
+                const roleConfig = ROLE_CONFIG[dp.roleKey]
+                if (!roleConfig) return
+
+                const score = dp.domain === 'data' ? dataScore : dp.domain === 'vis' ? biScore : sciScore
+                const suggestedAlloc = mapScoreToAlloc(score)
+
+                const existingIdx = newProfiles.findIndex(p => p.role === roleConfig.label && p.seniority === dp.seniority)
+
+                if (existingIdx === -1) {
+                    // AUTO-ADD
+                    const newProfile = {
+                        id: crypto.randomUUID(),
+                        role: roleConfig.label,
+                        seniority: dp.seniority,
+                        count: 1,
+                        price: roleConfig.defaultPrice * (SENIORITY_MODIFIERS[dp.seniority as keyof typeof SENIORITY_MODIFIERS] || 1),
+                        skills: '',
+                        startDate: new Date().toISOString(),
+                        endDate: new Date().toISOString(),
+                        allocationPercentage: suggestedAlloc,
+                        isManual: false
+                    }
+                    newProfiles.push(newProfile)
+                    newRoles[dp.roleKey] = (newRoles[dp.roleKey] || 0) + 1
+                    hasChanged = true
+                } else if (!newProfiles[existingIdx].isManual) {
+                    // AUTO-UPDATE ALLOCATION
+                    if (newProfiles[existingIdx].allocationPercentage !== suggestedAlloc) {
+                        newProfiles[existingIdx] = { ...newProfiles[existingIdx], allocationPercentage: suggestedAlloc }
+                        hasChanged = true
                     }
                 }
-            }
+            })
 
-            // Heuristic: Dev Hours Suggestion
-            const suggestedHours = (pipelinesCount * 2) + (notebooksCount * 1) + (dsModelsCount * 4)
-            if (suggestedHours > 0 && suggestedHours > state.sustainDetails.devHours) {
-                setState(prev => ({
-                    ...prev,
-                    sustainDetails: {
-                        ...prev.sustainDetails,
-                        devHours: suggestedHours
-                    }
-                }))
-                // Debounce toast or just show it (might be too spammy if typing numbers, but OK for now)
-                // toast.info(`Se an actualiza las horas de desarrollo sugeridas a ${suggestedHours}hs basedo en volumetría.`) 
+            if (!hasChanged) return prev
+            return {
+                ...prev,
+                roles: newRoles,
+                staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
             }
-        }
-    }, [state.serviceType, state.sustainDetails.metrics.pipelinesCount, state.sustainDetails.metrics.notebooksCount, state.sustainDetails.metrics.dsModelsCount])
+        })
+    }, [
+        state.serviceType,
+        state.sustainDetails.techStack,
+        state.sustainDetails.metrics.pipelinesCount,
+        state.sustainDetails.metrics.notebooksCount,
+        state.sustainDetails.metrics.dashboardsCount,
+        state.sustainDetails.metrics.dsModelsCount,
+        state.sustainDetails.metrics.manualProcess,
+        state.sustainDetails.metrics.updateFrequency,
+        state.sustainDetails.criticalityMatrix.usersImpacted
+    ])
 
     // --- RENDER WIZARD STEP 0 (SELECTION) ---
     if (wizardStep === 0) {
@@ -2649,86 +2727,8 @@ graph TD
 
 
                         {/* =====================================================================================
-                            NEW LOGIC: GENERATE SUGGESTIONS (PROJECT & SUSTAIN)
+                            LEGACY SUGGESTION BUTTON REMOVED - NOW REACTIVE
                            ===================================================================================== */}
-                        {(() => {
-                            const handleGenerateSuggestions = () => {
-                                setIsSuggestionLoading(true)
-                                setTimeout(() => {
-                                    // 1. Detect Stack source based on Service Type
-                                    let activeStack: string[] = []
-                                    if (state.serviceType === 'Sustain') {
-                                        activeStack = state.sustainDetails.techStack || []
-                                    } else {
-                                        activeStack = state.techStack || []
-                                    }
-
-                                    if (activeStack.length === 0) {
-                                        toast.error("Selecciona al menos una tecnología primero")
-                                        setIsSuggestionLoading(false)
-                                        return
-                                    }
-
-                                    // 2. Generate Recommendations
-                                    const recommendations: any[] = []
-                                    const processedRoles = new Set<string>()
-
-                                    activeStack.forEach(techId => {
-                                        const suggestions = RECOMENDACIONES_MAPPING[techId]
-                                        if (suggestions) {
-                                            suggestions.forEach(sug => {
-                                                // Unique key to prevent duplicates
-                                                const key = `${sug.role}-${sug.seniority}`
-                                                if (!processedRoles.has(key)) {
-                                                    const roleConfig = ROLE_CONFIG[sug.role]
-                                                    if (roleConfig) {
-                                                        recommendations.push({
-                                                            role: roleConfig.label,
-                                                            seniority: sug.seniority,
-                                                            count: 1,
-                                                            rationale: sug.rationale,
-                                                            roleKey: sug.role
-                                                        })
-                                                        processedRoles.add(key)
-                                                    }
-                                                }
-                                            })
-                                        }
-                                    })
-
-                                    if (recommendations.length > 0) {
-                                        setPendingRecs(recommendations)
-                                        setIsSuggestionModalOpen(true)
-                                        toast.success(`${recommendations.length} perfiles sugeridos`)
-                                    } else {
-                                        toast.info("No se encontraron sugerencias específicas para este stack")
-                                    }
-                                    setIsSuggestionLoading(false)
-                                }, 800)
-                            }
-
-                            return (
-                                <div className="mb-6 bg-gradient-to-r from-yellow-500/10 to-transparent p-4 rounded-xl border border-yellow-500/20 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-yellow-500/20 rounded-lg">
-                                            <Sparkles className="w-5 h-5 text-yellow-500" />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-[#E8EDDF] font-bold text-sm">Sugerencia Automática de Equipo</h4>
-                                            <p className="text-[#CFDBD5] text-xs opacity-70">Basado en la volumetría y stack definidos</p>
-                                        </div>
-                                    </div>
-                                    <Button
-                                        onClick={handleGenerateSuggestions}
-                                        disabled={isSuggestionLoading}
-                                        className="bg-[#F5CB5C] text-[#242423] hover:bg-[#E0B84C] font-bold text-xs"
-                                    >
-                                        {isSuggestionLoading ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Wand2 className="w-3 h-3 mr-2" />}
-                                        {isSuggestionLoading ? 'Analizando...' : 'Generar Sugerencia'}
-                                    </Button>
-                                </div>
-                            )
-                        })()}
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <div className="space-y-6">
