@@ -222,48 +222,48 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-full w-9 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute left-0 shrink-0 border-r border-[#4A4D4A]/30"
+                className="h-full w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute left-0 shrink-0 border-r border-[#4A4D4A]/10"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.max(min, value - 1)); }}
                 disabled={value <= min}
             >
-                <Minus className="w-4 h-4" />
+                <Minus className="w-3.5 h-3.5" />
             </Button>
 
             {/* Input Area - Centered Number */}
-            <div className="flex-1 flex items-center justify-center h-full px-9 min-w-0 relative">
-                <div className="flex items-center justify-center w-full h-full relative">
-                    <input
-                        type="text"
-                        inputMode="numeric"
-                        value={value}
-                        onChange={e => {
-                            const raw = e.target.value.replace(/[^0-9]/g, '');
-                            const cleaned = raw.replace(/^0+/, '') || '0';
-                            const val = parseInt(cleaned);
-                            onChange(Math.max(min, Math.min(max, val)));
-                        }}
-                        onBlur={() => {
-                            if (isNaN(value)) onChange(min);
-                        }}
-                        className="bg-transparent text-[#E8EDDF] text-lg font-black text-center w-full focus:outline-none border-0 p-0 leading-none h-full min-w-0 z-10"
-                    />
-                    {unit && (
-                        <span className="absolute right-0 text-[9px] text-[#7C7F7C] font-bold uppercase select-none pointer-events-none pr-1">
-                            {unit}
-                        </span>
-                    )}
-                </div>
+            <div className="flex-1 flex items-center justify-center h-full px-8 relative">
+                <input
+                    type="text"
+                    inputMode="numeric"
+                    value={value}
+                    onChange={e => {
+                        const raw = e.target.value.replace(/[^0-9]/g, '');
+                        // Immediate leading zero removal
+                        const cleaned = raw.replace(/^0+/, '') || '0';
+                        const val = parseInt(cleaned);
+                        onChange(Math.max(min, Math.min(max, val)));
+                    }}
+                    onBlur={() => {
+                        if (isNaN(value)) onChange(min);
+                    }}
+                    className="bg-transparent text-[#E8EDDF] text-lg font-black text-center w-full focus:outline-none focus:ring-0 border-0 p-0 leading-none h-full z-10 selection:bg-[#F5CB5C]/30 shadow-none outline-none"
+                    style={{ WebkitAppearance: 'none', margin: 0 }}
+                />
+                {unit && (
+                    <span className="absolute right-8 text-[9px] text-[#7C7F7C] font-black uppercase select-none pointer-events-none pb-0.5 z-0 pr-1">
+                        {unit}
+                    </span>
+                )}
             </div>
 
             {/* Plus Button */}
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-full w-9 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute right-0 shrink-0 border-l border-[#4A4D4A]/30"
+                className="h-full w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute right-0 shrink-0 border-l border-[#4A4D4A]/10"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.min(max, value + 1)); }}
                 disabled={value >= max}
             >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5" />
             </Button>
         </div>
     </div>
@@ -2262,39 +2262,39 @@ graph TD
                                                 <Label className="text-[#CFDBD5] mb-3 block text-xs uppercase font-bold tracking-tight ml-1">Métricas Volumetría (Mensual)</Label>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 items-start bg-[#333533]/20 p-3 rounded-2xl border border-[#4A4D4A]/30">
                                                     <NumericStepper
-                                                        label="Nº Pipelines"
+                                                        label="Pipelines"
                                                         value={state.sustainDetails.metrics.pipelinesCount}
-                                                        onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, pipelinesCount: val } })}
                                                         unit="CANT."
                                                         maxWidth="130px"
+                                                        onChange={v => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, pipelinesCount: v } })}
                                                     />
                                                     <NumericStepper
-                                                        label="Nº Fuentes Datos"
+                                                        label="Data Sources"
                                                         value={state.sustainDetails.metrics.dataSourcesCount}
-                                                        onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dataSourcesCount: val } })}
                                                         unit="CANT."
                                                         maxWidth="130px"
+                                                        onChange={v => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dataSourcesCount: v } })}
                                                     />
                                                     <NumericStepper
-                                                        label="Nº Notebooks"
+                                                        label="Notebooks"
                                                         value={state.sustainDetails.metrics.notebooksCount}
-                                                        onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, notebooksCount: val } })}
                                                         unit="CANT."
                                                         maxWidth="130px"
+                                                        onChange={v => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, notebooksCount: v } })}
                                                     />
                                                     <NumericStepper
-                                                        label="Nº Dashboards"
+                                                        label="Dashboards"
                                                         value={state.sustainDetails.metrics.dashboardsCount}
-                                                        onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dashboardsCount: val } })}
                                                         unit="CANT."
                                                         maxWidth="130px"
+                                                        onChange={v => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dashboardsCount: v } })}
                                                     />
                                                     <NumericStepper
-                                                        label="Nº Modelos DS"
+                                                        label="DS Models"
                                                         value={state.sustainDetails.metrics.dsModelsCount}
-                                                        onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dsModelsCount: val } })}
                                                         unit="CANT."
                                                         maxWidth="130px"
+                                                        onChange={v => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dsModelsCount: v } })}
                                                     />
                                                     <div className="space-y-1.5 text-left">
                                                         <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">¿Procesos Manuales?</Label>
@@ -2396,9 +2396,9 @@ graph TD
                                             <NumericStepper
                                                 label="Duración Proceso"
                                                 value={parseInt(state.sustainDetails.updateDuration) || 0}
-                                                onChange={val => updateState('sustainDetails', { ...state.sustainDetails, updateDuration: val.toString() })}
                                                 unit="HS"
                                                 maxWidth="130px"
+                                                onChange={v => updateState('sustainDetails', { ...state.sustainDetails, updateDuration: v.toString() })}
                                             />
                                             <div className="md:col-span-2">
                                                 <div className="space-y-2">
@@ -2520,9 +2520,9 @@ graph TD
                                                 <NumericStepper
                                                     label="Incidentabilidad Esperada"
                                                     value={state.sustainDetails.incidentRate}
-                                                    onChange={val => updateState('sustainDetails', { ...state.sustainDetails, incidentRate: val })}
                                                     unit="INC."
                                                     maxWidth="130px"
+                                                    onChange={v => updateState('sustainDetails', { ...state.sustainDetails, incidentRate: v })}
                                                 />
                                             </div>
 
@@ -2682,18 +2682,18 @@ graph TD
                                                         <NumericStepper
                                                             label="Mercados Impactados"
                                                             value={state.sustainDetails.criticalityMatrix.marketsImpacted}
-                                                            onChange={val => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, marketsImpacted: val } })}
-                                                            unit="MKTS"
+                                                            unit="CANT."
                                                             maxWidth="130px"
+                                                            onChange={v => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, marketsImpacted: v } })}
                                                         />
                                                     </div>
                                                     <div className="relative">
                                                         <NumericStepper
                                                             label="Usuarios Impactados"
                                                             value={state.sustainDetails.criticalityMatrix.usersImpacted}
-                                                            onChange={val => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, usersImpacted: val } })}
-                                                            unit="USRS"
+                                                            unit="CANT."
                                                             maxWidth="130px"
+                                                            onChange={v => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, usersImpacted: v } })}
                                                         />
                                                     </div>
                                                 </div>
