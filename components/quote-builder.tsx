@@ -217,25 +217,25 @@ interface QuoteState {
 const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "", className = "", maxWidth = "100%" }: { label: string, value: number, onChange: (val: number) => void, min?: number, max?: number, unit?: string, className?: string, maxWidth?: string }) => (
     <div className={cn("space-y-1.5", className)} style={{ maxWidth }}>
         {label && <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">{label}</Label>}
-        <div className="flex items-center bg-[#242423] rounded-xl border border-[#4A4D4A] hover:border-[#F5CB5C]/30 transition-all w-full h-11 relative overflow-hidden group">
+        <div className="flex items-center bg-[#242423] rounded-xl border border-[#4A4D4A] hover:border-[#F5CB5C]/30 transition-all w-full h-10 relative overflow-hidden group">
             {/* Minus Button */}
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-full w-9 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute left-0 shrink-0 border-r border-[#4A4D4A]/30"
+                className="h-full w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute left-0 shrink-0 border-r border-[#4A4D4A]/10"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.max(min, value - 1)); }}
                 disabled={value <= min}
             >
-                <Minus className="w-4 h-4" />
+                <Minus className="w-3.5 h-3.5" />
             </Button>
 
             {/* Input Area */}
-            <div className="flex-1 flex items-center justify-center h-full px-10 min-w-0">
-                <div className="flex items-baseline justify-center gap-1 w-full">
+            <div className="flex-1 flex items-center justify-center h-full px-8 min-w-0">
+                <div className="flex items-baseline justify-center gap-0.5 w-full">
                     <input
                         type="text"
                         inputMode="numeric"
-                        value={value}
+                        value={value === 0 ? '0' : value.toString()}
                         onChange={e => {
                             const raw = e.target.value.replace(/[^0-9]/g, '');
                             const val = parseInt(raw || '0');
@@ -244,9 +244,9 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
                         onBlur={() => {
                             if (isNaN(value)) onChange(min);
                         }}
-                        className="bg-transparent text-[#E8EDDF] text-2xl font-black text-center w-full focus:outline-none border-0 p-0 leading-none h-full min-w-0"
+                        className="bg-transparent text-[#E8EDDF] text-lg font-black text-center w-full focus:outline-none border-0 p-0 leading-none h-full min-w-0"
                     />
-                    {unit && <span className="text-[10px] text-[#7C7F7C] font-bold uppercase select-none shrink-0">{unit}</span>}
+                    {unit && <span className="text-[9px] text-[#7C7F7C] font-bold uppercase select-none shrink-0">{unit}</span>}
                 </div>
             </div>
 
@@ -254,11 +254,11 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-full w-9 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute right-0 shrink-0 border-l border-[#4A4D4A]/30"
+                className="h-full w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute right-0 shrink-0 border-l border-[#4A4D4A]/10"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.min(max, value + 1)); }}
                 disabled={value >= max}
             >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5" />
             </Button>
         </div>
     </div>
@@ -2227,26 +2227,31 @@ graph TD
                                                         label="Nº Pipelines"
                                                         value={state.sustainDetails.metrics.pipelinesCount}
                                                         onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, pipelinesCount: val } })}
+                                                        maxWidth="130px"
                                                     />
                                                     <NumericStepper
                                                         label="Nº Fuentes Datos"
                                                         value={state.sustainDetails.metrics.dataSourcesCount}
                                                         onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dataSourcesCount: val } })}
+                                                        maxWidth="130px"
                                                     />
                                                     <NumericStepper
                                                         label="Nº Notebooks"
                                                         value={state.sustainDetails.metrics.notebooksCount}
                                                         onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, notebooksCount: val } })}
+                                                        maxWidth="130px"
                                                     />
                                                     <NumericStepper
                                                         label="Nº Dashboards"
                                                         value={state.sustainDetails.metrics.dashboardsCount}
                                                         onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dashboardsCount: val } })}
+                                                        maxWidth="130px"
                                                     />
                                                     <NumericStepper
                                                         label="Nº Modelos DS"
                                                         value={state.sustainDetails.metrics.dsModelsCount}
                                                         onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dsModelsCount: val } })}
+                                                        maxWidth="130px"
                                                     />
                                                     <div className="space-y-1.5 text-left">
                                                         <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">¿Procesos Manuales?</Label>
@@ -2350,7 +2355,7 @@ graph TD
                                                 value={parseInt(state.sustainDetails.updateDuration) || 0}
                                                 onChange={val => updateState('sustainDetails', { ...state.sustainDetails, updateDuration: val.toString() })}
                                                 unit="HS"
-                                                maxWidth="160px"
+                                                maxWidth="130px"
                                             />
                                             <div className="md:col-span-2">
                                                 <div className="space-y-2">
@@ -2473,8 +2478,8 @@ graph TD
                                                     label="Incidentabilidad Esperada"
                                                     value={state.sustainDetails.incidentRate}
                                                     onChange={val => updateState('sustainDetails', { ...state.sustainDetails, incidentRate: val })}
-                                                    unit="Tickets/mes"
-                                                    maxWidth="160px"
+                                                    unit="CANT"
+                                                    maxWidth="130px"
                                                 />
                                             </div>
 
@@ -2492,21 +2497,21 @@ graph TD
                                                     </div>
 
                                                     {state.sustainDetails.hasHypercare && (
-                                                        <div className="space-y-2 flex-1 animate-in fade-in slide-in-from-left-4 duration-300">
-                                                            <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">Periodo Hypercare</Label>
+                                                        <div className="space-y-1.5 flex-1 animate-in fade-in slide-in-from-left-4 duration-300 max-w-[130px]">
+                                                            <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">Periodo</Label>
                                                             <Select
                                                                 value={state.sustainDetails.hypercarePeriod || '30_days'}
                                                                 onValueChange={v => updateState('sustainDetails', { ...state.sustainDetails, hypercarePeriod: v })}
                                                             >
-                                                                <SelectTrigger className="w-full h-10 bg-[#242423] border-[#4A4D4A] text-white rounded-xl">
+                                                                <SelectTrigger className="w-full h-10 bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] rounded-xl text-xs font-bold hover:border-[#F5CB5C]/30 transition-all">
                                                                     <SelectValue placeholder="Periodo" />
                                                                 </SelectTrigger>
-                                                                <SelectContent className="bg-[#242423] border-[#4A4D4A] text-white">
-                                                                    <SelectItem value="15_days">15 días</SelectItem>
-                                                                    <SelectItem value="30_days">30 días</SelectItem>
-                                                                    <SelectItem value="60_days">60 días</SelectItem>
-                                                                    <SelectItem value="90_days">90 días</SelectItem>
-                                                                    <SelectItem value="+90_days">+ días</SelectItem>
+                                                                <SelectContent className="bg-[#242423] border border-[#4A4D4A] text-[#E8EDDF] rounded-xl overflow-hidden shadow-2xl">
+                                                                    <SelectItem value="15_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">15 días</SelectItem>
+                                                                    <SelectItem value="30_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">30 días</SelectItem>
+                                                                    <SelectItem value="60_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">60 días</SelectItem>
+                                                                    <SelectItem value="90_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">90 días</SelectItem>
+                                                                    <SelectItem value="+90_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">+ días</SelectItem>
                                                                 </SelectContent>
                                                             </Select>
                                                         </div>
@@ -2622,7 +2627,7 @@ graph TD
                                                             value={state.sustainDetails.criticalityMatrix.marketsImpacted}
                                                             onChange={val => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, marketsImpacted: val } })}
                                                             unit="MKTS"
-                                                            maxWidth="140px"
+                                                            maxWidth="130px"
                                                         />
                                                     </div>
                                                     <div className="relative">
@@ -2631,7 +2636,7 @@ graph TD
                                                             value={state.sustainDetails.criticalityMatrix.usersImpacted}
                                                             onChange={val => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, usersImpacted: val } })}
                                                             unit="USRS"
-                                                            maxWidth="140px"
+                                                            maxWidth="130px"
                                                         />
                                                     </div>
                                                 </div>
