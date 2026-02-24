@@ -2496,14 +2496,28 @@ graph TD
                                             <div className="flex flex-col gap-4">
                                                 <div className="flex items-center gap-4">
                                                     <div className="space-y-2">
-                                                        <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold text-opacity-70">Soporte Hypercare (+1 Mes Base)</Label>
-                                                        <div className="flex items-center gap-3 bg-[#1A1A1A] p-2 rounded-xl border border-[#333533]">
-                                                            <Switch
-                                                                checked={state.sustainDetails.hasHypercare}
-                                                                onCheckedChange={v => updateState('sustainDetails', { ...state.sustainDetails, hasHypercare: v })}
-                                                            />
-                                                            <span className="text-xs font-bold text-[#E8EDDF] uppercase">{state.sustainDetails.hasHypercare ? 'ACTIVADO' : 'DESACTIVADO'}</span>
-                                                        </div>
+                                                        <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold text-opacity-70 text-left ml-1">Soporte Hypercare (+1 Mes Base)</Label>
+                                                        <ToggleGroup
+                                                            type="single"
+                                                            value={state.sustainDetails.hasHypercare ? 'yes' : 'no'}
+                                                            onValueChange={(val) => {
+                                                                if (val) updateState('sustainDetails', { ...state.sustainDetails, hasHypercare: val === 'yes' })
+                                                            }}
+                                                            className="justify-start gap-0 h-10 w-full"
+                                                        >
+                                                            <ToggleGroupItem
+                                                                value="yes"
+                                                                className="flex-1 rounded-l-xl rounded-r-none border border-r-0 border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-[#242423] data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-black text-[10px]"
+                                                            >
+                                                                SÍ
+                                                            </ToggleGroupItem>
+                                                            <ToggleGroupItem
+                                                                value="no"
+                                                                className="flex-1 rounded-r-xl rounded-l-none border border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-[#242423] data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-black text-[10px]"
+                                                            >
+                                                                NO
+                                                            </ToggleGroupItem>
+                                                        </ToggleGroup>
                                                     </div>
 
                                                     {state.sustainDetails.hasHypercare && (
