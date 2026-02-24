@@ -2268,18 +2268,12 @@ graph TD
                                                     className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF] focus:border-[#F5CB5C]"
                                                 />
                                             </div>
-                                            <div>
-                                                <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Duración Proceso</Label>
-                                                <div className="relative">
-                                                    <Input
-                                                        value={state.sustainDetails.updateDuration}
-                                                        onChange={e => updateState('sustainDetails', { ...state.sustainDetails, updateDuration: e.target.value })}
-                                                        placeholder="Ej. 2 horas"
-                                                        className="bg-[#242423] border-[#4A4D4A] rounded-xl text-[#E8EDDF] pr-12 focus:border-[#F5CB5C]"
-                                                    />
-                                                    <span className="absolute right-3 top-2.5 text-[#7C7F7C] text-xs">min/hs</span>
-                                                </div>
-                                            </div>
+                                            <NumericStepper
+                                                label="Duración Proceso"
+                                                value={parseInt(state.sustainDetails.updateDuration) || 0}
+                                                onChange={val => updateState('sustainDetails', { ...state.sustainDetails, updateDuration: val.toString() })}
+                                                unit="HS"
+                                            />
                                             <div className="md:col-span-2">
                                                 <div className="space-y-2">
                                                     <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Frecuencia Actualización Datos</Label>
