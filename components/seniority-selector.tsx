@@ -20,9 +20,10 @@ interface SenioritySelectorProps {
     defaultPrice?: number
     multipliers?: Record<string, number>
     compact?: boolean
+    trigger?: React.ReactNode
 }
 
-export function SenioritySelector({ roleName, roleKey, capabilities, serviceRates, onSelect, defaultPrice, multipliers, compact = false }: SenioritySelectorProps) {
+export function SenioritySelector({ roleName, roleKey, capabilities, serviceRates, onSelect, defaultPrice, multipliers, compact = false, trigger }: SenioritySelectorProps) {
     const [open, setOpen] = useState(false)
     const [allocation, setAllocation] = useState(100)
     const [isEditable, setIsEditable] = useState(false)
@@ -60,12 +61,14 @@ export function SenioritySelector({ roleName, roleKey, capabilities, serviceRate
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button size="icon" className={cn(
-                    "rounded-full bg-[#242423] text-[#F5CB5C] border border-[#F5CB5C]/30 hover:bg-[#F5CB5C] hover:text-[#242423] transition-all",
-                    compact ? "h-6 w-6" : "h-8 w-8"
-                )}>
-                    <Plus className={cn(compact ? "w-3 h-3" : "w-4 h-4")} />
-                </Button>
+                {trigger || (
+                    <Button size="icon" className={cn(
+                        "rounded-full bg-[#242423] text-[#F5CB5C] border border-[#F5CB5C]/30 hover:bg-[#F5CB5C] hover:text-[#242423] transition-all",
+                        compact ? "h-6 w-6" : "h-8 w-8"
+                    )}>
+                        <Plus className={cn(compact ? "w-3 h-3" : "w-4 h-4")} />
+                    </Button>
+                )}
             </PopoverTrigger>
             <PopoverContent className="w-64 bg-[#242423] border-[#F5CB5C] text-[#E8EDDF] p-3 shadow-xl" side="right" align="start">
                 <h5 className="text-xs font-bold text-[#F5CB5C] uppercase tracking-wider mb-3 px-1 border-b border-[#333533] pb-2">

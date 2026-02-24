@@ -15,7 +15,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Separator } from "@/components/ui/separator"
 import { ServiceRate } from "@prisma/client"
 import { MermaidDiagram } from "@/components/mermaid-diagram"
-import { Wand2, Download, FileText, Check, ShieldAlert, Network, Cpu, Calculator, Save, Loader2, ClipboardList, Database, Users, Briefcase, Layers, AlertTriangle, Activity, Zap, Edit, X, RefreshCw, ImageDown, Sparkles, Undo2, ArrowRight, Plus, Minus, Trash2 } from "lucide-react"
+import { Wand2, Download, FileText, Check, ShieldAlert, Network, Cpu, Calculator, Save, Loader2, ClipboardList, Database, Users, Briefcase, Layers, AlertTriangle, Activity, Zap, Edit, X, RefreshCw, ImageDown, Sparkles, Undo2, ArrowRight, Plus, Minus, Trash2, Pencil } from "lucide-react"
 import { SenioritySelector } from "@/components/seniority-selector"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
@@ -1771,12 +1771,17 @@ graph TD
         const { updateFrequency } = metrics
 
         // 1. Identify Required Profiles by Domain
-        const domainProfiles: Array<{ roleKey: RoleKey, domain: 'data' | 'vis' | 'sci', seniority: string }> = []
+        const domainProfiles: Array<{ roleKey: RoleKey, domain: 'data' | 'vis' | 'sci', seniority: string, rationale: string }> = []
         techStack.forEach(t => {
             const suggestions = RECOMENDACIONES_MAPPING[t] || []
             suggestions.filter(s => s.domain).forEach(s => {
                 if (!domainProfiles.some(p => p.roleKey === s.role && p.seniority === s.seniority)) {
-                    domainProfiles.push({ roleKey: s.role, domain: s.domain as any, seniority: s.seniority })
+                    domainProfiles.push({
+                        roleKey: s.role,
+                        domain: s.domain as any,
+                        seniority: s.seniority,
+                        rationale: s.rationale
+                    })
                 }
             })
         })
@@ -1825,7 +1830,7 @@ graph TD
                         seniority: dp.seniority,
                         count: 1,
                         price: roleConfig.defaultPrice * (SENIORITY_MODIFIERS[dp.seniority as keyof typeof SENIORITY_MODIFIERS] || 1),
-                        skills: '',
+                        skills: dp.rationale,
                         startDate: new Date().toISOString(),
                         endDate: new Date().toISOString(),
                         allocationPercentage: suggestedAlloc,
@@ -2849,47 +2854,41 @@ graph TD
                                                         'border-zinc-500/50 text-zinc-400'
 
                                             return (
-                                                <div key={idx} className="group relative flex items-center justify-between p-3 bg-[#242423] rounded-lg border border-[#333533] hover:border-[#F5CB5C]/30 transition-all animate-in fade-in slide-in-from-right-2">
-
-                                                    {/* LEFT: Role & Seniority */}
-                                                    <div className="flex items-center gap-3 overflow-hidden mr-2">
-                                                        <div className={cn("w-6 h-6 rounded flex items-center justify-center text-[9px] font-black border shrink-0", badgeColor)}>
-                                                            {profile.seniority?.substring(0, 2).toUpperCase()}
+                                                <div key={idx} className={cn(
+                                                    "group relative flex flex-col p-4 bg-[#242423] rounded-xl border border-[#333533] hover:border-[#F5CB5C]/30 transition-all animate-in fade-in slide-in-from-right-2",
+                                                    profile.isManual && "border-yellow-500/30 bg-yellow-500/5 shadow-[inset_0_0_20px_rgba(245,203,92,0.05)]"
+                                                )}>
+                                                    {/* Manual Badge */}
+                                                    {profile.isManual && (
+                                                        <div className="absolute top-[-8px] right-10 bg-yellow-500 text-black text-[8px] font-black px-1.5 py-0.5 rounded shadow-lg uppercase tracking-wider z-10">
+                                                            Manual
                                                         </div>
-                                                        <div className="min-w-0 flex flex-col justify-center">
-                                                            <div className="text-[#E8EDDF] font-bold text-xs truncate leading-none">
-                                                                {profile.role}
+                                                    )}
+
+                                                    {/* Header: Role, Seniority, Actions */}
+                                                    <div className="flex items-start justify-between w-full mb-1">
+                                                        <div className="flex items-center gap-3 overflow-hidden">
+                                                            <div className={cn("w-7 h-7 rounded flex items-center justify-center text-[10px] font-black border shrink-0", badgeColor)}>
+                                                                {profile.seniority?.substring(0, 2).toUpperCase()}
                                                             </div>
-                                                            {profile.allocationPercentage !== undefined && profile.allocationPercentage < 100 && (
-                                                                <div className="text-[10px] text-[#F5CB5C] font-black mt-1">
-                                                                    {profile.allocationPercentage}% ASIGNACIÓN
+                                                            <div className="min-w-0">
+                                                                <div className="text-[#E8EDDF] font-bold text-sm leading-tight">
+                                                                    {profile.role}
                                                                 </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* RIGHT: Specs */}
-                                                    <div className="flex items-center gap-3 shrink-0">
-
-                                                        {/* Quantity */}
-                                                        <div className="bg-[#1E1E1E] px-2 py-1 rounded text-[10px] font-mono text-[#CFDBD5] border border-[#333533]">
-                                                            CANT: <span className="text-[#E8EDDF] font-bold">{profile.count}</span>
-                                                        </div>
-
-                                                        {/* Price */}
-                                                        <div className="text-right">
-                                                            <div className="text-[#F5CB5C] font-mono font-bold text-xs leading-none tabular-nums">
-                                                                ${finalPrice.toLocaleString('en-US', { useGrouping: false }).split('.')[0]}
                                                             </div>
                                                         </div>
 
-                                                        {/* Trash Match Height */}
-                                                        <div className="flex items-center gap-1">
+                                                        <div className="flex items-center gap-1 shrink-0">
                                                             <SenioritySelector
                                                                 roleName={profile.role}
                                                                 roleKey={Object.keys(ROLE_CONFIG).find(k => ROLE_CONFIG[k as RoleKey].label === profile.role) || ''}
                                                                 capabilities={['Jr', 'Med', 'Sr', 'Expert']}
                                                                 serviceRates={dbRates}
+                                                                trigger={
+                                                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-[#CFDBD5]/40 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 transition-colors">
+                                                                        <Pencil className="w-3.5 h-3.5" />
+                                                                    </Button>
+                                                                }
                                                                 onSelect={(level, price, allocation) => {
                                                                     setState(prev => {
                                                                         const newProfiles = [...prev.staffingDetails.profiles]
@@ -2905,7 +2904,7 @@ graph TD
                                                                             staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
                                                                         }
                                                                     })
-                                                                    toast.success("Perfil actualizado")
+                                                                    toast.success("Perfil actualizado y bloqueado.")
                                                                 }}
                                                                 defaultPrice={Object.values(ROLE_CONFIG).find(r => r.label === profile.role)?.defaultPrice}
                                                                 multipliers={SENIORITY_MODIFIERS}
@@ -2932,6 +2931,62 @@ graph TD
                                                             >
                                                                 <Trash2 className="w-4 h-4 opacity-70 hover:opacity-100" />
                                                             </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Description / Rationale */}
+                                                    {profile.skills && (
+                                                        <div className="text-[10px] text-[#CFDBD5]/60 italic leading-relaxed pt-2 border-t border-[#333533]/30 mt-1">
+                                                            {profile.skills}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Footer: Allocation, Quantity, Price */}
+                                                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#333533]/50">
+                                                        <div className="flex items-center gap-4">
+                                                            {/* Allocation - Clickable */}
+                                                            <SenioritySelector
+                                                                roleName={profile.role}
+                                                                roleKey={Object.keys(ROLE_CONFIG).find(k => ROLE_CONFIG[k as RoleKey].label === profile.role) || ''}
+                                                                capabilities={['Jr', 'Med', 'Sr', 'Expert']}
+                                                                serviceRates={dbRates}
+                                                                trigger={
+                                                                    <div className="text-[10px] text-[#F5CB5C] font-black cursor-pointer hover:underline">
+                                                                        {profile.allocationPercentage}% ASIGNACIÓN
+                                                                    </div>
+                                                                }
+                                                                onSelect={(level, price, allocation) => {
+                                                                    setState(prev => {
+                                                                        const newProfiles = [...prev.staffingDetails.profiles]
+                                                                        newProfiles[idx] = {
+                                                                            ...newProfiles[idx],
+                                                                            seniority: level,
+                                                                            price: price,
+                                                                            allocationPercentage: allocation,
+                                                                            isManual: true // Lock as manual after edit
+                                                                        }
+                                                                        return {
+                                                                            ...prev,
+                                                                            staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
+                                                                        }
+                                                                    })
+                                                                    toast.success("Asignación actualizada.")
+                                                                }}
+                                                                defaultPrice={Object.values(ROLE_CONFIG).find(r => r.label === profile.role)?.defaultPrice}
+                                                                multipliers={SENIORITY_MODIFIERS}
+                                                                compact={true}
+                                                            />
+                                                            {/* Quantity */}
+                                                            <div className="bg-[#1E1E1E] px-2 py-0.5 rounded text-[10px] font-mono text-[#CFDBD5] border border-[#333533]">
+                                                                CANT: <span className="text-[#E8EDDF] font-bold">{profile.count}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Price */}
+                                                        <div className="text-right">
+                                                            <div className="text-[#F5CB5C] font-mono font-bold text-sm leading-none tabular-nums">
+                                                                ${finalPrice.toLocaleString('en-US', { useGrouping: false }).split('.')[0]}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
