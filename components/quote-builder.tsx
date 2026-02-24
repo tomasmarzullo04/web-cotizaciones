@@ -2232,30 +2232,35 @@ graph TD
                                                         label="Nº Pipelines"
                                                         value={state.sustainDetails.metrics.pipelinesCount}
                                                         onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, pipelinesCount: val } })}
+                                                        unit="CANT."
                                                         maxWidth="130px"
                                                     />
                                                     <NumericStepper
                                                         label="Nº Fuentes Datos"
                                                         value={state.sustainDetails.metrics.dataSourcesCount}
                                                         onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dataSourcesCount: val } })}
+                                                        unit="CANT."
                                                         maxWidth="130px"
                                                     />
                                                     <NumericStepper
                                                         label="Nº Notebooks"
                                                         value={state.sustainDetails.metrics.notebooksCount}
                                                         onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, notebooksCount: val } })}
+                                                        unit="CANT."
                                                         maxWidth="130px"
                                                     />
                                                     <NumericStepper
                                                         label="Nº Dashboards"
                                                         value={state.sustainDetails.metrics.dashboardsCount}
                                                         onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dashboardsCount: val } })}
+                                                        unit="CANT."
                                                         maxWidth="130px"
                                                     />
                                                     <NumericStepper
                                                         label="Nº Modelos DS"
                                                         value={state.sustainDetails.metrics.dsModelsCount}
                                                         onChange={val => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dsModelsCount: val } })}
+                                                        unit="CANT."
                                                         maxWidth="130px"
                                                     />
                                                     <div className="space-y-1.5 text-left">
@@ -2483,7 +2488,7 @@ graph TD
                                                     label="Incidentabilidad Esperada"
                                                     value={state.sustainDetails.incidentRate}
                                                     onChange={val => updateState('sustainDetails', { ...state.sustainDetails, incidentRate: val })}
-                                                    unit="CANT"
+                                                    unit="INC."
                                                     maxWidth="130px"
                                                 />
                                             </div>
