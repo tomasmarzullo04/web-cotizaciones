@@ -215,28 +215,27 @@ interface QuoteState {
 }
 
 const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "", className = "" }: { label: string, value: number, onChange: (val: number) => void, min?: number, max?: number, unit?: string, className?: string }) => {
-    const [isEditing, setIsEditing] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
     const [localValue, setLocalValue] = useState(value.toString());
 
     useEffect(() => {
-        if (!isEditing) {
+        if (!isOpen) {
             setLocalValue(value.toString());
         }
-    }, [value, isEditing]);
+    }, [value, isOpen]);
 
-    const handleBlur = () => {
-        setIsEditing(false);
+    const handleSave = () => {
         const parsed = parseInt(localValue);
         const finalValue = isNaN(parsed) ? 0 : Math.max(min, Math.min(max, parsed));
         onChange(finalValue);
-        setLocalValue(finalValue.toString());
+        setIsOpen(false);
     };
 
     return (
         <div className={cn("space-y-1.5", className)} style={{ width: '160px' }}>
             {label && <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">{label}</Label>}
             <div className="flex items-center bg-[#2A2A28] rounded-xl border border-[#4A4D4A] transition-all w-full h-11 relative overflow-hidden group shadow-inner">
-                {/* Column 1: Minus Button (Fixed Width) */}
+                {/* Column 1: Minus Button */}
                 <Button
                     variant="ghost"
                     size="icon"
@@ -247,33 +246,43 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
                     <Minus className="w-4 h-4" />
                 </Button>
 
-                {/* Column 2: Centered Number/Input (Flex-1) */}
+                {/* Column 2: Centered Number/Popover Trigger */}
                 <div className="flex-1 flex items-center justify-center h-full relative px-2">
-                    {isEditing ? (
-                        <input
-                            type="text"
-                            inputMode="numeric"
-                            autoFocus
-                            value={localValue}
-                            onChange={e => {
-                                const raw = e.target.value.replace(/[^0-9]/g, '');
-                                setLocalValue(raw);
-                            }}
-                            onBlur={handleBlur}
-                            onKeyDown={e => {
-                                if (e.key === 'Enter') handleBlur();
-                            }}
-                            className="!bg-transparent !bg-none !shadow-none !ring-0 !outline-none text-[#E8EDDF] text-xl font-black text-center w-full h-full p-0 m-0 z-30 selection:bg-[#F5CB5C]/30 caret-[#F5CB5C]"
-                        />
-                    ) : (
-                        <div className="flex items-center justify-center gap-1.5 cursor-pointer group/inner transition-all hover:scale-110 active:scale-95 py-1 rounded-md hover:bg-white/5 w-full h-full" onClick={() => setIsEditing(true)}>
-                            <span className="text-[#E8EDDF] text-xl font-black leading-none">{value}</span>
-                            <Pencil className="w-3 h-3 text-[#CFDBD5]/20 group-hover/inner:text-[#F5CB5C] transition-colors" />
-                        </div>
-                    )}
+                    <Popover open={isOpen} onOpenChange={setIsOpen}>
+                        <PopoverTrigger asChild>
+                            <div className="flex items-center justify-center gap-1.5 cursor-pointer group/inner transition-all hover:scale-110 active:scale-95 py-1 rounded-md hover:bg-white/5 w-full h-full">
+                                <span className="text-[#E8EDDF] text-lg font-black leading-none">{value}</span>
+                                <Pencil className="w-3 h-3 text-[#CFDBD5]/20 group-hover/inner:text-[#F5CB5C] transition-colors" />
+                            </div>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-40 bg-[#242423] border-[#4A4D4A] p-3 rounded-xl shadow-2xl animate-in zoom-in-95 duration-200" side="bottom" align="center" sideOffset={8}>
+                            <div className="flex flex-col gap-3">
+                                <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    autoFocus
+                                    className="w-full bg-[#1A1A19] border border-[#4A4D4A] rounded-lg px-2 py-1.5 text-[#E8EDDF] text-center font-bold outline-none focus:border-[#F5CB5C]/50 transition-colors"
+                                    value={localValue}
+                                    onChange={e => setLocalValue(e.target.value.replace(/[^0-9]/g, ''))}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') handleSave();
+                                        if (e.key === 'Escape') setIsOpen(false);
+                                    }}
+                                />
+                                <div className="flex gap-2">
+                                    <Button size="sm" className="flex-1 bg-[#F5CB5C] hover:bg-[#FFE082] text-black font-bold h-8" onClick={handleSave}>
+                                        <Check className="w-4 h-4" />
+                                    </Button>
+                                    <Button size="sm" variant="outline" className="flex-1 border-[#4A4D4A] text-[#CFDBD5] hover:bg-white/5 h-8" onClick={() => setIsOpen(false)}>
+                                        <X className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                 </div>
 
-                {/* Column 3: Unit + Plus Button (Right Aligned) */}
+                {/* Column 3: Unit + Plus Button */}
                 <div className="flex items-center h-full shrink-0">
                     {unit && (
                         <span className="text-[10px] text-[#7C7F7C] font-black uppercase select-none pointer-events-none mr-2">
@@ -294,6 +303,7 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
         </div>
     );
 }
+
 
 
 const INITIAL_STATE: QuoteState = {
@@ -2546,59 +2556,68 @@ graph TD
                                                 />
                                             </div>
 
-                                            <div className="flex flex-col gap-4">
-                                                <div className="flex items-center gap-4">
-                                                    <div className={cn(
-                                                        "flex items-center gap-4 py-2 border border-[#4A4D4A] bg-[#2A2A28] rounded-2xl px-5 flex-1 min-h-[64px] transition-all",
-                                                        state.sustainDetails.hasHypercare && "border-[#F5CB5C]/50 shadow-[0_0_15px_rgba(245,203,92,0.05)]"
-                                                    )}>
-                                                        <div className="flex-1">
-                                                            <Label className="text-[#CFDBD5] block text-xs uppercase font-bold text-opacity-70">Soporte Hypercare (+1 Mes Base)</Label>
-                                                            <p className="text-[10px] text-[#7C7F7C]">Acompañamiento post-salida a producción</p>
-                                                        </div>
-                                                        <div className="flex items-center gap-3 bg-[#1E1E1E]/50 px-3 py-1.5 rounded-xl border border-[#4A4D4A]/50">
-                                                            <span
-                                                                className={cn("text-[9px] font-black transition-colors w-4 cursor-pointer hover:text-[#F5CB5C] text-center", !state.sustainDetails.hasHypercare ? "text-[#F5CB5C]" : "text-[#7C7F7C]")}
-                                                                onClick={() => updateState("sustainDetails", { ...state.sustainDetails, hasHypercare: false })}
-                                                            >
-                                                                NO
-                                                            </span>
-                                                            <Switch
-                                                                checked={state.sustainDetails.hasHypercare}
-                                                                onCheckedChange={v => updateState("sustainDetails", { ...state.sustainDetails, hasHypercare: v })}
-                                                                className="data-[state=checked]:bg-[#F5CB5C]"
-                                                            />
-                                                            <span
-                                                                className={cn("text-[9px] font-black transition-colors w-4 text-center cursor-pointer hover:text-[#F5CB5C]", state.sustainDetails.hasHypercare ? "text-[#F5CB5C]" : "text-[#7C7F7C]")}
-                                                                onClick={() => updateState("sustainDetails", { ...state.sustainDetails, hasHypercare: true })}
-                                                            >
-                                                                SÍ
-                                                            </span>
-                                                        </div>
+                                            <div className="flex flex-col gap-3 flex-1">
+                                                <div className={cn(
+                                                    "flex items-center gap-4 py-2 border border-[#4A4D4A] bg-[#2A2A28] rounded-2xl px-5 transition-all",
+                                                    state.sustainDetails.hasHypercare && "border-[#F5CB5C]/50 shadow-[0_0_15px_rgba(245,203,92,0.05)]"
+                                                )}>
+                                                    <div className="flex-1">
+                                                        <Label className="text-[#CFDBD5] block text-xs uppercase font-bold text-opacity-70">Soporte Hypercare (+1 Mes Base)</Label>
+                                                        <p className="text-[10px] text-[#7C7F7C]">Acompañamiento post-salida a producción</p>
                                                     </div>
-
-                                                    {state.sustainDetails.hasHypercare && (
-                                                        <div className="space-y-1.5 flex-1 animate-in fade-in slide-in-from-left-4 duration-300 max-w-[130px]">
-                                                            <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">Periodo</Label>
-                                                            <Select
-                                                                value={state.sustainDetails.hypercarePeriod || '30_days'}
-                                                                onValueChange={v => updateState('sustainDetails', { ...state.sustainDetails, hypercarePeriod: v })}
-                                                            >
-                                                                <SelectTrigger className="w-full h-10 bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] rounded-xl text-xs font-bold hover:border-[#F5CB5C]/30 transition-all">
-                                                                    <SelectValue placeholder="Periodo" />
-                                                                </SelectTrigger>
-                                                                <SelectContent className="bg-[#242423] border border-[#4A4D4A] text-[#E8EDDF] rounded-xl overflow-hidden shadow-2xl">
-                                                                    <SelectItem value="15_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">15 días</SelectItem>
-                                                                    <SelectItem value="30_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">30 días</SelectItem>
-                                                                    <SelectItem value="60_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">60 días</SelectItem>
-                                                                    <SelectItem value="90_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">90 días</SelectItem>
-                                                                    <SelectItem value="+90_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">+ días</SelectItem>
-                                                                </SelectContent>
-                                                            </Select>
-                                                        </div>
-                                                    )}
+                                                    <div className="flex items-center gap-2 bg-[#1E1E1E]/50 p-1 rounded-xl border border-[#4A4D4A]/50">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => updateState("sustainDetails", { ...state.sustainDetails, hasHypercare: false })}
+                                                            className={cn(
+                                                                "px-3 py-1.5 rounded-lg text-[10px] font-black transition-all",
+                                                                !state.sustainDetails.hasHypercare
+                                                                    ? "bg-[#4A4D4A] text-[#E8EDDF] shadow-lg"
+                                                                    : "text-[#7C7F7C] hover:text-[#E8EDDF]"
+                                                            )}
+                                                        >
+                                                            NO
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => updateState("sustainDetails", { ...state.sustainDetails, hasHypercare: true })}
+                                                            className={cn(
+                                                                "px-3 py-1.5 rounded-lg text-[10px] font-black transition-all",
+                                                                state.sustainDetails.hasHypercare
+                                                                    ? "bg-[#F5CB5C] text-black shadow-lg"
+                                                                    : "text-[#7C7F7C] hover:text-[#F5CB5C]"
+                                                            )}
+                                                        >
+                                                            SÍ
+                                                        </button>
+                                                    </div>
                                                 </div>
+
+                                                {state.sustainDetails.hasHypercare && (
+                                                    <div className="bg-[#1E1E1E]/30 border border-[#4A4D4A]/30 rounded-xl p-3 flex items-center justify-between animate-in slide-in-from-top-2 duration-300">
+                                                        <div className="flex items-center gap-2">
+                                                            <Activity className="w-3.5 h-3.5 text-[#F5CB5C]" />
+                                                            <span className="text-[10px] text-[#CFDBD5]/70 uppercase font-black">Periodo de Cobertura</span>
+                                                        </div>
+                                                        <Select
+                                                            value={state.sustainDetails.hypercarePeriod || '30_days'}
+                                                            onValueChange={v => updateState('sustainDetails', { ...state.sustainDetails, hypercarePeriod: v })}
+                                                        >
+                                                            <SelectTrigger className="w-[140px] h-9 bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] rounded-lg text-[11px] font-bold hover:border-[#F5CB5C]/30 transition-all">
+                                                                <SelectValue placeholder="Periodo" />
+                                                            </SelectTrigger>
+                                                            <SelectContent className="bg-[#242423] border border-[#4A4D4A] text-[#E8EDDF] rounded-xl overflow-hidden shadow-2xl">
+                                                                <SelectItem value="15_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">15 días</SelectItem>
+                                                                <SelectItem value="30_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">30 días</SelectItem>
+                                                                <SelectItem value="60_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">60 días</SelectItem>
+                                                                <SelectItem value="90_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">90 días</SelectItem>
+                                                                <SelectItem value="+90_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">+ días</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                )}
                                             </div>
+
                                         </div>
                                     </AccordionContent>
                                 </AccordionItem>
