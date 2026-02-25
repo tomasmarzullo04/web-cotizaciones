@@ -214,15 +214,15 @@ interface QuoteState {
 
 }
 
-const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "", className = "", maxWidth = "100%" }: { label: string, value: number, onChange: (val: number) => void, min?: number, max?: number, unit?: string, className?: string, maxWidth?: string }) => (
+const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "", className = "", maxWidth = "130px" }: { label: string, value: number, onChange: (val: number) => void, min?: number, max?: number, unit?: string, className?: string, maxWidth?: string }) => (
     <div className={cn("space-y-1.5", className)} style={{ maxWidth }}>
         {label && <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">{label}</Label>}
-        <div className="flex items-center bg-[#242423] rounded-xl border border-[#4A4D4A] hover:border-[#F5CB5C]/30 transition-all w-full h-10 relative overflow-hidden group">
+        <div className="flex items-center justify-between bg-[#242423] rounded-xl border border-[#4A4D4A] hover:border-[#F5CB5C]/30 transition-all w-full h-10 px-1 group">
             {/* Minus Button */}
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-full w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute left-0 shrink-0 border-r border-[#4A4D4A]/10"
+                className="h-8 w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-lg transition-colors disabled:opacity-30 shrink-0"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.max(min, value - 1)); }}
                 disabled={value <= min}
             >
@@ -230,7 +230,7 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
             </Button>
 
             {/* Input Area - Centered Number */}
-            <div className="flex-1 flex items-center justify-center h-full px-8 relative">
+            <div className="flex-1 flex items-center justify-center gap-1">
                 <input
                     type="text"
                     inputMode="numeric"
@@ -245,11 +245,11 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
                     onBlur={() => {
                         if (isNaN(value)) onChange(min);
                     }}
-                    className="bg-transparent text-[#E8EDDF] text-lg font-black text-center w-full focus:outline-none focus:ring-0 border-0 p-0 leading-none h-full z-10 selection:bg-[#F5CB5C]/30 shadow-none outline-none"
+                    className="bg-transparent text-[#E8EDDF] text-[16px] font-black text-center w-8 focus:outline-none focus:ring-0 border-0 p-0 leading-none h-full selection:bg-[#F5CB5C]/30 shadow-none outline-none"
                     style={{ WebkitAppearance: 'none', margin: 0 }}
                 />
                 {unit && (
-                    <span className="absolute right-8 text-[9px] text-[#7C7F7C] font-black uppercase select-none pointer-events-none pb-0.5 z-0 pr-1">
+                    <span className="text-[9px] text-[#7C7F7C] font-black uppercase select-none pointer-events-none mb-0.5">
                         {unit}
                     </span>
                 )}
@@ -259,7 +259,7 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-full w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-none transition-colors disabled:opacity-30 z-20 absolute right-0 shrink-0 border-l border-[#4A4D4A]/10"
+                className="h-8 w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-lg transition-colors disabled:opacity-30 shrink-0"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.min(max, value + 1)); }}
                 disabled={value >= max}
             >
