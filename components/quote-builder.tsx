@@ -260,7 +260,7 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
                                         onChange(parseInt(value.toString()) || 0);
                                     }
                                 }}
-                                className="bg-transparent text-[#E8EDDF] text-lg font-black text-center w-full focus:outline-none focus:ring-0 border-none shadow-none outline-none p-0 leading-none h-full z-10 selection:bg-[#F5CB5C]/30"
+                                className="!bg-transparent text-[#E8EDDF] text-lg font-black text-center w-full focus:!ring-0 focus:!outline-none !border-none !shadow-none !outline-none !p-0 !h-full z-10 selection:bg-[#F5CB5C]/30"
                             />
                         ) : (
                             <div className="flex items-center justify-center gap-1 cursor-pointer group/inner transition-all hover:scale-105" onClick={() => setIsEditing(true)}>
