@@ -1,4 +1,4 @@
-Ôªø'use client'
+'use client'
 // Synced for Vercel (Fix Drive Race Condition)
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
@@ -214,60 +214,84 @@ interface QuoteState {
 
 }
 
-const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "", className = "", maxWidth = "130px" }: { label: string, value: number, onChange: (val: number) => void, min?: number, max?: number, unit?: string, className?: string, maxWidth?: string }) => (
-    <div className={cn("space-y-1.5", className)} style={{ maxWidth }}>
-        {label && <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">{label}</Label>}
-        <div className="flex items-center justify-between bg-[#242423] rounded-xl border border-[#4A4D4A] hover:border-[#F5CB5C]/30 transition-all w-full h-10 px-1 group">
-            {/* Minus Button */}
-            <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-lg transition-colors disabled:opacity-30 shrink-0"
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.max(min, value - 1)); }}
-                disabled={value <= min}
-            >
-                <Minus className="w-3.5 h-3.5" />
-            </Button>
+const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "", className = "", maxWidth = "140px" }: { label: string, value: number, onChange: (val: number) => void, min?: number, max?: number, unit?: string, className?: string, maxWidth?: string }) => {
+    const [isEditing, setIsEditing] = useState(false)
+    const [tempValue, setTempValue] = useState(value.toString())
 
-            {/* Input Area - Centered Number */}
-            <div className="flex-1 flex items-center justify-center gap-1">
-                <input
-                    type="text"
-                    inputMode="numeric"
-                    value={value}
-                    onChange={e => {
-                        const raw = e.target.value.replace(/[^0-9]/g, '');
-                        // Immediate leading zero removal
-                        const cleaned = raw.replace(/^0+/, '') || '0';
-                        const val = parseInt(cleaned);
-                        onChange(Math.max(min, Math.min(max, val)));
-                    }}
-                    onBlur={() => {
-                        if (isNaN(value)) onChange(min);
-                    }}
-                    className="bg-transparent text-[#E8EDDF] text-[16px] font-black text-center w-8 focus:outline-none focus:ring-0 border-0 p-0 leading-none h-full selection:bg-[#F5CB5C]/30 shadow-none outline-none"
-                    style={{ WebkitAppearance: 'none', margin: 0 }}
-                />
-                {unit && (
-                    <span className="text-[9px] text-[#7C7F7C] font-black uppercase select-none pointer-events-none mb-0.5">
-                        {unit}
-                    </span>
+    useEffect(() => {
+        setTempValue(value.toString())
+    }, [value])
+
+    const handleBlur = () => {
+        setIsEditing(false)
+        const cleaned = tempValue.replace(/^0+/, '') || '0';
+        const val = parseInt(cleaned);
+        onChange(Math.max(min, Math.min(max, isNaN(val) ? min : val)));
+    }
+
+    return (
+        <div className={cn("space-y-1.5", className)} style={{ maxWidth }}>
+            {label && <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">{label}</Label>}
+            <div className="flex items-center justify-between bg-transparent transition-all w-full h-10 px-0 group">
+                {/* Minus Button */}
+                {!isEditing && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-transparent rounded-lg transition-colors disabled:opacity-30 shrink-0"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.max(min, value - 1)); }}
+                        disabled={value <= min}
+                    >
+                        <Minus className="w-4 h-4" />
+                    </Button>
+                )}
+
+                {/* Input Area - Centered Number */}
+                <div className="flex-1 flex items-center justify-center gap-1.5 relative h-full">
+                    {isEditing ? (
+                        <input
+                            autoFocus
+                            type="text"
+                            inputMode="numeric"
+                            value={tempValue}
+                            onChange={e => {
+                                const raw = e.target.value.replace(/[^0-9]/g, '');
+                                setTempValue(raw);
+                            }}
+                            onBlur={handleBlur}
+                            onKeyDown={e => e.key === 'Enter' && handleBlur()}
+                            className="bg-transparent text-[#E8EDDF] text-[16px] font-black text-center w-full focus:outline-none focus:ring-0 border-0 p-0 leading-none h-full selection:bg-[#F5CB5C]/30 shadow-none outline-none"
+                        />
+                    ) : (
+                        <div className="flex items-center gap-1 justify-center w-full h-full cursor-pointer" onClick={() => setIsEditing(true)}>
+                            <span className="text-[#E8EDDF] text-[16px] font-black">{value}</span>
+                            {unit && (
+                                <span className="text-[9px] text-[#7C7F7C] font-black uppercase select-none pointer-events-none mb-0.5">
+                                    {unit}
+                                </span>
+                            )}
+                            <Pencil className="w-3 h-3 text-[#CFDBD5]/20 group-hover:text-[#CFDBD5]/50 transition-colors ml-1" />
+                        </div>
+                    )}
+                </div>
+
+                {/* Plus Button */}
+                {!isEditing && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-transparent rounded-lg transition-colors disabled:opacity-30 shrink-0"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.min(max, value + 1)); }}
+                        disabled={value >= max}
+                    >
+                        <Plus className="w-4 h-4" />
+                    </Button>
                 )}
             </div>
-
-            {/* Plus Button */}
-            <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-lg transition-colors disabled:opacity-30 shrink-0"
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.min(max, value + 1)); }}
-                disabled={value >= max}
-            >
-                <Plus className="w-3.5 h-3.5" />
-            </Button>
         </div>
-    </div>
-)
+    )
+}
+
 
 const INITIAL_STATE: QuoteState = {
     clientName: '',
@@ -396,14 +420,14 @@ const SUSTAIN_TECH_OPTIONS = [
 ]
 
 const RECOMMENDATIONS: Record<string, { role: RoleKey, seniority: string, reason: string }> = {
-    azure: { role: 'data_engineer', seniority: 'Med', reason: 'Para orquestaci√≥n en Data Factory' },
-    databricks: { role: 'data_engineer', seniority: 'Sr', reason: 'Para ingenier√≠a de datos avanzada' },
-    powerbi: { role: 'bi_visualization_developer', seniority: 'Med', reason: 'Para modelado y visualizaci√≥n' },
-    snowflake: { role: 'data_engineer', seniority: 'Sr', reason: 'Para optimizaci√≥n de Warehouse' },
+    azure: { role: 'data_engineer', seniority: 'Med', reason: 'Para orquestaciÛn en Data Factory' },
+    databricks: { role: 'data_engineer', seniority: 'Sr', reason: 'Para ingenierÌa de datos avanzada' },
+    powerbi: { role: 'bi_visualization_developer', seniority: 'Med', reason: 'Para modelado y visualizaciÛn' },
+    snowflake: { role: 'data_engineer', seniority: 'Sr', reason: 'Para optimizaciÛn de Warehouse' },
     python: { role: 'data_engineer', seniority: 'Sr', reason: 'Para custom scripting y pipelines' },
-    datascience: { role: 'data_scientist', seniority: 'Sr', reason: 'Para an√°lisis avanzado y ML' },
-    synapse: { role: 'bi_data_architect', seniority: 'Sr', reason: 'Para dise√±o de arquitectura unificada' },
-    sqlserver: { role: 'data_operations_analyst', seniority: 'Med', reason: 'Para administraci√≥n y soporte T-SQL' }
+    datascience: { role: 'data_scientist', seniority: 'Sr', reason: 'Para an·lisis avanzado y ML' },
+    synapse: { role: 'bi_data_architect', seniority: 'Sr', reason: 'Para diseÒo de arquitectura unificada' },
+    sqlserver: { role: 'data_operations_analyst', seniority: 'Med', reason: 'Para administraciÛn y soporte T-SQL' }
 }
 
 // --- 2. COMPONENT ---
@@ -433,11 +457,11 @@ const DEFAULT_DIAGRAM = `graph TD
 const RECOMENDACIONES_MAPPING: Record<string, Array<{ role: RoleKey, seniority: string, rationale: string, domain?: 'data' | 'vis' | 'sci' }>> = {
     // Shared & Project Techs
     'azure': [
-        { role: 'data_engineer', seniority: 'Sr', rationale: 'Implementaci√≥n de pipelines de datos y orquestaci√≥n.' },
+        { role: 'data_engineer', seniority: 'Sr', rationale: 'ImplementaciÛn de pipelines de datos y orquestaciÛn.' },
         { role: 'data_engineer', seniority: 'Sr', rationale: 'Mantenimiento de infraestructura Azure.', domain: 'data' }
     ],
     'databricks': [
-        { role: 'data_engineer', seniority: 'Sr', rationale: 'Procesamiento Spark y optimizaci√≥n de Lakehouse.' },
+        { role: 'data_engineer', seniority: 'Sr', rationale: 'Procesamiento Spark y optimizaciÛn de Lakehouse.' },
         { role: 'data_engineer', seniority: 'Med', rationale: 'Soporte a notebooks y clusters Databricks.', domain: 'data' }
     ],
     'synapse': [
@@ -445,15 +469,15 @@ const RECOMENDACIONES_MAPPING: Record<string, Array<{ role: RoleKey, seniority: 
         { role: 'data_engineer', seniority: 'Sr', rationale: 'Mantenimiento de Synapse Analytics.', domain: 'data' }
     ],
     'snowflake': [
-        { role: 'data_engineer', seniority: 'Sr', rationale: 'Gesti√≥n de almac√©n de datos nube.' },
+        { role: 'data_engineer', seniority: 'Sr', rationale: 'GestiÛn de almacÈn de datos nube.' },
         { role: 'data_engineer', seniority: 'Sr', rationale: 'Mantenimiento de Warehouse Snowflake.', domain: 'data' }
     ],
     'powerbi': [
-        { role: 'bi_visualization_developer', seniority: 'Med', rationale: 'Modelado de m√©tricas DAX y visualizaci√≥n de tableros.' },
+        { role: 'bi_visualization_developer', seniority: 'Med', rationale: 'Modelado de mÈtricas DAX y visualizaciÛn de tableros.' },
         { role: 'bi_visualization_developer', seniority: 'Med', rationale: 'Mantenimiento de tableros Power BI.', domain: 'vis' }
     ],
     'sqlserver': [
-        { role: 'data_engineer', seniority: 'Med', rationale: 'Optimizaci√≥n de consultas y gesti√≥n de DB relacionales.' },
+        { role: 'data_engineer', seniority: 'Med', rationale: 'OptimizaciÛn de consultas y gestiÛn de DB relacionales.' },
         { role: 'data_engineer', seniority: 'Med', rationale: 'Mantenimiento de bases SQL Server.', domain: 'data' }
     ],
     'logicapps': [
@@ -465,15 +489,15 @@ const RECOMENDACIONES_MAPPING: Record<string, Array<{ role: RoleKey, seniority: 
         { role: 'bi_visualization_developer', seniority: 'Med', rationale: 'Mantenimiento de dashboards Tableau.', domain: 'vis' }
     ],
     'python': [
-        { role: 'data_scientist', seniority: 'Sr', rationale: 'Scripts de automatizaci√≥n y modelos anal√≠ticos.' },
+        { role: 'data_scientist', seniority: 'Sr', rationale: 'Scripts de automatizaciÛn y modelos analÌticos.' },
         { role: 'data_scientist', seniority: 'Sr', rationale: 'Mantenimiento de scripts y modelos Python.', domain: 'sci' }
     ],
     'n8n': [
-        { role: 'azure_developer', seniority: 'Med', rationale: 'Automatizaci√≥n de flujos con herramientas Low-Code.' },
+        { role: 'azure_developer', seniority: 'Med', rationale: 'AutomatizaciÛn de flujos con herramientas Low-Code.' },
         { role: 'azure_developer', seniority: 'Med', rationale: 'Mantenimiento de integraciones n8n.', domain: 'data' }
     ],
     'antigravity': [
-        { role: 'data_scientist', seniority: 'Expert', rationale: 'Implementaci√≥n de Agentes IA y RAG.' },
+        { role: 'data_scientist', seniority: 'Expert', rationale: 'ImplementaciÛn de Agentes IA y RAG.' },
         { role: 'data_scientist', seniority: 'Expert', rationale: 'Soporte a agentes Antigravity.', domain: 'sci' }
     ],
     'lovable': [
@@ -481,7 +505,7 @@ const RECOMENDACIONES_MAPPING: Record<string, Array<{ role: RoleKey, seniority: 
         { role: 'low_code_developer', seniority: 'Med', rationale: 'Soporte a aplicaciones Lovable.', domain: 'vis' }
     ],
     'powerapps': [
-        { role: 'power_app_streamlit_developer', seniority: 'Med', rationale: 'Aplicaciones de negocio y personalizaci√≥n corporativa.' },
+        { role: 'power_app_streamlit_developer', seniority: 'Med', rationale: 'Aplicaciones de negocio y personalizaciÛn corporativa.' },
         { role: 'power_app_streamlit_developer', seniority: 'Med', rationale: 'Soporte a Power Apps corporativas.', domain: 'vis' }
     ],
 
@@ -943,7 +967,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
 
     const handleManualSuggestion = () => {
         if (!state.techStack || state.techStack.length === 0) {
-            toast.error("Selecciona al menos una tecnolog√≠a para recibir sugerencias.")
+            toast.error("Selecciona al menos una tecnologÌa para recibir sugerencias.")
             return
         }
 
@@ -961,7 +985,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         })
 
         if (recommendations.length === 0) {
-            toast.error("No se encontraron recomendaciones espec√≠ficas para este stack.")
+            toast.error("No se encontraron recomendaciones especÌficas para este stack.")
             return
         }
 
@@ -1020,7 +1044,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         // Simulate AI delay
         await new Promise(r => setTimeout(r, 1500))
         updateState('description',
-            `PROYECTO: ${state.clientName || 'Empresa'}\n\nOBJETIVO ESTRAT√âGICO:\n${state.description}\n\nARQUITECTURA PROPUESTA:\nImplementaci√É¬≥n de un ecosistema de datos moderno basado en ${state.techStack.join(', ') || 'Azure/AWS'}. Se dise√±ar√°n ${state.pipelinesCount} pipelines de ingesta resilientes y se desplegar√°n ${state.dashboardsCount + state.reportsCount} activos de visualizaci√≥n para soportar la toma de decisiones.\n\nALCANCE:\n- Ingesta: ${state.updateFrequency} (${state.manualProcessPct}% manual actual)\n- Consumo: ${state.reportUsers} usuarios finales`)
+            `PROYECTO: ${state.clientName || 'Empresa'}\n\nOBJETIVO ESTRAT…GICO:\n${state.description}\n\nARQUITECTURA PROPUESTA:\nImplementaci√≥n de un ecosistema de datos moderno basado en ${state.techStack.join(', ') || 'Azure/AWS'}. Se diseÒar·n ${state.pipelinesCount} pipelines de ingesta resilientes y se desplegar·n ${state.dashboardsCount + state.reportsCount} activos de visualizaciÛn para soportar la toma de decisiones.\n\nALCANCE:\n- Ingesta: ${state.updateFrequency} (${state.manualProcessPct}% manual actual)\n- Consumo: ${state.reportUsers} usuarios finales`)
         setPolishLoading(false)
     }
 
@@ -1195,7 +1219,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
 
         // --- 5. Retention (deducted from Gross Total) ---
         const retentionVal = state.retention.enabled ? grossTotal * (state.retention.percentage / 100) : 0
-        const netTotal = grossTotal - retentionVal // "Inversi√≥n Neta Final"
+        const netTotal = grossTotal - retentionVal // "InversiÛn Neta Final"
 
         // --- Sustain Mode: Fixed Class Pricing ---
         if (state.serviceType === 'Sustain') {
@@ -1403,7 +1427,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             if (initialData && initialData.id) {
                 // UPDATE
                 result = await updateQuote(initialData.id, payload)
-                if (validate) toast.success("Cotizaci√≥n actualizada correctamente")
+                if (validate) toast.success("CotizaciÛn actualizada correctamente")
             } else {
                 // CREATE
                 result = await saveQuote(payload)
@@ -1452,7 +1476,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             }
 
             // Only show main toast if validating (Full Save)
-            if (validate) toast.success(redirect ? "Cotizaci√≥n guardada exitosamente." : "Cambios guardados correctamente.")
+            if (validate) toast.success(redirect ? "CotizaciÛn guardada exitosamente." : "Cambios guardados correctamente.")
 
             // Only redirect if requested (Full Save typically)
             if (redirect) {
@@ -1654,7 +1678,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             }
         } catch (e) {
             console.error(e)
-            alert("Error al exportar cotizaci√É¬≥n.")
+            alert("Error al exportar cotizaci√≥n.")
         } finally {
             setIsExporting(false)
         }
@@ -1692,7 +1716,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         }
         // Explode Tech Stack into Subgraph with Row Layout
         if (techStack.length > 0) {
-            nodes += '\n    subgraph TechStack [Stack Tecnol√≥gico]'
+            nodes += '\n    subgraph TechStack [Stack TecnolÛgico]'
             nodes += '\n    direction TB' // Main stack is top-bottom
 
             // Helper function to chunk array
@@ -1779,7 +1803,7 @@ graph TD
 
         setDependencyInput("") // Clear input
         await persistDependencies(newDepsString)
-        toast.success("Dependencia a√±adida")
+        toast.success("Dependencia aÒadida")
     }
 
     const handleRemoveDependency = async (indexToRemove: number) => {
@@ -1907,17 +1931,17 @@ graph TD
             >
                 <div className="text-center mb-8 md:mb-16 space-y-4">
                     <h1 className="text-4xl md:text-6xl font-black text-[#E8EDDF] tracking-tighter">
-                        Nueva <span className="text-[#F5CB5C]">Estimaci√≥n</span>
+                        Nueva <span className="text-[#F5CB5C]">EstimaciÛn</span>
                     </h1>
                     <p className="text-[#CFDBD5] text-lg md:text-xl max-w-2xl mx-auto">
-                        Seleccione el tipo de servicio para configurar la cotizaci√≥n adecuada.
+                        Seleccione el tipo de servicio para configurar la cotizaciÛn adecuada.
                     </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-6xl w-full">
                     {[
-                        { id: 'Proyecto', icon: Network, title: 'Proyecto', desc: 'Estimaci√≥n basada en entregables, arquitectura de datos y roadmap de implementaci√≥n.' },
-                        { id: 'Staffing', icon: Briefcase, title: 'Staffing', desc: 'Solicitud de perfiles IT especializados. Defina seniority, skills y duraci√≥n.' },
+                        { id: 'Proyecto', icon: Network, title: 'Proyecto', desc: 'EstimaciÛn basada en entregables, arquitectura de datos y roadmap de implementaciÛn.' },
+                        { id: 'Staffing', icon: Briefcase, title: 'Staffing', desc: 'Solicitud de perfiles IT especializados. Defina seniority, skills y duraciÛn.' },
                         { id: 'Sustain', icon: ShieldAlert, title: 'Sustain', desc: 'Servicios de soporte y mantenimiento. Configure niveles de servicio (SLA) y criticidad.' }
                     ].map((item) => (
                         <div
@@ -1971,7 +1995,7 @@ graph TD
                             <p className="text-[#F5CB5C] font-bold text-lg uppercase tracking-widest">{state.serviceType}</p>
                         </div>
                         <div className="text-right">
-                            <div className="text-xs text-[#CFDBD5] uppercase tracking-wider mb-1">ID Cotizaci√≥n</div>
+                            <div className="text-xs text-[#CFDBD5] uppercase tracking-wider mb-1">ID CotizaciÛn</div>
                             <div className="text-3xl font-bold text-[#F5CB5C] font-mono tracking-widest">
                                 {state.quoteNumber ? state.quoteNumber.toString().padStart(6, '0') : '[PENDIENTE]'}
                             </div>
@@ -1979,7 +2003,7 @@ graph TD
                     </div>
 
                     {/* 1. GENERAL */}
-                    <SectionCard number={getSectionNumber('general')} title="Informaci√≥n General" icon={ClipboardList}>
+                    <SectionCard number={getSectionNumber('general')} title="InformaciÛn General" icon={ClipboardList}>
                         <div className="space-y-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                                 {/* Left: Client Selector */}
@@ -2076,7 +2100,7 @@ graph TD
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <Label className="text-[#CFDBD5] text-sm font-bold uppercase tracking-wider mb-2 block">Duraci√≥n del Proyecto</Label>
+                                    <Label className="text-[#CFDBD5] text-sm font-bold uppercase tracking-wider mb-2 block">DuraciÛn del Proyecto</Label>
                                     <div className="flex gap-2">
                                         <Input
                                             type="number"
@@ -2092,7 +2116,7 @@ graph TD
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                <SelectItem value="days">D√≠as</SelectItem>
+                                                <SelectItem value="days">DÌas</SelectItem>
                                                 <SelectItem value="weeks">Semanas</SelectItem>
                                                 <SelectItem value="months">Meses</SelectItem>
                                             </SelectContent>
@@ -2119,13 +2143,13 @@ graph TD
 
                             <div>
                                 <Label className="text-[#CFDBD5] text-sm font-bold uppercase tracking-wider mb-2 block">
-                                    {state.serviceType === 'Staffing' ? 'Contexto de la B√∫squeda' : 'Descripci√≥n y Objetivo'}
+                                    {state.serviceType === 'Staffing' ? 'Contexto de la B˙squeda' : 'DescripciÛn y Objetivo'}
                                 </Label>
                                 <div className="relative group/textarea">
                                     <Textarea
                                         value={state.description}
                                         onChange={(e) => updateState('description', e.target.value)}
-                                        placeholder={state.serviceType === 'Staffing' ? "Descripci√≥n del equipo actual, cultura, y por qu√© se necesitan estos perfiles..." : "Describe el desaf√≠o de negocio..."}
+                                        placeholder={state.serviceType === 'Staffing' ? "DescripciÛn del equipo actual, cultura, y por quÈ se necesitan estos perfiles..." : "Describe el desafÌo de negocio..."}
                                         className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] min-h-[160px] focus-visible:ring-[#F5CB5C] rounded-2xl p-4 leading-relaxed pb-12 resize-none"
                                     />
                                     <div className="absolute bottom-3 right-3 flex items-center gap-2">
@@ -2140,7 +2164,7 @@ graph TD
                                             ) : (
                                                 <Sparkles className="w-3.5 h-3.5 mr-2" />
                                             )}
-                                            {polishLoading ? 'Puliendo...' : 'Pulir texto de descripci√≥n de proyecto con IA'}
+                                            {polishLoading ? 'Puliendo...' : 'Pulir texto de descripciÛn de proyecto con IA'}
                                         </Button>
                                     </div>
                                 </div>
@@ -2150,7 +2174,7 @@ graph TD
 
                     {/* 2. VOLUMETRY (Moved to Step 02 for Project) */}
                     {state.serviceType === 'Proyecto' && (
-                        <SectionCard number={getSectionNumber('volumetry')} title="Volumetr√≠a de Datos" icon={Database}>
+                        <SectionCard number={getSectionNumber('volumetry')} title="VolumetrÌa de Datos" icon={Database}>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                                 <div>
                                     <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Fuentes de Datos</Label>
@@ -2174,7 +2198,7 @@ graph TD
 
                     {/* 3. TECH (Step 03 for Project, 02 for Staffing) */}
                     {state.serviceType !== 'Sustain' && (
-                        <SectionCard number={getSectionNumber('tech')} title="Stack Tecnol√≥gico" icon={Layers}>
+                        <SectionCard number={getSectionNumber('tech')} title="Stack TecnolÛgico" icon={Layers}>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {TECH_OPTIONS.map(tech => (
                                     <div
@@ -2200,17 +2224,17 @@ graph TD
                         <div className="space-y-6">
                             <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
 
-                                {/* SECTION 1: PERFIL T√âCNICO */}
+                                {/* SECTION 1: PERFIL T…CNICO */}
                                 <AccordionItem value="item-1" className="border-b border-[#4A4D4A]">
                                     <AccordionTrigger className="text-[#E8EDDF] hover:text-[#F5CB5C] hover:no-underline">
                                         <span className="font-bold uppercase tracking-wider text-sm flex items-center gap-2">
-                                            <Cpu className="w-4 h-4 text-[#F5CB5C]" /> 1. Perfil T√©cnico
+                                            <Cpu className="w-4 h-4 text-[#F5CB5C]" /> 1. Perfil TÈcnico
                                         </span>
                                     </AccordionTrigger>
                                     <AccordionContent className="p-4 space-y-6 bg-[#242423]/50 rounded-b-xl">
                                         <div className="space-y-4">
                                             <div className="mb-12">
-                                                <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Nombre Soluci√≥n / Producto</Label>
+                                                <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Nombre SoluciÛn / Producto</Label>
                                                 <Input
                                                     value={state.sustainDetails.solutionName}
                                                     onChange={e => updateState('sustainDetails', { ...state.sustainDetails, solutionName: e.target.value })}
@@ -2219,18 +2243,18 @@ graph TD
                                                 />
                                             </div>
                                             <div className="mb-12">
-                                                <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Descripci√≥n Funcional</Label>
+                                                <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">DescripciÛn Funcional</Label>
                                                 <Textarea
                                                     value={state.sustainDetails.technicalDescription}
                                                     onChange={e => updateState('sustainDetails', { ...state.sustainDetails, technicalDescription: e.target.value })}
                                                     className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] min-h-[100px] w-full"
-                                                    placeholder="Describe qu√© hace la soluci√≥n, usuarios clave y flujo de datos..."
+                                                    placeholder="Describe quÈ hace la soluciÛn, usuarios clave y flujo de datos..."
                                                 />
                                             </div>
 
                                             {/* Tech Stack Multi-Select */}
                                             <div className="mb-12">
-                                                <Label className="text-[#CFDBD5] mb-3 block text-xs uppercase font-bold">Stack Tecnol√≥gico</Label>
+                                                <Label className="text-[#CFDBD5] mb-3 block text-xs uppercase font-bold">Stack TecnolÛgico</Label>
                                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                                     {SUSTAIN_TECH_OPTIONS.map((item) => {
                                                         const isSelected = state.sustainDetails.techStack.includes(item.id)
@@ -2259,45 +2283,40 @@ graph TD
 
                                             {/* Metrics Grid - FIXED VOLUMETRICS */}
                                             <div>
-                                                <Label className="text-[#CFDBD5] mb-3 block text-xs uppercase font-bold tracking-tight ml-1">M√©tricas Volumetr√≠a (Mensual)</Label>
+                                                <Label className="text-[#CFDBD5] mb-3 block text-xs uppercase font-bold tracking-tight ml-1">MÈtricas VolumetrÌa (Mensual)</Label>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 items-start bg-[#333533]/20 p-3 rounded-2xl border border-[#4A4D4A]/30">
                                                     <NumericStepper
                                                         label="Pipelines"
                                                         value={state.sustainDetails.metrics.pipelinesCount}
                                                         unit="CANT."
-                                                        maxWidth="130px"
                                                         onChange={v => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, pipelinesCount: v } })}
                                                     />
                                                     <NumericStepper
                                                         label="Data Sources"
                                                         value={state.sustainDetails.metrics.dataSourcesCount}
                                                         unit="CANT."
-                                                        maxWidth="130px"
                                                         onChange={v => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dataSourcesCount: v } })}
                                                     />
                                                     <NumericStepper
                                                         label="Notebooks"
                                                         value={state.sustainDetails.metrics.notebooksCount}
                                                         unit="CANT."
-                                                        maxWidth="130px"
                                                         onChange={v => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, notebooksCount: v } })}
                                                     />
                                                     <NumericStepper
                                                         label="Dashboards"
                                                         value={state.sustainDetails.metrics.dashboardsCount}
                                                         unit="CANT."
-                                                        maxWidth="130px"
                                                         onChange={v => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dashboardsCount: v } })}
                                                     />
                                                     <NumericStepper
                                                         label="DS Models"
                                                         value={state.sustainDetails.metrics.dsModelsCount}
                                                         unit="CANT."
-                                                        maxWidth="130px"
                                                         onChange={v => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, dsModelsCount: v } })}
                                                     />
                                                     <div className="space-y-1.5 text-left">
-                                                        <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">¬øProcesos Manuales?</Label>
+                                                        <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">øProcesos Manuales?</Label>
                                                         <ToggleGroup
                                                             type="single"
                                                             value={state.sustainDetails.metrics.manualProcess ? 'yes' : 'no'}
@@ -2310,7 +2329,7 @@ graph TD
                                                                 value="yes"
                                                                 className="flex-1 rounded-l-xl rounded-r-none border border-r-0 border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-[#242423] data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-black text-[10px]"
                                                             >
-                                                                S√ç
+                                                                SÕ
                                                             </ToggleGroupItem>
                                                             <ToggleGroupItem
                                                                 value="no"
@@ -2347,7 +2366,7 @@ graph TD
                                                                 className="bg-[#F5CB5C] text-[#242423] hover:bg-[#F5CB5C]/90 text-xs h-10 px-3 font-bold uppercase tracking-wider rounded-lg"
                                                                 disabled={isDependencySaving}
                                                             >
-                                                                {isDependencySaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "A√±adir"}
+                                                                {isDependencySaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "AÒadir"}
                                                             </Button>
                                                         </div>
 
@@ -2380,7 +2399,7 @@ graph TD
                                 <AccordionItem value="item-2" className="border-b border-[#4A4D4A]">
                                     <AccordionTrigger className="text-[#E8EDDF] hover:text-[#F5CB5C] hover:no-underline">
                                         <span className="font-bold uppercase tracking-wider text-sm flex items-center gap-2">
-                                            <Activity className="w-4 h-4 text-[#F5CB5C]" /> 2. Definici√≥n Operacional
+                                            <Activity className="w-4 h-4 text-[#F5CB5C]" /> 2. DefiniciÛn Operacional
                                         </span>
                                     </AccordionTrigger>
                                     <AccordionContent className="p-4 space-y-6 bg-[#242423]/50 rounded-b-xl">
@@ -2394,15 +2413,15 @@ graph TD
                                                 />
                                             </div>
                                             <NumericStepper
-                                                label="Duraci√≥n Proceso"
+                                                label="DuraciÛn Proceso"
                                                 value={parseInt(state.sustainDetails.updateDuration) || 0}
                                                 unit="HS"
-                                                maxWidth="130px"
+
                                                 onChange={v => updateState('sustainDetails', { ...state.sustainDetails, updateDuration: v.toString() })}
                                             />
                                             <div className="md:col-span-2">
                                                 <div className="space-y-2">
-                                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Frecuencia Actualizaci√≥n Datos</Label>
+                                                    <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Frecuencia ActualizaciÛn Datos</Label>
                                                     <Select value={state.sustainDetails.metrics.updateFrequency} onValueChange={v => updateState('sustainDetails', { ...state.sustainDetails, metrics: { ...state.sustainDetails.metrics, updateFrequency: v } })}>
                                                         <SelectTrigger className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-10 rounded-xl focus:border-[#F5CB5C] transition-all hover:bg-[#333533]">
                                                             <SelectValue placeholder="Seleccionar frecuencia..." />
@@ -2418,7 +2437,7 @@ graph TD
                                             </div>
                                             {/* Schedule Inputs - Dynamic Array */}
                                             <div className="md:col-span-2 space-y-3 mt-2">
-                                                <Label className="text-[#CFDBD5] text-xs uppercase font-bold block">Horarios de Actualizaci√≥n</Label>
+                                                <Label className="text-[#CFDBD5] text-xs uppercase font-bold block">Horarios de ActualizaciÛn</Label>
                                                 <div className="flex flex-wrap gap-4 items-start">
                                                     {state.sustainDetails.updateSchedules.map((sched, idx) => (
                                                         <div key={idx} className="space-y-2 group relative">
@@ -2476,7 +2495,7 @@ graph TD
                                                         "text-xs font-bold transition-colors",
                                                         (state.sustainDetails.weekendDays && state.sustainDetails.weekendDays.length > 0) ? "text-[#F5CB5C]" : "text-[#E8EDDF]"
                                                     )}>
-                                                        ¬øUso Fines de Semana?
+                                                        øUso Fines de Semana?
                                                     </Label>
                                                     {(state.sustainDetails.weekendDays && state.sustainDetails.weekendDays.length > 0) && (
                                                         <span className="text-[10px] font-bold text-[#F5CB5C] uppercase animate-in fade-in zoom-in">
@@ -2495,8 +2514,8 @@ graph TD
                                                     })}
                                                     className="justify-start gap-2"
                                                 >
-                                                    <ToggleGroupItem value="S√°bado" className="data-[state=on]:bg-[#F5CB5C] data-[state=on]:text-[#242423] border border-[#4A4D4A] text-xs h-8 px-3 rounded-lg hover:bg-[#F5CB5C]/20 transition-all flex-1">
-                                                        S√°bado
+                                                    <ToggleGroupItem value="S·bado" className="data-[state=on]:bg-[#F5CB5C] data-[state=on]:text-[#242423] border border-[#4A4D4A] text-xs h-8 px-3 rounded-lg hover:bg-[#F5CB5C]/20 transition-all flex-1">
+                                                        S·bado
                                                     </ToggleGroupItem>
                                                     <ToggleGroupItem value="Domingo" className="data-[state=on]:bg-[#F5CB5C] data-[state=on]:text-[#242423] border border-[#4A4D4A] text-xs h-8 px-3 rounded-lg hover:bg-[#F5CB5C]/20 transition-all flex-1">
                                                         Domingo
@@ -2505,7 +2524,7 @@ graph TD
 
                                                 {(state.sustainDetails.weekendDays && state.sustainDetails.weekendDays.length > 0) && (
                                                     <div className="animate-in fade-in slide-in-from-top-2 pt-2 border-t border-[#4A4D4A]/50 mt-1">
-                                                        <Label className="text-[#F5CB5C] mb-2 block text-[10px] uppercase font-bold">Horario Espec√≠fico Fin de Semana</Label>
+                                                        <Label className="text-[#F5CB5C] mb-2 block text-[10px] uppercase font-bold">Horario EspecÌfico Fin de Semana</Label>
                                                         <Input
                                                             value={state.sustainDetails.weekendSupportHours}
                                                             onChange={e => updateState('sustainDetails', { ...state.sustainDetails, weekendSupportHours: e.target.value })}
@@ -2521,37 +2540,24 @@ graph TD
                                                     label="Incidentabilidad Esperada"
                                                     value={state.sustainDetails.incidentRate}
                                                     unit="INC."
-                                                    maxWidth="130px"
+
                                                     onChange={v => updateState('sustainDetails', { ...state.sustainDetails, incidentRate: v })}
                                                 />
                                             </div>
 
                                             <div className="flex flex-col gap-4">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="space-y-2">
-                                                        <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold text-opacity-70 text-left ml-1">Soporte Hypercare (+1 Mes Base)</Label>
-                                                        <ToggleGroup
-                                                            type="single"
-                                                            value={state.sustainDetails.hasHypercare ? 'yes' : 'no'}
-                                                            onValueChange={(val) => {
-                                                                if (val) updateState('sustainDetails', { ...state.sustainDetails, hasHypercare: val === 'yes' })
-                                                            }}
-                                                            className="justify-start gap-0 h-10 w-full"
-                                                        >
-                                                            <ToggleGroupItem
-                                                                value="yes"
-                                                                className="flex-1 rounded-l-xl rounded-r-none border border-r-0 border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-[#242423] data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-black text-[10px]"
-                                                            >
-                                                                S√ç
-                                                            </ToggleGroupItem>
-                                                            <ToggleGroupItem
-                                                                value="no"
-                                                                className="flex-1 rounded-r-xl rounded-l-none border border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-[#242423] data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-black text-[10px]"
-                                                            >
-                                                                NO
-                                                            </ToggleGroupItem>
-                                                        </ToggleGroup>
-                                                    </div>
+                                                     <div className="flex items-center gap-4 py-2 border border-[#4A4D4A]/30 bg-[#242423]/50 rounded-2xl px-5 flex-1 min-h-[64px]">
+                                                         <div className="flex-1">
+                                                             <Label className="text-[#CFDBD5] block text-xs uppercase font-bold text-opacity-70">Soporte Hypercare (+1 Mes Base)</Label>
+                                                             <p className="text-[10px] text-[#7C7F7C]">Acompa√±amiento post-salida a producci√≥n</p>
+                                                         </div>
+                                                         <Switch
+                                                             checked={state.sustainDetails.hasHypercare}
+                                                             onCheckedChange={v => updateState("sustainDetails", { ...state.sustainDetails, hasHypercare: v })}
+                                                             className="data-[state=checked]:bg-[#F5CB5C]"
+                                                         />
+                                                     </div>
 
                                                     {state.sustainDetails.hasHypercare && (
                                                         <div className="space-y-1.5 flex-1 animate-in fade-in slide-in-from-left-4 duration-300 max-w-[130px]">
@@ -2564,11 +2570,11 @@ graph TD
                                                                     <SelectValue placeholder="Periodo" />
                                                                 </SelectTrigger>
                                                                 <SelectContent className="bg-[#242423] border border-[#4A4D4A] text-[#E8EDDF] rounded-xl overflow-hidden shadow-2xl">
-                                                                    <SelectItem value="15_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">15 d√≠as</SelectItem>
-                                                                    <SelectItem value="30_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">30 d√≠as</SelectItem>
-                                                                    <SelectItem value="60_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">60 d√≠as</SelectItem>
-                                                                    <SelectItem value="90_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">90 d√≠as</SelectItem>
-                                                                    <SelectItem value="+90_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">+ d√≠as</SelectItem>
+                                                                    <SelectItem value="15_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">15 dÌas</SelectItem>
+                                                                    <SelectItem value="30_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">30 dÌas</SelectItem>
+                                                                    <SelectItem value="60_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">60 dÌas</SelectItem>
+                                                                    <SelectItem value="90_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">90 dÌas</SelectItem>
+                                                                    <SelectItem value="+90_days" className="text-xs hover:bg-[#333533] focus:bg-[#333533] transition-colors py-2 cursor-pointer">+ dÌas</SelectItem>
                                                                 </SelectContent>
                                                             </Select>
                                                         </div>
@@ -2592,7 +2598,7 @@ graph TD
                                         <div className={cn("flex items-center justify-between p-4 rounded-xl border mb-6 transition-all", sustainLevel.color)}>
                                             <div>
                                                 <h4 className="font-black text-2xl tracking-tighter">CLASE {sustainLevel.label}</h4>
-                                                <p className="text-[10px] uppercase font-bold opacity-80">Score T√©cnico: {(sustainScores.factors.pipelines || 0) + (sustainScores.factors.notebooks || 0) + (sustainScores.factors.dashboards || 0) + (sustainScores.factors.models || 0) + (sustainScores.factors.manual || 0)} | Score Operativo: {(sustainScores.factors.frequency || 0) + (sustainScores.factors.dependencies || 0)}</p>
+                                                <p className="text-[10px] uppercase font-bold opacity-80">Score TÈcnico: {(sustainScores.factors.pipelines || 0) + (sustainScores.factors.notebooks || 0) + (sustainScores.factors.dashboards || 0) + (sustainScores.factors.models || 0) + (sustainScores.factors.manual || 0)} | Score Operativo: {(sustainScores.factors.frequency || 0) + (sustainScores.factors.dependencies || 0)}</p>
                                                 <p className="text-xs font-bold text-yellow-500">Puntaje Final: {sustainScores.total} / 5.0</p>
                                             </div>
                                             <div className="text-right">
@@ -2603,8 +2609,8 @@ graph TD
                                         {/* FINANCIAL CRITICALITY TOGGLE */}
                                         <div className="bg-[#333533] p-4 rounded-xl border border-[#4A4D4A] mb-6 flex items-center justify-between">
                                             <div>
-                                                <h4 className="font-bold text-[#E8EDDF] text-sm">¬øCr√≠tico para Cierre Financiero / Ventas?</h4>
-                                                <p className="text-xs text-[#CFDBD5]">Impacto directo en facturaci√≥n o reportes legales.</p>
+                                                <h4 className="font-bold text-[#E8EDDF] text-sm">øCrÌtico para Cierre Financiero / Ventas?</h4>
+                                                <p className="text-xs text-[#CFDBD5]">Impacto directo en facturaciÛn o reportes legales.</p>
                                             </div>
                                             <Switch
                                                 checked={state.isFinancialOrSales}
@@ -2621,7 +2627,7 @@ graph TD
                                             {/* NEW FIELD: Critical Dates */}
                                             <div className="bg-[#333533]/50 border border-[#4A4D4A] p-4 rounded-xl space-y-4">
                                                 <div className="flex items-center justify-between">
-                                                    <Label className="text-[#CFDBD5] text-xs uppercase font-bold">¬øFechas Cr√≠ticas?</Label>
+                                                    <Label className="text-[#CFDBD5] text-xs uppercase font-bold">øFechas CrÌticas?</Label>
                                                     <ToggleGroup
                                                         type="single"
                                                         value={state.sustainDetails.criticalityMatrix.hasCriticalDates ? 'yes' : 'no'}
@@ -2637,7 +2643,7 @@ graph TD
                                                             value="yes"
                                                             className="w-16 rounded-l-lg rounded-r-none border border-r-0 border-[#4A4D4A] data-[state=on]:bg-yellow-500 data-[state=on]:text-black data-[state=off]:bg-transparent data-[state=off]:text-[#CFDBD5] data-[state=off]:hover:bg-[#333533] h-10 transition-all font-bold text-xs"
                                                         >
-                                                            S√ç
+                                                            SÕ
                                                         </ToggleGroupItem>
                                                         <ToggleGroupItem
                                                             value="no"
@@ -2659,7 +2665,7 @@ graph TD
                                                         >
                                                             <div className="pt-2">
                                                                 <Input
-                                                                    placeholder="Describir fechas (ej. d√≠a 5, 20...)"
+                                                                    placeholder="Describir fechas (ej. dÌa 5, 20...)"
                                                                     value={state.sustainDetails.criticalityMatrix.criticalDatesDescription}
                                                                     onChange={(e) => updateState('sustainDetails', {
                                                                         ...state.sustainDetails,
@@ -2683,7 +2689,7 @@ graph TD
                                                             label="Mercados Impactados"
                                                             value={state.sustainDetails.criticalityMatrix.marketsImpacted}
                                                             unit="CANT."
-                                                            maxWidth="130px"
+
                                                             onChange={v => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, marketsImpacted: v } })}
                                                         />
                                                     </div>
@@ -2692,7 +2698,7 @@ graph TD
                                                             label="Usuarios Impactados"
                                                             value={state.sustainDetails.criticalityMatrix.usersImpacted}
                                                             unit="CANT."
-                                                            maxWidth="130px"
+
                                                             onChange={v => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, usersImpacted: v } })}
                                                         />
                                                     </div>
@@ -2710,8 +2716,8 @@ graph TD
                                                     <SelectTrigger className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
                                                     <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
                                                         <SelectItem value="1">Bajo (1) - Impacto menor</SelectItem>
-                                                        <SelectItem value="3">Importante (3) - Afecta √°rea</SelectItem>
-                                                        <SelectItem value="5">Cr√≠tico (5) - Detiene operaci√≥n</SelectItem>
+                                                        <SelectItem value="3">Importante (3) - Afecta ·rea</SelectItem>
+                                                        <SelectItem value="5">CrÌtico (5) - Detiene operaciÛn</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
@@ -2745,32 +2751,32 @@ graph TD
                                                     <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
                                                         <SelectItem value="1">Menos de 100 (1)</SelectItem>
                                                         <SelectItem value="3">100 - 500 (3)</SelectItem>
-                                                        <SelectItem value="5">M√°s de 500 (5)</SelectItem>
+                                                        <SelectItem value="5">M·s de 500 (5)</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
 
-                                            {/* 4. Cobertura Pa√≠ses */}
+                                            {/* 4. Cobertura PaÌses */}
                                             <div className="space-y-2">
                                                 <div className="flex justify-between">
-                                                    <Label className="text-[#CFDBD5] text-xs uppercase font-bold">4. Pa√≠ses</Label>
+                                                    <Label className="text-[#CFDBD5] text-xs uppercase font-bold">4. PaÌses</Label>
                                                     <span className="text-[#F5CB5C] text-xs font-mono">{state.sustainDetails.criticalityMatrix.countryCoverage} pts</span>
                                                 </div>
                                                 <Select value={state.sustainDetails.criticalityMatrix.countryCoverage.toString()}
                                                     onValueChange={v => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, countryCoverage: parseInt(v) } })}>
                                                     <SelectTrigger className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]"><SelectValue /></SelectTrigger>
                                                     <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                                        <SelectItem value="1">Local / 1 Pa√≠s (1)</SelectItem>
-                                                        <SelectItem value="3">Regional / 2-3 Pa√≠ses (3)</SelectItem>
-                                                        <SelectItem value="5">Global / 4+ Pa√≠ses (5)</SelectItem>
+                                                        <SelectItem value="1">Local / 1 PaÌs (1)</SelectItem>
+                                                        <SelectItem value="3">Regional / 2-3 PaÌses (3)</SelectItem>
+                                                        <SelectItem value="5">Global / 4+ PaÌses (5)</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
 
-                                            {/* 5. Madurez T√©cnica */}
+                                            {/* 5. Madurez TÈcnica */}
                                             <div className="space-y-2">
                                                 <div className="flex justify-between">
-                                                    <Label className="text-[#CFDBD5] text-xs uppercase font-bold">5. Madurez T√©cnica</Label>
+                                                    <Label className="text-[#CFDBD5] text-xs uppercase font-bold">5. Madurez TÈcnica</Label>
                                                     <span className="text-[#F5CB5C] text-xs font-mono">{state.sustainDetails.criticalityMatrix.technicalMaturity} pts</span>
                                                 </div>
                                                 <Select value={state.sustainDetails.criticalityMatrix.technicalMaturity.toString()}
@@ -2811,7 +2817,7 @@ graph TD
 
 
                     {/* 5. TEAM SELECTION */}
-                    <SectionCard number={getSectionNumber('team')} title="Selecci√≥n de Perfiles" icon={Users}>
+                    <SectionCard number={getSectionNumber('team')} title="SelecciÛn de Perfiles" icon={Users}>
 
 
 
@@ -2822,7 +2828,7 @@ graph TD
                                     className="h-10 bg-[#171717] hover:bg-[#242423] text-[#F5CB5C] border border-[#F5CB5C]/30 rounded-xl font-black transition-all px-6 shadow-sm group"
                                 >
                                     <Sparkles className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-                                    Sugerencia Autom√°tica de Equipo
+                                    Sugerencia Autom·tica de Equipo
                                 </Button>
                             </div>
                         )}
@@ -2873,7 +2879,7 @@ graph TD
                                 <div className="space-y-4">
                                     {state.staffingDetails.profiles.length === 0 ? (
                                         <div className="text-center py-10 border-2 border-dashed border-[#333533] rounded-xl">
-                                            <p className="text-[#CFDBD5]/50 text-sm italic">No se han seleccionado perfiles a√∫n.</p>
+                                            <p className="text-[#CFDBD5]/50 text-sm italic">No se han seleccionado perfiles a˙n.</p>
                                         </div>
                                     ) : (
                                         state.staffingDetails.profiles.map((profile, idx) => {
@@ -2988,7 +2994,7 @@ graph TD
                                                                 serviceRates={dbRates}
                                                                 trigger={
                                                                     <div className="text-[10px] text-[#F5CB5C] font-black cursor-pointer hover:underline">
-                                                                        {profile.allocationPercentage}% ASIGNACI√ìN
+                                                                        {profile.allocationPercentage}% ASIGNACI”N
                                                                     </div>
                                                                 }
                                                                 onSelect={(level, price, allocation) => {
@@ -3006,7 +3012,7 @@ graph TD
                                                                             staffingDetails: { ...prev.staffingDetails, profiles: newProfiles }
                                                                         }
                                                                     })
-                                                                    toast.success("Asignaci√≥n actualizada.")
+                                                                    toast.success("AsignaciÛn actualizada.")
                                                                 }}
                                                                 defaultPrice={Object.values(ROLE_CONFIG).find(r => r.label === profile.role)?.defaultPrice}
                                                                 multipliers={SENIORITY_MODIFIERS}
@@ -3062,7 +3068,7 @@ graph TD
                                         <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-[#242423] border border-[#333533]">
                                             <div>
                                                 <div className="text-[#E8EDDF] font-bold text-sm">{rec.role}</div>
-                                                <div className="text-[10px] text-[#CFDBD5] opacity-70">{rec.seniority} ‚Ä¢ {rec.rationale}</div>
+                                                <div className="text-[10px] text-[#CFDBD5] opacity-70">{rec.seniority} ï {rec.rationale}</div>
                                             </div>
                                             <div className="bg-[#333533] px-2 py-1 rounded text-[#F5CB5C] font-bold text-xs">
                                                 x{rec.count}
@@ -3127,11 +3133,11 @@ graph TD
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1">L√≠der de √Årea</Label>
+                                    <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1">LÌder de ¡rea</Label>
                                     <Input
                                         value={state.clientContact.areaLeader || ''}
                                         onChange={e => updateState('clientContact', { ...state.clientContact, areaLeader: e.target.value })}
-                                        placeholder="L√≠der"
+                                        placeholder="LÌder"
                                         className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF] h-[50px] rounded-[1rem] focus:border-[#F5CB5C] transition-all hover:border-[#F5CB5C]/50"
                                     />
                                 </div>
@@ -3141,7 +3147,7 @@ graph TD
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                                 {/* Selector (Col 1) */}
                                 <div className="space-y-2">
-                                    <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1">Retenci√≥n Fiscal</Label>
+                                    <Label className="text-[#CFDBD5] text-xs font-bold uppercase tracking-wider pl-1">RetenciÛn Fiscal</Label>
                                     <Select
                                         value={state.retention.enabled ? "yes" : "no"}
                                         onValueChange={(v) => updateState('retention', { ...state.retention, enabled: v === 'yes' })}
@@ -3151,7 +3157,7 @@ graph TD
                                         </SelectTrigger>
                                         <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
                                             <SelectItem value="no">No aplica</SelectItem>
-                                            <SelectItem value="yes">S√≠, aplica retenci√≥n</SelectItem>
+                                            <SelectItem value="yes">SÌ, aplica retenciÛn</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -3243,7 +3249,7 @@ graph TD
                     <div>
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="text-[#F5CB5C] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                                <Calculator className="w-4 h-4" /> INVERSI√ìN ESTIMADA
+                                <Calculator className="w-4 h-4" /> INVERSI”N ESTIMADA
                             </h4>
                             <div className="w-[100px]">
                                 <Select value={currency} onValueChange={(val) => setCurrency(val)}>
@@ -3251,7 +3257,7 @@ graph TD
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="bg-[#242423] border-[#4A4D4A] text-[#E8EDDF]">
-                                        <SelectItem value="USD">USD - D√≥lar</SelectItem>
+                                        <SelectItem value="USD">USD - DÛlar</SelectItem>
                                         <SelectItem value="EUR">EUR - Euro</SelectItem>
                                         <SelectItem value="ARS">ARS - Peso Arg</SelectItem>
                                         <SelectItem value="MXN">MXN - Peso Mex</SelectItem>
@@ -3273,7 +3279,7 @@ graph TD
                     </div>
                     <p className="text-[#CFDBD5] mt-2 font-medium flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-[#F5CB5C] animate-pulse" />
-                        Inversi√≥n {viewMode === 'annual' ? 'Anual' : 'Mensual'} Estimada
+                        InversiÛn {viewMode === 'annual' ? 'Anual' : 'Mensual'} Estimada
                     </p>
                 </div >
 
@@ -3355,13 +3361,13 @@ graph TD
                         </div>
                         {state.retention.enabled && (
                             <div className="flex justify-between items-center text-[#E8EDDF]/70 text-base border-t border-[#4A4D4A]/50 pt-1 mt-1">
-                                <span>Retenci√≥n (-{state.retention.percentage}%) {viewMode === 'annual' ? 'Anual' : ''}</span>
+                                <span>RetenciÛn (-{state.retention.percentage}%) {viewMode === 'annual' ? 'Anual' : ''}</span>
                                 <span className="font-mono text-red-400">- {formatMoney(viewMode === 'annual' ? retentionAmount * 12 : retentionAmount)}</span>
                             </div>
                         )}
                         <div className="flex justify-between items-center text-[#F5CB5C] font-black text-2xl pt-2 mt-2 border-t border-[#4A4D4A]">
                             <div className="flex flex-col">
-                                <span>Inversi√≥n Neta Final</span>
+                                <span>InversiÛn Neta Final</span>
                                 <span className="text-[10px] text-[#F5CB5C]/50 uppercase tracking-tighter leading-none mt-1">
                                     {viewMode === 'annual' ? 'PROYECTADA ANUAL' : 'COSTO MENSUAL ESTIMADO'}
                                 </span>
@@ -3389,7 +3395,7 @@ graph TD
                         className="bg-[#F5CB5C] hover:bg-[#E0B84C] text-[#242423] border-0 rounded-2xl h-14 font-bold w-full transition-all text-base shadow-[0_0_20px_rgba(245,203,92,0.3)] hover:shadow-[0_0_25px_rgba(245,203,92,0.5)] transform hover:scale-[1.02]"
                     >
                         {isSaving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
-                        {isSaving ? 'Guardando...' : 'Guardar Cotizaci√≥n'}
+                        {isSaving ? 'Guardando...' : 'Guardar CotizaciÛn'}
                     </Button>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -3420,7 +3426,7 @@ graph TD
                         <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
                             <div className="flex items-center justify-between">
                                 <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                                    <Network className="w-4 h-4 text-[#F5CB5C]" /> Arquitectura Din√°mica
+                                    <Network className="w-4 h-4 text-[#F5CB5C]" /> Arquitectura Din·mica
                                 </h4>
                                 <div className="flex gap-4">
                                     {!isEditingDiagram ? (
@@ -3430,12 +3436,12 @@ graph TD
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => {
-                                                        if (confirm("¬øRestaurar diagrama autom√°tico? Se perder√°n los cambios manuales.")) {
+                                                        if (confirm("øRestaurar diagrama autom·tico? Se perder·n los cambios manuales.")) {
                                                             setManualDiagramCode(null)
                                                         }
                                                     }}
                                                     className="h-7 px-2 text-[#CFDBD5] hover:text-[#F5CB5C] text-[10px]"
-                                                    title="Restaurar Autom√°tico"
+                                                    title="Restaurar Autom·tico"
                                                 >
                                                     <RefreshCw className="w-3 h-3" />
                                                 </Button>
@@ -3495,7 +3501,7 @@ graph TD
                                             <Sparkles className="w-5 h-5 text-[#F5CB5C]" />
                                         </div>
                                         <Input
-                                            placeholder="Describe cambios con IA (ej: 'Agrega validaci√≥n entre origen e ingesta')"
+                                            placeholder="Describe cambios con IA (ej: 'Agrega validaciÛn entre origen e ingesta')"
                                             value={aiPrompt}
                                             onChange={(e) => setAiPrompt(e.target.value)}
                                             className="bg-transparent border-none text-[#E8EDDF] placeholder:text-[#CFDBD5]/50 focus-visible:ring-0"
@@ -3513,7 +3519,7 @@ graph TD
 
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center">
-                                            <label className="text-[10px] font-bold text-[#CFDBD5] uppercase tracking-wider">C√≥digo Mermaid</label>
+                                            <label className="text-[10px] font-bold text-[#CFDBD5] uppercase tracking-wider">CÛdigo Mermaid</label>
                                             {diagramHistory.length > 0 && (
                                                 <Button
                                                     variant="ghost"
@@ -3533,7 +3539,7 @@ graph TD
                                         />
                                         <p className="text-[10px] text-[#CFDBD5]/50 flex items-center gap-1">
                                             <ShieldAlert className="w-3 h-3" />
-                                            La edici√≥n manual desactiva las actualizaciones autom√°ticas.
+                                            La ediciÛn manual desactiva las actualizaciones autom·ticas.
                                         </p>
                                     </div>
                                     <div className="space-y-2">
@@ -3564,7 +3570,7 @@ graph TD
                 {state.serviceType !== 'Staffing' && (
                     <div className="space-y-6 pt-10 border-t border-[#CFDBD5]/10">
                         <h4 className="text-[#CFDBD5] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                            <Cpu className="w-4 h-4 text-[#F5CB5C]" /> Resumen T√©cnico
+                            <Cpu className="w-4 h-4 text-[#F5CB5C]" /> Resumen TÈcnico
                         </h4>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-[#333533] p-5 rounded-2xl border border-[#4A4D4A] text-center">
@@ -3588,7 +3594,7 @@ graph TD
                                 Sugerencia de Perfiles
                             </DialogTitle>
                             <DialogDescription className="text-[#CFDBD5]">
-                                Basado en tu stack tecnol√≥gico, recomendamos agregar los siguientes perfiles a tu equipo:
+                                Basado en tu stack tecnolÛgico, recomendamos agregar los siguientes perfiles a tu equipo:
                             </DialogDescription>
                         </DialogHeader>
 
@@ -3667,7 +3673,7 @@ function generateSustainDiagram(stack: string[]): string {
 
     // Tech Stack Overlay
     if (stack.length > 0) {
-        code += `\n    subgraph TechStack [Stack Tecnol√≥gico]`
+        code += `\n    subgraph TechStack [Stack TecnolÛgico]`
         code += `\n    direction TB`
 
         const chunkSize = 4

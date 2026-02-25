@@ -531,7 +531,7 @@ export function createQuoteWordDoc(data: any): Document {
                                                 children: [
                                                     new TextRun({
                                                         text: data.sustainDetails.hasHypercare
-                                                            ? `ACTIVADO (${(data.sustainDetails.hypercarePeriod || '30_days').replace('_', ' ').replace('days', 'días')})`
+                                                            ? `Soporte Hypercare: ${(data.sustainDetails.hypercarePeriod || '30_days').replace('_', ' ').replace(/^\+/, '+ ').replace('days', 'días')}`
                                                             : "NO APLICABLE",
                                                         size: 17
                                                     })

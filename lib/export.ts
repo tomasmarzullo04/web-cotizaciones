@@ -631,10 +631,11 @@ function createPDFDocument(data: QuoteState & {
         doc.text(`${(data.sustainDetails.metrics.updateFrequency || 'daily').toUpperCase()} / ${data.sustainDetails.updateDuration || 'N/A'}`, margin + paddingX, sy)
         const formatHypercare = (val: string) => {
             if (!val) return "30 días"
+            if (val === "+90_days") return "+ días"
             return val.replace('_', ' ').replace('days', 'días')
         }
         const hypercareText = data.sustainDetails.hasHypercare
-            ? `ACTIVADO (${formatHypercare(data.sustainDetails.hypercarePeriod)})`
+            ? `Soporte Hypercare: ${formatHypercare(data.sustainDetails.hypercarePeriod)}`
             : "NO APLICABLE"
         doc.text(hypercareText, col2, sy)
 
