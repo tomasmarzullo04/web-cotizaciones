@@ -263,13 +263,7 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
                             onKeyDown={e => {
                                 if (e.key === 'Enter') handleBlur();
                             }}
-                            className="!bg-transparent !bg-none !border-none !ring-0 !outline-none !shadow-none text-[#E8EDDF] text-xl font-black text-center w-full h-full p-0 m-0 z-30 selection:bg-[#F5CB5C]/30 caret-[#F5CB5C]"
-                            style={{
-                                backgroundColor: 'transparent',
-                                border: 'none',
-                                boxShadow: 'none',
-                                outline: 'none'
-                            }}
+                            className="!bg-transparent !bg-none !shadow-none !ring-0 !outline-none text-[#E8EDDF] text-xl font-black text-center w-full h-full p-0 m-0 z-30 selection:bg-[#F5CB5C]/30 caret-[#F5CB5C]"
                         />
                     ) : (
                         <div className="flex items-center justify-center gap-1.5 cursor-pointer group/inner transition-all hover:scale-110 active:scale-95 py-1 rounded-md hover:bg-white/5 w-full h-full" onClick={() => setIsEditing(true)}>
@@ -282,7 +276,7 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
                 {/* Column 3: Unit + Plus Button (Right Aligned) */}
                 <div className="flex items-center h-full shrink-0">
                     {unit && (
-                        <span className="text-[10px] text-[#7C7F7C] font-black uppercase select-none pointer-events-none mr-1">
+                        <span className="text-[10px] text-[#7C7F7C] font-black uppercase select-none pointer-events-none mr-2">
                             {unit}
                         </span>
                     )}
@@ -300,6 +294,7 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
         </div>
     );
 }
+
 
 const INITIAL_STATE: QuoteState = {
     clientName: '',
@@ -2563,7 +2558,7 @@ graph TD
                                                         </div>
                                                         <div className="flex items-center gap-3 bg-[#1E1E1E]/50 px-3 py-1.5 rounded-xl border border-[#4A4D4A]/50">
                                                             <span
-                                                                className={cn("text-[9px] font-black transition-colors w-4 cursor-pointer hover:text-[#F5CB5C]", state.sustainDetails.hasHypercare ? "text-[#7C7F7C]" : "text-[#F5CB5C]")}
+                                                                className={cn("text-[9px] font-black transition-colors w-4 cursor-pointer hover:text-[#F5CB5C] text-center", !state.sustainDetails.hasHypercare ? "text-[#F5CB5C]" : "text-[#7C7F7C]")}
                                                                 onClick={() => updateState("sustainDetails", { ...state.sustainDetails, hasHypercare: false })}
                                                             >
                                                                 NO
