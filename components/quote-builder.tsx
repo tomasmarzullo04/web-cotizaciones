@@ -909,7 +909,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
 
         // 4. Modelos DS
         const ds = metrics.dsModelsCount
-        const dsScore = ds === 0 ? 0 : ds <= 1 ? 1 : ds <= 5 ? 3 : 5
+        const dsScore = ds === 0 ? 0 : ds <= 2 ? 1 : ds <= 5 ? 2 : ds <= 10 ? 3 : ds <= 20 ? 4 : 5
 
         // 5. Procesos Manuales
         const mScore = metrics.manualProcess ? 5 : 0
@@ -922,12 +922,12 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         const depCount = metrics.systemDependencies ? metrics.systemDependencies.split(',').filter(x => x.trim()).length : 0
         const scopeBonus = (criticalityMatrix.marketsImpacted > 1 || criticalityMatrix.usersImpacted > 50) ? 1 : 0
 
-        // Fix: If no dependencies, score is 0. If 1-2, score is 1.
+        // Score scale alignment: 0-2:1, 3-5:2, 6-10:3, 11-20:4, +20:5
         let depScore = 0
         if (depCount > 0) {
-            depScore = Math.min(5, (depCount <= 2 ? 1 : depCount === 3 ? 3 : depCount === 4 ? 4 : 5) + scopeBonus)
+            depScore = Math.min(5, (depCount <= 2 ? 1 : depCount <= 5 ? 2 : depCount <= 10 ? 3 : depCount <= 20 ? 4 : 5) + scopeBonus)
         } else if (scopeBonus > 0) {
-            depScore = scopeBonus // If only scope is high
+            depScore = scopeBonus
         }
 
         const totalFactors = [pScore, nScore, dScore, dsScore, mScore, fScore, depScore]
@@ -1030,7 +1030,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         // Simulate AI delay
         await new Promise(r => setTimeout(r, 1500))
         updateState('description',
-            `PROYECTO: ${state.clientName || 'Empresa'}\n\nOBJETIVO ESTRATÉGICO:\n${state.description}\n\nARQUITECTURA PROPUESTA:\nImplementaciÃ³n de un ecosistema de datos moderno basado en ${state.techStack.join(', ') || 'Azure/AWS'}. Se diseñarán ${state.pipelinesCount} pipelines de ingesta resilientes y se desplegarán ${state.dashboardsCount + state.reportsCount} activos de visualización para soportar la toma de decisiones.\n\nALCANCE:\n- Ingesta: ${state.updateFrequency} (${state.manualProcessPct}% manual actual)\n- Consumo: ${state.reportUsers} usuarios finales`)
+            `PROYECTO: ${state.clientName || 'Empresa'}\n\nOBJETIVO ESTRATÉGICO:\n${state.description}\n\nARQUITECTURA PROPUESTA:\nImplementación de un ecosistema de datos moderno basado en ${state.techStack.join(', ') || 'Azure/AWS'}. Se diseñarán ${state.pipelinesCount} pipelines de ingesta resilientes y se desplegarán ${state.dashboardsCount + state.reportsCount} activos de visualización para soportar la toma de decisiones.\n\nALCANCE:\n- Ingesta: ${state.updateFrequency} (${state.manualProcessPct}% manual actual)\n- Consumo: ${state.reportUsers} usuarios finales`)
         setPolishLoading(false)
     }
 
