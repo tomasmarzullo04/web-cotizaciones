@@ -219,7 +219,7 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
     return (
         <div className={cn("space-y-1.5", className)} style={{ width: '140px' }}>
             {label && <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">{label}</Label>}
-            <div className="flex items-center bg-transparent rounded-xl border-0 transition-all w-full h-10 relative overflow-hidden group">
+            <div className="flex items-center bg-[#2A2A28] rounded-xl border border-[#4A4D4A] transition-all w-full h-10 relative overflow-hidden group">
                 {/* Minus Button */}
                 <Button
                     variant="ghost"
@@ -233,7 +233,7 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
 
                 {/* Input Area - Centered Number */}
                 <div className="flex-1 flex items-center justify-center h-full px-8 relative">
-                    <div className="flex items-baseline justify-center gap-1 w-full">
+                    <div className="flex items-baseline justify-center gap-1 w-full translate-x-[-1px]">
                         {isEditing ? (
                             <input
                                 type="text"
@@ -244,15 +244,17 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
                                     const raw = e.target.value.replace(/[^0-9]/g, '');
                                     const cleaned = raw.replace(/^0+/, '') || '0';
                                     const val = parseInt(cleaned);
-                                    onChange(Math.max(min, Math.min(max, val)));
+                                    if (!isNaN(val)) {
+                                        onChange(Math.max(min, Math.min(max, val)));
+                                    }
                                 }}
                                 onBlur={() => setIsEditing(false)}
                                 onKeyDown={e => e.key === 'Enter' && setIsEditing(false)}
-                                className="bg-transparent text-[#E8EDDF] text-[16px] font-black text-center w-full focus:outline-none focus:ring-0 border-0 p-0 leading-none h-full z-10 selection:bg-[#F5CB5C]/30 shadow-none outline-none"
+                                className="bg-transparent text-[#E8EDDF] text-lg font-black text-center w-full focus:outline-none focus:ring-0 border-0 p-0 leading-none h-full z-10 selection:bg-[#F5CB5C]/30 shadow-none outline-none"
                             />
                         ) : (
                             <div className="flex items-center justify-center gap-1 cursor-pointer group/inner" onClick={() => setIsEditing(true)}>
-                                <span className="text-[#E8EDDF] text-[16px] font-black">{value}</span>
+                                <span className="text-[#E8EDDF] text-lg font-black">{value}</span>
                                 <Pencil className="w-2.5 h-2.5 text-[#CFDBD5]/20 group-hover/inner:text-[#F5CB5C] transition-colors" />
                             </div>
                         )}
@@ -2531,16 +2533,23 @@ graph TD
 
                                             <div className="flex flex-col gap-4">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="flex items-center gap-4 py-2 border border-[#4A4D4A]/30 bg-[#242423]/50 rounded-2xl px-5 flex-1 min-h-[64px]">
+                                                    <div className={cn(
+                                                        "flex items-center gap-4 py-2 border border-[#4A4D4A] bg-[#2A2A28] rounded-2xl px-5 flex-1 min-h-[64px] transition-all",
+                                                        state.sustainDetails.hasHypercare && "border-[#F5CB5C]/50 shadow-[0_0_15px_rgba(245,203,92,0.05)]"
+                                                    )}>
                                                         <div className="flex-1">
                                                             <Label className="text-[#CFDBD5] block text-xs uppercase font-bold text-opacity-70">Soporte Hypercare (+1 Mes Base)</Label>
                                                             <p className="text-[10px] text-[#7C7F7C]">Acompañamiento post-salida a producción</p>
                                                         </div>
-                                                        <Switch
-                                                            checked={state.sustainDetails.hasHypercare}
-                                                            onCheckedChange={v => updateState("sustainDetails", { ...state.sustainDetails, hasHypercare: v })}
-                                                            className="data-[state=checked]:bg-[#F5CB5C]"
-                                                        />
+                                                        <div className="flex items-center gap-3 bg-[#1E1E1E]/50 px-3 py-1.5 rounded-xl border border-[#4A4D4A]/50">
+                                                            <span className={cn("text-[9px] font-black transition-colors w-4", state.sustainDetails.hasHypercare ? "text-[#7C7F7C]" : "text-[#F5CB5C]")}>NO</span>
+                                                            <Switch
+                                                                checked={state.sustainDetails.hasHypercare}
+                                                                onCheckedChange={v => updateState("sustainDetails", { ...state.sustainDetails, hasHypercare: v })}
+                                                                className="data-[state=checked]:bg-[#F5CB5C]"
+                                                            />
+                                                            <span className={cn("text-[9px] font-black transition-colors w-4 text-center", state.sustainDetails.hasHypercare ? "text-[#F5CB5C]" : "text-[#7C7F7C]")}>SÍ</span>
+                                                        </div>
                                                     </div>
 
                                                     {state.sustainDetails.hasHypercare && (
