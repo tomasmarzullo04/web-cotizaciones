@@ -247,12 +247,12 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
                 </Button>
 
                 {/* Column 2: Centered Number/Popover Trigger */}
-                <div className="flex-1 flex items-center justify-center h-full relative px-2">
+                <div className="flex-1 flex items-center justify-center h-full relative px-1.5">
                     <Popover open={isOpen} onOpenChange={setIsOpen}>
                         <PopoverTrigger asChild>
-                            <div className="flex items-center justify-center gap-1.5 cursor-pointer group/inner transition-all hover:scale-110 active:scale-95 py-1 rounded-md hover:bg-white/5 w-full h-full">
-                                <span className="text-[#E8EDDF] text-lg font-black leading-none">{value}</span>
-                                <Pencil className="w-3 h-3 text-[#CFDBD5]/20 group-hover/inner:text-[#F5CB5C] transition-colors" />
+                            <div className="flex items-center justify-center gap-1 cursor-pointer group/inner transition-all hover:scale-110 active:scale-95 py-1 rounded-md hover:bg-white/5 w-full h-full">
+                                <span className="text-[#E8EDDF] text-[15px] font-black leading-none">{value}</span>
+                                <Pencil className="w-2.5 h-2.5 text-[#CFDBD5]/20 group-hover/inner:text-[#F5CB5C] transition-colors" />
                             </div>
                         </PopoverTrigger>
                         <PopoverContent className="w-40 bg-[#242423] border-[#4A4D4A] p-3 rounded-xl shadow-2xl animate-in zoom-in-95 duration-200" side="bottom" align="center" sideOffset={8}>
