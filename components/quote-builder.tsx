@@ -242,18 +242,28 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
                                 value={value}
                                 onChange={e => {
                                     const raw = e.target.value.replace(/[^0-9]/g, '');
-                                    const cleaned = raw.replace(/^0+/, '') || '0';
-                                    const val = parseInt(cleaned);
+                                    const val = parseInt(raw);
                                     if (!isNaN(val)) {
                                         onChange(Math.max(min, Math.min(max, val)));
+                                    } else if (raw === '') {
+                                        onChange(0);
                                     }
                                 }}
-                                onBlur={() => setIsEditing(false)}
-                                onKeyDown={e => e.key === 'Enter' && setIsEditing(false)}
-                                className="bg-transparent text-[#E8EDDF] text-lg font-black text-center w-full focus:outline-none focus:ring-0 border-0 p-0 leading-none h-full z-10 selection:bg-[#F5CB5C]/30 shadow-none outline-none"
+                                onBlur={() => {
+                                    setIsEditing(false);
+                                    // Ensure no leading zeros on exit if value is > 0
+                                    onChange(parseInt(value.toString()) || 0);
+                                }}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') {
+                                        setIsEditing(false);
+                                        onChange(parseInt(value.toString()) || 0);
+                                    }
+                                }}
+                                className="bg-transparent text-[#E8EDDF] text-lg font-black text-center w-full focus:outline-none focus:ring-0 border-none shadow-none outline-none p-0 leading-none h-full z-10 selection:bg-[#F5CB5C]/30"
                             />
                         ) : (
-                            <div className="flex items-center justify-center gap-1 cursor-pointer group/inner" onClick={() => setIsEditing(true)}>
+                            <div className="flex items-center justify-center gap-1 cursor-pointer group/inner transition-all hover:scale-105" onClick={() => setIsEditing(true)}>
                                 <span className="text-[#E8EDDF] text-lg font-black">{value}</span>
                                 <Pencil className="w-2.5 h-2.5 text-[#CFDBD5]/20 group-hover/inner:text-[#F5CB5C] transition-colors" />
                             </div>
@@ -2272,7 +2282,7 @@ graph TD
                                             {/* Metrics Grid - FIXED VOLUMETRICS */}
                                             <div>
                                                 <Label className="text-[#CFDBD5] mb-3 block text-xs uppercase font-bold tracking-tight ml-1">Métricas Volumetría (Mensual)</Label>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 items-start bg-[#333533]/20 p-3 rounded-2xl border border-[#4A4D4A]/30">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-8 items-start bg-[#333533]/20 p-4 rounded-2xl border border-[#4A4D4A]/30">
                                                     <NumericStepper
                                                         label="Pipelines"
                                                         value={state.sustainDetails.metrics.pipelinesCount}
@@ -2391,7 +2401,7 @@ graph TD
                                         </span>
                                     </AccordionTrigger>
                                     <AccordionContent className="p-4 space-y-6 bg-[#242423]/50 rounded-b-xl">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div>
                                                 <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Owner de Negocio</Label>
                                                 <Input
@@ -2542,13 +2552,23 @@ graph TD
                                                             <p className="text-[10px] text-[#7C7F7C]">Acompañamiento post-salida a producción</p>
                                                         </div>
                                                         <div className="flex items-center gap-3 bg-[#1E1E1E]/50 px-3 py-1.5 rounded-xl border border-[#4A4D4A]/50">
-                                                            <span className={cn("text-[9px] font-black transition-colors w-4", state.sustainDetails.hasHypercare ? "text-[#7C7F7C]" : "text-[#F5CB5C]")}>NO</span>
+                                                            <span
+                                                                className={cn("text-[9px] font-black transition-colors w-4 cursor-pointer hover:text-[#F5CB5C]", state.sustainDetails.hasHypercare ? "text-[#7C7F7C]" : "text-[#F5CB5C]")}
+                                                                onClick={() => updateState("sustainDetails", { ...state.sustainDetails, hasHypercare: false })}
+                                                            >
+                                                                NO
+                                                            </span>
                                                             <Switch
                                                                 checked={state.sustainDetails.hasHypercare}
                                                                 onCheckedChange={v => updateState("sustainDetails", { ...state.sustainDetails, hasHypercare: v })}
                                                                 className="data-[state=checked]:bg-[#F5CB5C]"
                                                             />
-                                                            <span className={cn("text-[9px] font-black transition-colors w-4 text-center", state.sustainDetails.hasHypercare ? "text-[#F5CB5C]" : "text-[#7C7F7C]")}>SÍ</span>
+                                                            <span
+                                                                className={cn("text-[9px] font-black transition-colors w-4 text-center cursor-pointer hover:text-[#F5CB5C]", state.sustainDetails.hasHypercare ? "text-[#F5CB5C]" : "text-[#7C7F7C]")}
+                                                                onClick={() => updateState("sustainDetails", { ...state.sustainDetails, hasHypercare: true })}
+                                                            >
+                                                                SÍ
+                                                            </span>
                                                         </div>
                                                     </div>
 
@@ -2676,7 +2696,7 @@ graph TD
                                             {/* NEW FIELD: Scope (Markets & Users) */}
                                             <div className="bg-[#333533]/20 border border-[#4A4D4A]/30 p-3 rounded-xl space-y-3 col-span-1 md:col-span-2 transition-all">
                                                 <Label className="text-[#CFDBD5] text-[10px] uppercase font-bold tracking-wider ml-1">Alcance (Mercados / Usuarios)</Label>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                                     <div className="relative">
                                                         <NumericStepper
                                                             label="Mercados Impactados"
