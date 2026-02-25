@@ -216,60 +216,82 @@ interface QuoteState {
 
 const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "", className = "" }: { label: string, value: number, onChange: (val: number) => void, min?: number, max?: number, unit?: string, className?: string }) => {
     const [isEditing, setIsEditing] = useState(false);
+    const [localValue, setLocalValue] = useState(value.toString());
+
+    useEffect(() => {
+        if (!isEditing) {
+            setLocalValue(value.toString());
+        }
+    }, [value, isEditing]);
+
+    const handleBlur = () => {
+        setIsEditing(false);
+        const parsed = parseInt(localValue);
+        const finalValue = isNaN(parsed) ? 0 : Math.max(min, Math.min(max, parsed));
+        onChange(finalValue);
+        setLocalValue(finalValue.toString());
+    };
+
     return (
-        <div className={cn("space-y-1.5", className)} style={{ width: '140px' }}>
+        <div className={cn("space-y-1.5", className)} style={{ width: '150px' }}>
             {label && <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">{label}</Label>}
-            <div className="flex items-center bg-[#2A2A28] rounded-xl border border-[#4A4D4A] transition-all w-full h-10 relative overflow-hidden group">
+            <div className="flex items-center bg-[#2A2A28] rounded-xl border border-[#4A4D4A] transition-all w-full h-11 relative overflow-hidden group shadow-inner">
                 {/* Minus Button */}
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-full w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-transparent rounded-none transition-colors disabled:opacity-30 z-20 absolute left-0 shrink-0"
+                    className="h-full w-9 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-white/5 rounded-none transition-colors disabled:opacity-30 z-20 absolute left-0 shrink-0 border-r border-[#4A4D4A]/30"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.max(min, value - 1)); }}
                     disabled={value <= min}
                 >
-                    <Minus className="w-3.5 h-3.5" />
+                    <Minus className="w-4 h-4" />
                 </Button>
 
                 {/* Input Area - Centered Number */}
-                <div className="flex-1 flex items-center justify-center h-full px-8 relative">
-                    <div className="flex items-baseline justify-center gap-1 w-full translate-x-[-1px]">
+                <div className="flex-1 flex items-center justify-center h-full px-9 relative">
+                    <div className="flex items-baseline justify-center gap-1 w-full">
                         {isEditing ? (
                             <input
                                 type="text"
                                 inputMode="numeric"
                                 autoFocus
-                                value={value}
+                                value={localValue}
                                 onChange={e => {
                                     const raw = e.target.value.replace(/[^0-9]/g, '');
-                                    const val = parseInt(raw);
-                                    if (!isNaN(val)) {
-                                        onChange(Math.max(min, Math.min(max, val)));
-                                    } else if (raw === '') {
-                                        onChange(0);
-                                    }
+                                    setLocalValue(raw);
                                 }}
-                                onBlur={() => {
-                                    setIsEditing(false);
-                                    // Ensure no leading zeros on exit if value is > 0
-                                    onChange(parseInt(value.toString()) || 0);
-                                }}
+                                onBlur={handleBlur}
                                 onKeyDown={e => {
-                                    if (e.key === 'Enter') {
-                                        setIsEditing(false);
-                                        onChange(parseInt(value.toString()) || 0);
-                                    }
+                                    if (e.key === 'Enter') handleBlur();
                                 }}
-                                className="!bg-transparent text-[#E8EDDF] text-lg font-black text-center w-full focus:!ring-0 focus:!outline-none !border-none !shadow-none !outline-none !p-0 !h-full z-10 selection:bg-[#F5CB5C]/30"
+                                style={{
+                                    background: 'transparent',
+                                    backgroundColor: 'transparent',
+                                    border: 'none',
+                                    outline: 'none',
+                                    boxShadow: 'none',
+                                    padding: '0',
+                                    height: '100%',
+                                    width: '100%',
+                                    textAlign: 'center',
+                                    color: '#E8EDDF',
+                                    fontSize: '1.25rem', // text-xl (slightly larger for impact)
+                                    fontWeight: '900', // font-black
+                                    lineHeight: '1',
+                                    zIndex: 10,
+                                    margin: '0',
+                                    display: 'block'
+                                }}
+                                className="selection:bg-[#F5CB5C]/30 caret-[#F5CB5C]"
                             />
                         ) : (
-                            <div className="flex items-center justify-center gap-1 cursor-pointer group/inner transition-all hover:scale-105" onClick={() => setIsEditing(true)}>
-                                <span className="text-[#E8EDDF] text-lg font-black">{value}</span>
-                                <Pencil className="w-2.5 h-2.5 text-[#CFDBD5]/20 group-hover/inner:text-[#F5CB5C] transition-colors" />
+                            <div className="flex items-center justify-center gap-1.5 cursor-pointer group/inner transition-all hover:scale-110 active:scale-95 py-1 px-2 rounded-md hover:bg-white/5" onClick={() => setIsEditing(true)}>
+                                <span className="text-[#E8EDDF] text-xl font-black leading-none">{value}</span>
+                                <Pencil className="w-3 h-3 text-[#CFDBD5]/20 group-hover/inner:text-[#F5CB5C] transition-colors" />
                             </div>
                         )}
                         {unit && (
-                            <span className="text-[9px] text-[#7C7F7C] font-black uppercase select-none pointer-events-none pb-0.5">
+                            <span className="text-[10px] text-[#7C7F7C] font-black uppercase select-none pointer-events-none pb-0.5">
                                 {unit}
                             </span>
                         )}
@@ -280,11 +302,11 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-full w-8 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-transparent rounded-none transition-colors disabled:opacity-30 z-20 absolute right-0 shrink-0"
+                    className="h-full w-9 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-white/5 rounded-none transition-colors disabled:opacity-30 z-20 absolute right-0 shrink-0 border-l border-[#4A4D4A]/30"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.min(max, value + 1)); }}
                     disabled={value >= max}
                 >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-4 h-4" />
                 </Button>
             </div>
         </div>
@@ -2282,7 +2304,7 @@ graph TD
                                             {/* Metrics Grid - FIXED VOLUMETRICS */}
                                             <div>
                                                 <Label className="text-[#CFDBD5] mb-3 block text-xs uppercase font-bold tracking-tight ml-1">Métricas Volumetría (Mensual)</Label>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-8 items-start bg-[#333533]/20 p-4 rounded-2xl border border-[#4A4D4A]/30">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-8 items-start bg-[#333533]/20 p-6 rounded-2xl border border-[#4A4D4A]/30">
                                                     <NumericStepper
                                                         label="Pipelines"
                                                         value={state.sustainDetails.metrics.pipelinesCount}
@@ -2401,7 +2423,7 @@ graph TD
                                         </span>
                                     </AccordionTrigger>
                                     <AccordionContent className="p-4 space-y-6 bg-[#242423]/50 rounded-b-xl">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                                             <div>
                                                 <Label className="text-[#CFDBD5] mb-2 block text-xs uppercase font-bold">Owner de Negocio</Label>
                                                 <Input
@@ -2635,7 +2657,6 @@ graph TD
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
 
                                             {/* NEW FIELD: Frequency of Use */}
-                                            {/* NEW FIELD: Frequency of Use */}
 
                                             {/* NEW FIELD: Critical Dates */}
                                             <div className="bg-[#333533]/50 border border-[#4A4D4A] p-4 rounded-xl space-y-4">
@@ -2693,10 +2714,9 @@ graph TD
                                             </div>
 
                                             {/* NEW FIELD: Scope (Markets & Users) */}
-                                            {/* NEW FIELD: Scope (Markets & Users) */}
                                             <div className="bg-[#333533]/20 border border-[#4A4D4A]/30 p-3 rounded-xl space-y-3 col-span-1 md:col-span-2 transition-all">
                                                 <Label className="text-[#CFDBD5] text-[10px] uppercase font-bold tracking-wider ml-1">Alcance (Mercados / Usuarios)</Label>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                                                     <div className="relative">
                                                         <NumericStepper
                                                             label="Mercados Impactados"
