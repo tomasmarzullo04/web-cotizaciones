@@ -2402,7 +2402,6 @@ graph TD
                                                 label="Duración Proceso"
                                                 value={parseInt(state.sustainDetails.updateDuration) || 0}
                                                 unit="HS"
-                                                maxWidth="130px"
                                                 onChange={v => updateState('sustainDetails', { ...state.sustainDetails, updateDuration: v.toString() })}
                                             />
                                             <div className="md:col-span-2">
@@ -2532,17 +2531,17 @@ graph TD
 
                                             <div className="flex flex-col gap-4">
                                                 <div className="flex items-center gap-4">
-                                                     <div className="flex items-center gap-4 py-2 border border-[#4A4D4A]/30 bg-[#242423]/50 rounded-2xl px-5 flex-1 min-h-[64px]">
-                                                         <div className="flex-1">
-                                                             <Label className="text-[#CFDBD5] block text-xs uppercase font-bold text-opacity-70">Soporte Hypercare (+1 Mes Base)</Label>
-                                                             <p className="text-[10px] text-[#7C7F7C]">AcompaÃ±amiento post-salida a producciÃ³n</p>
-                                                         </div>
-                                                         <Switch
-                                                             checked={state.sustainDetails.hasHypercare}
-                                                             onCheckedChange={v => updateState("sustainDetails", { ...state.sustainDetails, hasHypercare: v })}
-                                                             className="data-[state=checked]:bg-[#F5CB5C]",
-                                                         />
-                                                     </div>
+                                                    <div className="flex items-center gap-4 py-2 border border-[#4A4D4A]/30 bg-[#242423]/50 rounded-2xl px-5 flex-1 min-h-[64px]">
+                                                        <div className="flex-1">
+                                                            <Label className="text-[#CFDBD5] block text-xs uppercase font-bold text-opacity-70">Soporte Hypercare (+1 Mes Base)</Label>
+                                                            <p className="text-[10px] text-[#7C7F7C]">Acompañamiento post-salida a producción</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={state.sustainDetails.hasHypercare}
+                                                            onCheckedChange={v => updateState("sustainDetails", { ...state.sustainDetails, hasHypercare: v })}
+                                                            className="data-[state=checked]:bg-[#F5CB5C]"
+                                                        />
+                                                    </div>
 
                                                     {state.sustainDetails.hasHypercare && (
                                                         <div className="space-y-1.5 flex-1 animate-in fade-in slide-in-from-left-4 duration-300 max-w-[130px]">
@@ -2674,7 +2673,6 @@ graph TD
                                                             label="Mercados Impactados"
                                                             value={state.sustainDetails.criticalityMatrix.marketsImpacted}
                                                             unit="CANT."
-                                                            maxWidth="130px"
                                                             onChange={v => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, marketsImpacted: v } })}
                                                         />
                                                     </div>
@@ -2683,7 +2681,6 @@ graph TD
                                                             label="Usuarios Impactados"
                                                             value={state.sustainDetails.criticalityMatrix.usersImpacted}
                                                             unit="CANT."
-                                                            maxWidth="130px"
                                                             onChange={v => updateState('sustainDetails', { ...state.sustainDetails, criticalityMatrix: { ...state.sustainDetails.criticalityMatrix, usersImpacted: v } })}
                                                         />
                                                     </div>
