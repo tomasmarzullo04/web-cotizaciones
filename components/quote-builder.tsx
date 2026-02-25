@@ -233,81 +233,69 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
     };
 
     return (
-        <div className={cn("space-y-1.5", className)} style={{ width: '150px' }}>
+        <div className={cn("space-y-1.5", className)} style={{ width: '160px' }}>
             {label && <Label className="text-[#CFDBD5]/70 text-[10px] uppercase font-bold tracking-wider block ml-1">{label}</Label>}
             <div className="flex items-center bg-[#2A2A28] rounded-xl border border-[#4A4D4A] transition-all w-full h-11 relative overflow-hidden group shadow-inner">
-                {/* Minus Button */}
+                {/* Column 1: Minus Button (Fixed Width) */}
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-full w-9 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-white/5 rounded-none transition-colors disabled:opacity-30 z-20 absolute left-0 shrink-0 border-r border-[#4A4D4A]/30"
+                    className="h-full w-9 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-white/5 rounded-none transition-colors border-r border-[#4A4D4A]/30 shrink-0"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.max(min, value - 1)); }}
                     disabled={value <= min}
                 >
                     <Minus className="w-4 h-4" />
                 </Button>
 
-                {/* Input Area - Centered Number */}
-                <div className="flex-1 flex items-center justify-center h-full px-9 relative">
-                    <div className="flex items-baseline justify-center gap-1 w-full">
-                        {isEditing ? (
-                            <input
-                                type="text"
-                                inputMode="numeric"
-                                autoFocus
-                                value={localValue}
-                                onChange={e => {
-                                    const raw = e.target.value.replace(/[^0-9]/g, '');
-                                    setLocalValue(raw);
-                                }}
-                                onBlur={handleBlur}
-                                onKeyDown={e => {
-                                    if (e.key === 'Enter') handleBlur();
-                                }}
-                                style={{
-                                    background: 'transparent',
-                                    backgroundColor: 'transparent',
-                                    border: 'none',
-                                    outline: 'none',
-                                    boxShadow: 'none',
-                                    padding: '0',
-                                    height: '100%',
-                                    width: '100%',
-                                    textAlign: 'center',
-                                    color: '#E8EDDF',
-                                    fontSize: '1.25rem', // text-xl (slightly larger for impact)
-                                    fontWeight: '900', // font-black
-                                    lineHeight: '1',
-                                    zIndex: 10,
-                                    margin: '0',
-                                    display: 'block'
-                                }}
-                                className="selection:bg-[#F5CB5C]/30 caret-[#F5CB5C]"
-                            />
-                        ) : (
-                            <div className="flex items-center justify-center gap-1.5 cursor-pointer group/inner transition-all hover:scale-110 active:scale-95 py-1 px-2 rounded-md hover:bg-white/5" onClick={() => setIsEditing(true)}>
-                                <span className="text-[#E8EDDF] text-xl font-black leading-none">{value}</span>
-                                <Pencil className="w-3 h-3 text-[#CFDBD5]/20 group-hover/inner:text-[#F5CB5C] transition-colors" />
-                            </div>
-                        )}
-                        {unit && (
-                            <span className="text-[10px] text-[#7C7F7C] font-black uppercase select-none pointer-events-none pb-0.5">
-                                {unit}
-                            </span>
-                        )}
-                    </div>
+                {/* Column 2: Centered Number/Input (Flex-1) */}
+                <div className="flex-1 flex items-center justify-center h-full relative px-2">
+                    {isEditing ? (
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            autoFocus
+                            value={localValue}
+                            onChange={e => {
+                                const raw = e.target.value.replace(/[^0-9]/g, '');
+                                setLocalValue(raw);
+                            }}
+                            onBlur={handleBlur}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter') handleBlur();
+                            }}
+                            className="!bg-transparent !bg-none !border-none !ring-0 !outline-none !shadow-none text-[#E8EDDF] text-xl font-black text-center w-full h-full p-0 m-0 z-30 selection:bg-[#F5CB5C]/30 caret-[#F5CB5C]"
+                            style={{
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                boxShadow: 'none',
+                                outline: 'none'
+                            }}
+                        />
+                    ) : (
+                        <div className="flex items-center justify-center gap-1.5 cursor-pointer group/inner transition-all hover:scale-110 active:scale-95 py-1 rounded-md hover:bg-white/5 w-full h-full" onClick={() => setIsEditing(true)}>
+                            <span className="text-[#E8EDDF] text-xl font-black leading-none">{value}</span>
+                            <Pencil className="w-3 h-3 text-[#CFDBD5]/20 group-hover/inner:text-[#F5CB5C] transition-colors" />
+                        </div>
+                    )}
                 </div>
 
-                {/* Plus Button */}
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-full w-9 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-white/5 rounded-none transition-colors disabled:opacity-30 z-20 absolute right-0 shrink-0 border-l border-[#4A4D4A]/30"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.min(max, value + 1)); }}
-                    disabled={value >= max}
-                >
-                    <Plus className="w-4 h-4" />
-                </Button>
+                {/* Column 3: Unit + Plus Button (Right Aligned) */}
+                <div className="flex items-center h-full shrink-0">
+                    {unit && (
+                        <span className="text-[10px] text-[#7C7F7C] font-black uppercase select-none pointer-events-none mr-1">
+                            {unit}
+                        </span>
+                    )}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-full w-9 text-[#CFDBD5]/30 hover:text-[#F5CB5C] hover:bg-white/5 rounded-none transition-colors border-l border-[#4A4D4A]/30"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(Math.min(max, value + 1)); }}
+                        disabled={value >= max}
+                    >
+                        <Plus className="w-4 h-4" />
+                    </Button>
+                </div>
             </div>
         </div>
     );
