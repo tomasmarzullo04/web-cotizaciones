@@ -38,7 +38,10 @@ export async function loginAction(formData: FormData) {
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
         cookies: {
             get(name: string) { return cookieStore.get(name)?.value },
-            set(name: string, value: string, options: CookieOptions) { cookieStore.set({ name, value, ...options }) },
+            set(name: string, value: string, options: CookieOptions) {
+                const { maxAge, expires, ...sessionOptions } = options;
+                cookieStore.set({ name, value, ...sessionOptions })
+            },
             remove(name: string, options: CookieOptions) { cookieStore.delete({ name, ...options }) },
         },
     })
@@ -178,7 +181,10 @@ export async function registerAction(formData: FormData) {
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
         cookies: {
             get(name: string) { return cookieStore.get(name)?.value },
-            set(name: string, value: string, options: CookieOptions) { cookieStore.set({ name, value, ...options }) },
+            set(name: string, value: string, options: CookieOptions) {
+                const { maxAge, expires, ...sessionOptions } = options;
+                cookieStore.set({ name, value, ...sessionOptions })
+            },
             remove(name: string, options: CookieOptions) { cookieStore.delete({ name, ...options }) },
         },
     })
@@ -284,7 +290,10 @@ export async function getServerSession() {
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
         cookies: {
             get(name: string) { return cookieStore.get(name)?.value },
-            set(name: string, value: string, options: CookieOptions) { cookieStore.set({ name, value, ...options }) },
+            set(name: string, value: string, options: CookieOptions) {
+                const { maxAge, expires, ...sessionOptions } = options;
+                cookieStore.set({ name, value, ...sessionOptions })
+            },
             remove(name: string, options: CookieOptions) { cookieStore.delete({ name, ...options }) },
         },
     })
@@ -336,7 +345,10 @@ export async function syncSessionAction() {
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
         cookies: {
             get(name: string) { return cookieStore.get(name)?.value },
-            set(name: string, value: string, options: CookieOptions) { cookieStore.set({ name, value, ...options }) },
+            set(name: string, value: string, options: CookieOptions) {
+                const { maxAge, expires, ...sessionOptions } = options;
+                cookieStore.set({ name, value, ...sessionOptions })
+            },
             remove(name: string, options: CookieOptions) { cookieStore.delete({ name, ...options }) },
         },
     })

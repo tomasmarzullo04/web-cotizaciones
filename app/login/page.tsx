@@ -21,7 +21,7 @@ const getSupabaseClient = () => {
     if (!url || !key) return null
     return createBrowserClient(url, key, {
         auth: {
-            persistSession: true,
+            persistSession: false,
             autoRefreshToken: true,
             detectSessionInUrl: true
         }

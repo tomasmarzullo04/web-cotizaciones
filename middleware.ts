@@ -17,15 +17,17 @@ export async function middleware(request: NextRequest) {
                     return request.cookies.getAll();
                 },
                 setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value, options }) =>
-                        request.cookies.set(name, value)
-                    );
+                    cookiesToSet.forEach(({ name, value, options }) => {
+                        const { maxAge, expires, ...sessionOptions } = options;
+                        request.cookies.set(name, value);
+                    });
                     response = NextResponse.next({
                         request,
                     });
-                    cookiesToSet.forEach(({ name, value, options }) =>
-                        response.cookies.set(name, value, options)
-                    );
+                    cookiesToSet.forEach(({ name, value, options }) => {
+                        const { maxAge, expires, ...sessionOptions } = options;
+                        response.cookies.set(name, value, sessionOptions);
+                    });
                 },
             },
         }
@@ -55,16 +57,12 @@ export async function middleware(request: NextRequest) {
 
         if (!sessionRole || !sessionUser) {
             console.log(`[Middleware] Desync detected for ${user.email}. Syncing cookies...`);
+        }
 
-            // We use the internal API or a direct DB fetch if possible.
-            // Since Middleware is Edge/Server, we can't easily use Prisma if it's not edge-ready,
-            // but we can let the next request (Layout) handle the heavy lifting, 
-            // OR we can trigger a sync via an internal call if needed.
-
-            // Optimization: If it's a page request, we let app/layout handle it.
-            // But to "shield" the Navbar immediately, we'd want cookies now.
-            // For now, if we're in middleware and have a user but no cookies,
-            // we'll proceed, but app/layout.tsx MUST be updated to sync them.
+        // REDIRECT EL GUARDIÁN: Redirect authenticated users away from the landing page "/"
+        if (url.pathname === "/") {
+            const target = sessionRole === 'ADMIN' ? '/admin/dashboard' : '/dashboard';
+            return NextResponse.redirect(new URL(target, request.url));
         }
     }
 
