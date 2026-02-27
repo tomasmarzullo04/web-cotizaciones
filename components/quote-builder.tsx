@@ -506,8 +506,8 @@ const RECOMENDACIONES_MAPPING: Record<string, Array<{ role: RoleKey, seniority: 
         { role: 'data_scientist', seniority: 'Sr', rationale: 'Mantenimiento de scripts y modelos Python.', domain: 'sci' }
     ],
     'n8n': [
-        { role: 'azure_developer', seniority: 'Med', rationale: 'Automatización de flujos con herramientas Low-Code.' },
-        { role: 'azure_developer', seniority: 'Med', rationale: 'Mantenimiento de integraciones n8n.', domain: 'data' }
+        { role: 'low_code_developer', seniority: 'Med', rationale: 'Automatización de flujos y procesos con n8n.' },
+        { role: 'low_code_developer', seniority: 'Med', rationale: 'Mantenimiento de automatizaciones n8n.', domain: 'data' }
     ],
     'antigravity': [
         { role: 'data_scientist', seniority: 'Expert', rationale: 'Implementación de Agentes IA y RAG.' },
