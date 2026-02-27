@@ -2212,22 +2212,25 @@ graph TD
                     {/* 3. TECH (Step 03 for Project, 02 for Staffing) */}
                     {state.serviceType !== 'Sustain' && (
                         <SectionCard number={getSectionNumber('tech')} title="Stack Tecnológico" icon={Layers}>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {TECH_OPTIONS.map(tech => (
-                                    <div
-                                        key={tech.id}
-                                        onClick={() => toggleTech(tech.id)}
-                                        className={cn(
-                                            "p-6 rounded-[1.5rem] border transition-all flex flex-col justify-between h-32 hover:scale-[1.02] cursor-pointer",
-                                            state.techStack.includes(tech.id)
-                                                ? "bg-[#242423] border-[#F5CB5C] text-[#E8EDDF] shadow-[0_0_20px_rgba(245,203,92,0.15)]"
-                                                : "bg-[#333533] text-[#CFDBD5] border-[#4A4D4A] hover:border-[#CFDBD5]"
-                                        )}
-                                    >
-                                        <span className="font-bold text-sm leading-tight">{tech.name}</span>
-                                        {state.techStack.includes(tech.id) && <Check className="w-6 h-6 self-end text-[#F5CB5C]" />}
-                                    </div>
-                                ))}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {TECH_OPTIONS.map(tech => {
+                                    const isSelected = state.techStack.includes(tech.id)
+                                    return (
+                                        <div
+                                            key={tech.id}
+                                            onClick={() => toggleTech(tech.id)}
+                                            className={cn(
+                                                "cursor-pointer text-xs px-3 py-2 rounded-lg border transition-all flex items-center gap-2",
+                                                isSelected ? "bg-[#F5CB5C]/10 border-[#F5CB5C] text-[#F5CB5C]" : "bg-[#333533] border-[#4A4D4A] text-[#CFDBD5] hover:border-[#CFDBD5]"
+                                            )}
+                                        >
+                                            <div className={cn("w-3 h-3 rounded border flex items-center justify-center shrink-0", isSelected ? "border-[#F5CB5C] bg-[#F5CB5C]" : "border-[#CFDBD5]")}>
+                                                {isSelected && <Check className="w-2 h-2 text-[#242423]" />}
+                                            </div>
+                                            {tech.name}
+                                        </div>
+                                    )
+                                })}
                             </div>
                         </SectionCard>
                     )}
