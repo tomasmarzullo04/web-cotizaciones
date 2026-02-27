@@ -1,12 +1,24 @@
+'use client'
+
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { LogoutButton } from '@/components/logout-button'
 import { Button } from '@/components/ui/button'
 
 export default function Navbar({ userRole, userName }: { userRole?: string | null, userName?: string | null }) {
+    const pathname = usePathname()
+
+    // Forzar modo público si estamos en la Landing Page (/)
+    const isLandingPage = pathname === '/'
+
+    // Si estamos en la landing, mostramos la versión pública sin datos de sesión
+    const displayRole = isLandingPage ? null : userRole
+    const displayName = isLandingPage ? null : userName
+
     // Determine target link based on role
     const getLogoHref = () => {
-        if (!userRole) return '/'
-        if (userRole === 'ADMIN') return '/admin/dashboard'
+        if (!displayRole) return '/'
+        if (displayRole === 'ADMIN') return '/admin/dashboard'
         return '/dashboard'
     }
 
@@ -25,9 +37,9 @@ export default function Navbar({ userRole, userName }: { userRole?: string | nul
 
                 {/* DYNAMIC LINKS (Logged In Only) */}
                 <div className="hidden md:flex items-center gap-8">
-                    {userRole && (
+                    {displayRole && (
                         <>
-                            {userRole === 'ADMIN' ? (
+                            {displayRole === 'ADMIN' ? (
                                 <Link href="/admin/dashboard" className="text-sm font-medium text-[#CFDBD5] hover:text-[#F5CB5C] transition-colors">Admin Board</Link>
                             ) : (
                                 <>
@@ -42,12 +54,12 @@ export default function Navbar({ userRole, userName }: { userRole?: string | nul
 
                 {/* RIGHT SIDE */}
                 <div className="flex items-center gap-4">
-                    {userRole ? (
+                    {displayRole ? (
                         <>
                             <div className="hidden md:flex flex-col items-end mr-2">
-                                <span className="text-xs font-bold text-[#E8EDDF]">{userName || 'Usuario'}</span>
+                                <span className="text-xs font-bold text-[#E8EDDF]">{displayName || 'Usuario'}</span>
                                 <span className="text-[10px] text-[#CFDBD5] uppercase tracking-wider">
-                                    {userRole === 'ADMIN' ? 'Admin Board' : (userRole === 'CONSULTOR' ? 'Consultor' : 'Usuario')}
+                                    {displayRole === 'ADMIN' ? 'Admin Board' : (displayRole === 'CONSULTOR' ? 'Consultor' : 'Usuario')}
                                 </span>
                             </div>
                             <LogoutButton />

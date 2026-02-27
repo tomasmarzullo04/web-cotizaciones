@@ -59,11 +59,8 @@ export async function middleware(request: NextRequest) {
             console.log(`[Middleware] Desync detected for ${user.email}. Syncing cookies...`);
         }
 
-        // REDIRECT EL GUARDIÁN: Redirect authenticated users away from the landing page "/"
-        if (url.pathname === "/") {
-            const target = sessionRole === 'ADMIN' ? '/admin/dashboard' : '/dashboard';
-            return NextResponse.redirect(new URL(target, request.url));
-        }
+        // REDIRECT EL GUARDIÁN: Landing page is now strictly public. 
+        // No redirection happens when an authenticated user visits "/"
     }
 
     return response;
