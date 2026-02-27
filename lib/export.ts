@@ -443,7 +443,7 @@ function createPDFDocument(data: QuoteState & {
     if (data.serviceType === 'Sustain' && (data.servicesCost || 0) > 0) {
         const classLabel = data.criticitnessLevel?.label || 'PENDIENTE'
         const monthlyBase = data.servicesCost || 0
-        const totalBase = data.viewMode === 'annual' ? monthlyBase * 12 : monthlyBase * data.durationMonths
+        const totalBase = data.viewMode === 'annual' ? monthlyBase * data.durationMonths : monthlyBase * data.durationMonths
         drawRow(`Complejidad del Servicio (Clase ${classLabel})`, "Tarifa Base", fmt(monthlyBase), fmt(totalBase))
     }
 
@@ -464,7 +464,7 @@ function createPDFDocument(data: QuoteState & {
             // Adjust totals for viewMode
             const displayMonthly = fmt(monthlySub)
             const displayPeriodTotal = data.viewMode === 'annual'
-                ? fmt(monthlySub * 12)
+                ? fmt(monthlySub * data.durationMonths)
                 : fmt(monthlySub * data.durationMonths)
 
             // Include allocation percentage in label if less than 100%
@@ -482,7 +482,7 @@ function createPDFDocument(data: QuoteState & {
                     const monthlySub = rate * count
                     const displayMonthly = fmt(monthlySub)
                     const displayPeriodTotal = data.viewMode === 'annual'
-                        ? fmt(monthlySub * 12)
+                        ? fmt(monthlySub * data.durationMonths)
                         : fmt(monthlySub * data.durationMonths)
 
                     let displayName = ROLE_CONFIG[role]?.label || role.replace(/_/g, ' ').toUpperCase()
@@ -509,9 +509,9 @@ function createPDFDocument(data: QuoteState & {
     // Totals Box
     y += 10
     const isAnnual = data.viewMode === 'annual'
-    const multiplier = isAnnual ? 12 : 1
-    const periodLabel = isAnnual ? "ANUALIZADO" : "TOTAL ESTIMADO"
-    const netLabel = isAnnual ? "INVERSIÓN ANUAL PROYECTADA" : "INVERSIÓN NETA ESTIMADA"
+    const multiplier = isAnnual ? data.durationMonths : 1
+    const periodLabel = isAnnual ? "TOTAL ESTIMADO" : "TOTAL ESTIMADO"
+    const netLabel = isAnnual ? "INVERSIÓN TOTAL PROYECTADA" : "INVERSIÓN NETA ESTIMADA"
 
     const displayGross = (data.grossTotal || data.finalTotal) * multiplier
     let displayRetention = (data.retentionAmount || 0) * multiplier

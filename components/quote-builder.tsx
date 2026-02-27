@@ -3334,22 +3334,22 @@ graph TD
                         )}
                     </div>
                     <div className="text-3xl md:text-3xl lg:text-4xl font-mono font-bold tracking-tighter text-[#E8EDDF] drop-shadow-[0_0_15px_rgba(245,203,92,0.1)] truncate">
-                        {formatMoney(finalTotal * (viewMode === 'annual' ? 12 : 1))}
+                        {formatMoney(finalTotal * (viewMode === 'annual' ? durationInMonths : 1))}
                     </div>
                     <p className="text-[#CFDBD5] mt-2 font-medium flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-[#F5CB5C] animate-pulse" />
-                        Inversión {viewMode === 'annual' ? 'Anual' : 'Mensual'} Estimada
+                        Inversión {viewMode === 'annual' ? 'Total Proyecto' : 'Mensual'} Estimada
                     </p>
                 </div >
 
                 <div className="bg-[#333533] rounded-[2rem] p-8 text-sm space-y-5 border border-[#4A4D4A] shadow-xl relative overflow-hidden">
                     <div className="flex justify-between items-center text-[#E8EDDF]">
                         <span className="text-[#CFDBD5]">{state.serviceType === 'Sustain' ? 'Complejidad del Servicio (Clase)' : 'Servicios (Infra/Data)'}</span>
-                        <span className="font-mono text-xl">{formatMoney(servicesCost * (viewMode === 'annual' ? 12 : 1))}</span>
+                        <span className="font-mono text-xl">{formatMoney(servicesCost * (viewMode === 'annual' ? durationInMonths : 1))}</span>
                     </div>
                     <div className="flex justify-between items-center text-[#E8EDDF]">
                         <span className="text-[#CFDBD5]">{state.serviceType === 'Sustain' ? 'Recursos Asignados' : 'Equipo (Roles)'}</span>
-                        <span className="font-mono text-xl">{formatMoney(rolesCost * (viewMode === 'annual' ? 12 : 1))}</span>
+                        <span className="font-mono text-xl">{formatMoney(rolesCost * (viewMode === 'annual' ? durationInMonths : 1))}</span>
                     </div>
                     {l2SupportCost > 0 && (
                         <div className="flex justify-between items-center text-[#F5CB5C] bg-[#F5CB5C]/10 p-3 rounded-xl -mx-2 border border-[#F5CB5C]/20">
@@ -3398,15 +3398,15 @@ graph TD
                                     viewMode === 'annual' ? "bg-[#F5CB5C] text-[#242423]" : "text-[#CFDBD5] hover:text-[#E8EDDF]"
                                 )}
                             >
-                                Anual
+                                Total Proyecto
                             </button>
                         </div>
                     </div>
 
                     {state.commercialDiscount > 0 && (
                         <div className="flex justify-between items-center text-green-400">
-                            <span>Ahorro Aplicado {viewMode === 'annual' ? 'Anual' : 'Mensual'}</span>
-                            <span className="font-mono">- {formatMoney(viewMode === 'annual' ? discountAmount * 12 : discountAmount)}</span>
+                            <span>Ahorro Aplicado {viewMode === 'annual' ? 'Total' : 'Mensual'}</span>
+                            <span className="font-mono">- {formatMoney(viewMode === 'annual' ? discountAmount * durationInMonths : discountAmount)}</span>
                         </div>
                     )}
 
@@ -3415,24 +3415,24 @@ graph TD
                     <Separator className="bg-[#4A4D4A]" />
                     <div className="space-y-1">
                         <div className="flex justify-between items-center text-[#E8EDDF] font-medium text-lg">
-                            <span>Subtotal {viewMode === 'annual' ? 'Anualizado' : ''}</span>
-                            <span className="font-mono">{formatMoney(viewMode === 'annual' ? grossTotal * 12 : grossTotal)}</span>
+                            <span>Subtotal {viewMode === 'annual' ? 'Proyecto' : ''}</span>
+                            <span className="font-mono">{formatMoney(viewMode === 'annual' ? grossTotal * durationInMonths : grossTotal)}</span>
                         </div>
                         {state.retention.enabled && (
                             <div className="flex justify-between items-center text-[#E8EDDF]/70 text-base border-t border-[#4A4D4A]/50 pt-1 mt-1">
-                                <span>Retención (-{state.retention.percentage}%) {viewMode === 'annual' ? 'Anual' : ''}</span>
-                                <span className="font-mono text-red-400">- {formatMoney(viewMode === 'annual' ? retentionAmount * 12 : retentionAmount)}</span>
+                                <span>Retención (-{state.retention.percentage}%) {viewMode === 'annual' ? 'Proyecto' : ''}</span>
+                                <span className="font-mono text-red-400">- {formatMoney(viewMode === 'annual' ? retentionAmount * durationInMonths : retentionAmount)}</span>
                             </div>
                         )}
                         <div className="flex justify-between items-center text-[#F5CB5C] font-black text-2xl pt-2 mt-2 border-t border-[#4A4D4A]">
                             <div className="flex flex-col">
                                 <span>Inversión Neta Final</span>
                                 <span className="text-[10px] text-[#F5CB5C]/50 uppercase tracking-tighter leading-none mt-1">
-                                    {viewMode === 'annual' ? 'PROYECTADA ANUAL' : 'COSTO MENSUAL ESTIMADO'}
+                                    {viewMode === 'annual' ? 'PROYECTADA TOTAL' : 'COSTO MENSUAL ESTIMADO'}
                                 </span>
                             </div>
                             <div className="text-right">
-                                <span>{formatMoney(viewMode === 'annual' ? finalTotal * 12 : finalTotal)}</span>
+                                <span>{formatMoney(viewMode === 'annual' ? finalTotal * durationInMonths : finalTotal)}</span>
                                 {state.serviceType === 'Sustain' && (
                                     <div className="text-[10px] text-yellow-500 font-black uppercase mt-1 drop-shadow-sm flex flex-col items-end">
                                         <div className="flex items-center gap-1.5 mb-0.5">
