@@ -1851,8 +1851,6 @@ graph TD
             })
         })
 
-        if (domainProfiles.length === 0) return
-
         // 2. Scoring & Multipliers
         const getScore = (val: number) => {
             if (val <= 0) return 0
@@ -1878,13 +1876,38 @@ graph TD
             const newProfiles = [...prev.staffingDetails.profiles]
             const newRoles = { ...prev.roles }
 
+            const requiredProfilesMap = new Map<string, { roleKey: RoleKey, alloc: number, rationale: string }>()
+            domainProfiles.forEach(dp => {
+                const roleConfig = ROLE_CONFIG[dp.roleKey]
+                if (!roleConfig) return
+                const score = dp.domain === 'data' ? dataScore : dp.domain === 'vis' ? biScore : sciScore
+                const suggestedAlloc = mapScoreToAlloc(score)
+                requiredProfilesMap.set(`${roleConfig.label}-${dp.seniority}`, { roleKey: dp.roleKey, alloc: suggestedAlloc, rationale: dp.rationale })
+            })
+
+            // 1. CLEANUP ORPHANS: Remove auto-generated profiles that are no longer required
+            for (let i = newProfiles.length - 1; i >= 0; i--) {
+                const p = newProfiles[i]
+                if (!p.isManual) {
+                    const profileKey = `${p.role}-${p.seniority}`
+                    if (!requiredProfilesMap.has(profileKey)) {
+                        const foundKey = Object.keys(ROLE_CONFIG).find(k => ROLE_CONFIG[k as RoleKey].label === p.role) as RoleKey | undefined
+                        if (foundKey && newRoles[foundKey] > 0) {
+                            newRoles[foundKey] -= 1
+                            if (newRoles[foundKey] === 0) delete newRoles[foundKey]
+                        }
+                        newProfiles.splice(i, 1)
+                        hasChanged = true
+                    }
+                }
+            }
+
+            // 2. ADD / UPDATE Required Profiles
             domainProfiles.forEach(dp => {
                 const roleConfig = ROLE_CONFIG[dp.roleKey]
                 if (!roleConfig) return
 
-                const score = dp.domain === 'data' ? dataScore : dp.domain === 'vis' ? biScore : sciScore
-                const suggestedAlloc = mapScoreToAlloc(score)
-
+                const req = requiredProfilesMap.get(`${roleConfig.label}-${dp.seniority}`)!
                 const existingIdx = newProfiles.findIndex(p => p.role === roleConfig.label && p.seniority === dp.seniority)
 
                 if (existingIdx === -1) {
@@ -1895,10 +1918,10 @@ graph TD
                         seniority: dp.seniority,
                         count: 1,
                         price: roleConfig.defaultPrice * (SENIORITY_MODIFIERS[dp.seniority as keyof typeof SENIORITY_MODIFIERS] || 1),
-                        skills: dp.rationale,
+                        skills: req.rationale,
                         startDate: new Date().toISOString(),
                         endDate: new Date().toISOString(),
-                        allocationPercentage: suggestedAlloc,
+                        allocationPercentage: req.alloc,
                         isManual: false
                     }
                     newProfiles.push(newProfile)
@@ -1906,8 +1929,8 @@ graph TD
                     hasChanged = true
                 } else if (!newProfiles[existingIdx].isManual) {
                     // AUTO-UPDATE ALLOCATION
-                    if (newProfiles[existingIdx].allocationPercentage !== suggestedAlloc) {
-                        newProfiles[existingIdx] = { ...newProfiles[existingIdx], allocationPercentage: suggestedAlloc }
+                    if (newProfiles[existingIdx].allocationPercentage !== req.alloc) {
+                        newProfiles[existingIdx] = { ...newProfiles[existingIdx], allocationPercentage: req.alloc }
                         hasChanged = true
                     }
                 }
