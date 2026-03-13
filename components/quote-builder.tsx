@@ -69,12 +69,11 @@ const SENIORITY_MODIFIERS = {
 const HOURS_MODIFIERS = {
     'business': 1.0,
     '9x5': 1.0,
-    '24/7': 1.5,
-    '24x7': 1.5,
+    '24/7': 4.5,
+    '24x7': 4.5,
     'combined': 1.2,
     'custom': 1.2
 }
-
 
 
 const COMPLEXITY_MODIFIERS = {
@@ -261,7 +260,7 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
                                     type="text"
                                     inputMode="numeric"
                                     autoFocus
-                                    className="w-full bg-[#1A1A19] border border-[#4A4D4A] rounded-lg px-2 py-1.5 text-[#E8EDDF] text-center font-bold outline-none focus:border-[#F5CB5C]/50 transition-colors"
+                                    className="w-full bg-transparent border border-[#4A4D4A] rounded-lg px-2 py-1.5 text-[#E8EDDF] text-center font-bold outline-none focus:border-[#F5CB5C]/50 transition-colors"
                                     value={localValue}
                                     onChange={e => setLocalValue(e.target.value.replace(/[^0-9]/g, ''))}
                                     onKeyDown={e => {
@@ -715,6 +714,9 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
     const [exportType, setExportType] = useState<'pdf' | 'word' | null>(null)
     const [wizardStep, setWizardStep] = useState(0) // 0: Selection, 1: Form
     const router = useRouter()
+    const [manualNetTotal, setManualNetTotal] = useState<number | null>(null)
+    const [isEditingNetTotal, setIsEditingNetTotal] = useState(false)
+    const [tempManualNet, setTempManualNet] = useState('')
 
     // --- Currency State (Global API) ---
     const FALLBACK_EXCHANGE_RATES: Record<string, number> = {
@@ -893,8 +895,8 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
 
     const getDurationInMonths = useCallback(() => {
         const { durationValue, durationUnit } = state
-        if (durationUnit === 'weeks') return durationValue / 4.33
-        if (durationUnit === 'days') return durationValue / 30
+        if (durationUnit === 'weeks') return durationValue / 4
+        if (durationUnit === 'days') return durationValue / 20
         return durationValue
     }, [state.durationValue, state.durationUnit])
 
@@ -904,11 +906,42 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         if (readOnly) return // BLOCK EDITING
         setState(prev => {
             const exists = prev.techStack.includes(id)
-            return {
-                ...prev,
-                techStack: exists
-                    ? prev.techStack.filter(t => t !== id)
-                    : [...prev.techStack, id]
+            if (exists) {
+                // Remove tech and associated suggested profiles
+                const newTechStack = prev.techStack.filter(t => t !== id)
+                const mappedRoles = RECOMENDACIONES_MAPPING[id] || []
+
+                let updatedProfiles = [...prev.staffingDetails.profiles]
+                let updatedRoles = { ...prev.roles }
+
+                mappedRoles.forEach(rec => {
+                    const roleKey = rec.role as RoleKey
+                    const roleName = ROLE_CONFIG[roleKey]?.label || roleKey
+                    const level = rec.seniority
+
+                    const profileIndex = updatedProfiles.findIndex(p => p.role === roleName && p.seniority === level && !p.isManual)
+                    if (profileIndex !== -1) {
+                        const profile = updatedProfiles[profileIndex]
+                        if (profile.count > 1) {
+                            updatedProfiles[profileIndex] = { ...profile, count: profile.count - 1 }
+                        } else {
+                            updatedProfiles.splice(profileIndex, 1)
+                        }
+                        updatedRoles[roleKey] = Math.max(0, (updatedRoles[roleKey] || 0) - 1)
+                    }
+                })
+
+                return {
+                    ...prev,
+                    techStack: newTechStack,
+                    roles: updatedRoles,
+                    staffingDetails: { ...prev.staffingDetails, profiles: updatedProfiles }
+                }
+            } else {
+                return {
+                    ...prev,
+                    techStack: [...prev.techStack, id]
+                }
             }
         })
     }
@@ -918,63 +951,38 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
 
     // --- SUSTAIN LOGIC ---
     const sustainScores = useMemo(() => {
-        if (state.serviceType !== 'Sustain') return { total: 0, factors: {} }
+        if (state.serviceType !== 'Sustain') return { totalPct: 0 }
 
         const { metrics, criticalityMatrix } = state.sustainDetails
 
-        // 1. Pipelines
-        const p = metrics.pipelinesCount
-        const pScore = p === 0 ? 0 : p <= 2 ? 1 : p <= 5 ? 2 : p <= 10 ? 3 : p <= 20 ? 4 : 5
+        // 1. Volumetría
+        const vCount = (metrics.pipelinesCount || 0) + (metrics.notebooksCount || 0) + (metrics.reportsCount || 0) + (metrics.dsModelsCount || 0) + (metrics.manualProcess ? 1 : 0)
+        const vPct = vCount * 0.005
 
-        // 2. Notebooks
-        const n = metrics.notebooksCount
-        const nScore = n === 0 ? 0 : n <= 2 ? 1 : n <= 5 ? 2 : n <= 10 ? 3 : n <= 20 ? 4 : 5
+        // 2. Frecuencia de Uso
+        const freq = criticalityMatrix.frequencyOfUse || metrics.updateFrequency
+        const fPct = !freq ? 0 : freq === 'weekly' ? 0.005 : freq === 'daily' ? 0.015 : freq === 'realtime' ? 0.03 : 0
 
-        // 3. Dashboards
-        const d = metrics.reportsCount || 0 // Sustain uses reportsCount
-        const dScore = d === 0 ? 0 : d <= 2 ? 1 : d <= 5 ? 2 : d <= 10 ? 3 : d <= 20 ? 4 : 5
+        // 3. Dependencias
+        const depVal = criticalityMatrix.dependencies || 1
+        const depPct = depVal === 1 ? 0.005 : depVal === 3 ? 0.015 : depVal === 5 ? 0.03 : 0
 
-        // 4. Modelos DS
-        const ds = metrics.dsModelsCount
-        const dsScore = ds === 0 ? 0 : ds <= 2 ? 1 : ds <= 5 ? 2 : ds <= 10 ? 3 : ds <= 20 ? 4 : 5
-
-        // 5. Procesos Manuales
-        const mScore = metrics.manualProcess ? 5 : 0
-
-        // 6. Frecuencia de Uso
-        const freq = criticalityMatrix.frequencyOfUse
-        const fScore = !freq ? 0 : freq === 'monthly' ? 1 : freq === 'weekly' ? 2 : freq === 'daily' ? 4 : 5
-
-        // 7. Dependencias & Alcance
-        const depCount = metrics.systemDependencies ? metrics.systemDependencies.split(',').filter(x => x.trim()).length : 0
-        const scopeBonus = (criticalityMatrix.marketsImpacted > 1 || criticalityMatrix.usersImpacted > 50) ? 1 : 0
-
-        // Score scale alignment: 0-2:1, 3-5:2, 6-10:3, 11-20:4, +20:5
-        let depScore = 0
-        if (depCount > 0) {
-            depScore = Math.min(5, (depCount <= 2 ? 1 : depCount <= 5 ? 2 : depCount <= 10 ? 3 : depCount <= 20 ? 4 : 5) + scopeBonus)
-        } else if (scopeBonus > 0) {
-            depScore = scopeBonus
-        }
-
-        const totalFactors = [pScore, nScore, dScore, dsScore, mScore, fScore, depScore]
-        const sum = totalFactors.reduce((a, b) => a + b, 0)
-        const total = sum > 0 ? sum / 7 : 0
-
+        const totalPct = vPct + fPct + depPct
         return {
-            total: Number(total.toFixed(2)),
-            factors: { pipelines: pScore, notebooks: nScore, dashboards: dScore, models: dsScore, manual: mScore, frequency: fScore, dependencies: depScore }
+            totalPct: Number(totalPct.toFixed(4)),
+            total: Number((totalPct * 100).toFixed(1)) // For UI compatibility backward label
         }
     }, [state.sustainDetails, state.serviceType])
 
     const sustainLevel = useMemo(() => {
-        const score = sustainScores.total
-        if (score === 0) return { label: 'PENDIENTE', color: 'bg-gray-500/10 text-gray-400 border-gray-500/20', baseCost: 0 }
-        if (score >= 4.3) return { label: 'PREMIUM', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20', baseCost: 45000 }
-        if (score >= 3.6) return { label: 'S3 (ALTA)', color: 'bg-red-500/10 text-red-400 border-red-500/20', baseCost: 22000 }
-        if (score >= 2.6) return { label: 'S2 (MEDIA)', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20', baseCost: 12000 }
-        return { label: 'S1 (BAJA)', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', baseCost: 5000 }
-    }, [sustainScores.total])
+        const pct = sustainScores.totalPct || 0
+        let label = 'S1 (BAJA)'
+        let color = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+        if (pct >= 0.03) { label = 'S3 (ALTA)'; color = 'bg-red-500/10 text-red-400 border-red-500/20' }
+        else if (pct >= 0.015) { label = 'S2 (MEDIA)'; color = 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' }
+        if (pct === 0) { label = 'PENDIENTE'; color = 'bg-gray-500/10 text-gray-400 border-gray-500/20' }
+        return { label, color, multiplier: pct }
+    }, [sustainScores.totalPct])
 
     const sustainScore = sustainScores.total // For compatibility if used elsewhere
 
@@ -1236,11 +1244,14 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
 
         // --- Sustain Mode: Fixed Class Pricing ---
         if (state.serviceType === 'Sustain') {
-            const baseCost = sustainLevel.baseCost || 0
+            const baseCost = baseRoles * (sustainLevel.multiplier || 0)
             const rolesCost = baseRoles // Profiles cost including support window multiplier
             const weekendSurcharge = state.sustainDetails.weekendUsage ? (baseCost * 0.015) : 0
-            const monthlyTotal = baseCost + rolesCost + weekendSurcharge
+
+            let monthlyTotal = baseCost + rolesCost + weekendSurcharge
             const hypercareCost = state.sustainDetails.hasHypercare ? (baseCost + rolesCost) : 0 // Hypercare is 1 month of total service
+
+            monthlyTotal = manualNetTotal !== null ? manualNetTotal : monthlyTotal
 
             return {
                 rolesCost: rolesCost,
@@ -1258,6 +1269,8 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
         }
 
         // --- Standard Mode (Proyecto/Staffing) ---
+        const finalNetTotal = manualNetTotal !== null ? manualNetTotal : netTotal
+
         return {
             rolesCost: baseRoles,
             servicesCost: baseServices,
@@ -1267,11 +1280,11 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             discountAmount: discountVal,
             grossTotal,
             retentionAmount: retentionVal,
-            finalTotal: netTotal,
-            totalMonthlyCost: netTotal,
+            finalTotal: finalNetTotal,
+            totalMonthlyCost: finalNetTotal,
             hypercareCost: 0
         }
-    }, [state, dbRates, findDynamicRate, sustainLevel, readOnly, frozenRates])
+    }, [state, dbRates, findDynamicRate, sustainLevel, readOnly, frozenRates, manualNetTotal])
 
     const durationInMonths = getDurationInMonths()
     const totalProjectCost = (finalTotal * durationInMonths) + hypercareCost
@@ -2661,12 +2674,12 @@ graph TD
                                         <div className={cn("flex items-center justify-between p-4 rounded-xl border mb-6 transition-all", sustainLevel.color)}>
                                             <div>
                                                 <h4 className="font-black text-2xl tracking-tighter">CLASE {sustainLevel.label}</h4>
-                                                <p className="text-[10px] uppercase font-bold opacity-80">Score Técnico: {(sustainScores.factors.pipelines || 0) + (sustainScores.factors.notebooks || 0) + (sustainScores.factors.dashboards || 0) + (sustainScores.factors.models || 0) + (sustainScores.factors.manual || 0)} | Score Operativo: {(sustainScores.factors.frequency || 0) + (sustainScores.factors.dependencies || 0)}</p>
-                                                <p className="text-xs font-bold text-yellow-500">Puntaje Final: {sustainScores.total} / 5.0</p>
+                                                <p className="text-[10px] uppercase font-bold opacity-80">Índice de Criticidad: {sustainScores.total}%</p>
+                                                <p className="text-xs font-bold text-yellow-500">Volumetría + Frecuencia + Dependencias</p>
                                             </div>
                                             <div className="text-right">
-                                                <span className="text-xs font-bold uppercase tracking-wider block text-opacity-70">Costo Base</span>
-                                                <span className="text-lg font-black">{formatMoney(sustainLevel.baseCost)}</span>
+                                                <span className="text-xs font-bold uppercase tracking-wider block text-opacity-70">Costo Base Calculado</span>
+                                                <span className="text-lg font-black">{formatMoney(servicesCost)}</span>
                                             </div>
                                         </div>
                                         {/* FINANCIAL CRITICALITY TOGGLE */}
@@ -3426,20 +3439,64 @@ graph TD
                         )}
                         <div className="flex justify-between items-center text-[#F5CB5C] font-black text-2xl pt-2 mt-2 border-t border-[#4A4D4A]">
                             <div className="flex flex-col">
-                                <span>Inversión Neta Final</span>
+                                <div className="flex items-center gap-2">
+                                    <span>Inversión Neta Final</span>
+                                    {!readOnly && (
+                                        <Popover open={isEditingNetTotal} onOpenChange={setIsEditingNetTotal}>
+                                            <PopoverTrigger asChild>
+                                                <button className="text-[#CFDBD5]/30 hover:text-[#F5CB5C] transition-colors p-1" onClick={() => { setTempManualNet(manualNetTotal !== null ? manualNetTotal.toString() : ''); setIsEditingNetTotal(true); }}>
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-56 bg-[#242423] border-[#4A4D4A] p-3 rounded-xl shadow-2xl animate-in zoom-in-95 duration-200" side="top" align="center">
+                                                <div className="flex flex-col gap-3">
+                                                    <div className="text-xs text-[#CFDBD5] mb-1">Override manual:</div>
+                                                    <input
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        autoFocus
+                                                        placeholder="Vacío para auto"
+                                                        className="w-full bg-transparent border border-[#4A4D4A] rounded-lg px-2 py-1.5 text-[#E8EDDF] text-center font-bold outline-none focus:border-[#F5CB5C]/50 transition-colors"
+                                                        value={tempManualNet}
+                                                        onChange={e => setTempManualNet(e.target.value.replace(/[^0-9]/g, ''))}
+                                                        onKeyDown={e => {
+                                                            if (e.key === 'Enter') {
+                                                                setManualNetTotal(tempManualNet ? parseInt(tempManualNet) : null);
+                                                                setIsEditingNetTotal(false);
+                                                            }
+                                                            if (e.key === 'Escape') setIsEditingNetTotal(false);
+                                                        }}
+                                                    />
+                                                    <div className="flex gap-2">
+                                                        <Button size="sm" className="flex-1 bg-[#F5CB5C] hover:bg-[#FFE082] text-black font-bold h-8" onClick={() => { setManualNetTotal(tempManualNet ? parseInt(tempManualNet) : null); setIsEditingNetTotal(false); }}>
+                                                            <Check className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button size="sm" variant="outline" className="flex-1 border-[#4A4D4A] text-[#CFDBD5] hover:bg-white/5 h-8" onClick={() => { setManualNetTotal(null); setIsEditingNetTotal(false); }}>
+                                                            <X className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </PopoverContent>
+                                        </Popover>
+                                    )}
+                                </div>
                                 <span className="text-[10px] text-[#F5CB5C]/50 uppercase tracking-tighter leading-none mt-1">
                                     {viewMode === 'annual' ? 'PROYECTADA TOTAL' : 'COSTO MENSUAL ESTIMADO'}
                                 </span>
                             </div>
                             <div className="text-right">
-                                <span>{formatMoney(viewMode === 'annual' ? finalTotal * durationInMonths : finalTotal)}</span>
+                                <div className="flex flex-col items-end gap-1">
+                                    {manualNetTotal !== null && (
+                                        <div className="text-[9px] bg-[#F5CB5C]/20 text-[#F5CB5C] px-1.5 py-0.5 rounded uppercase tracking-wider font-bold mb-0.5">AJUSTADO MANUALMENTE</div>
+                                    )}
+                                    <span>{formatMoney(viewMode === 'annual' ? finalTotal * durationInMonths : finalTotal)}</span>
+                                </div>
                                 {state.serviceType === 'Sustain' && (
                                     <div className="text-[10px] text-yellow-500 font-black uppercase mt-1 drop-shadow-sm flex flex-col items-end">
-                                        <div className="flex items-center gap-1.5 mb-0.5">
+                                        <div className="flex items-center gap-1.5 mt-1.5">
                                             <span className="bg-[#F5CB5C]/10 px-1.5 py-0.5 rounded border border-[#F5CB5C]/20 text-[#F5CB5C]">CLASE {sustainLevel.label}</span>
-                                            <span className="bg-[#333533] px-1.5 py-0.5 rounded border border-[#4A4D4A] text-[#CFDBD5]">SCORE: {sustainScores.total}</span>
+                                            <span className="bg-[#333533] px-1.5 py-0.5 rounded border border-[#4A4D4A] text-[#CFDBD5]">{sustainScores.total}% SCORE</span>
                                         </div>
-                                        <div>{(finalTotal / 160).toFixed(1)} Horas / Mes</div>
                                     </div>
                                 )}
                             </div>
