@@ -3439,47 +3439,7 @@ graph TD
                         )}
                         <div className="flex justify-between items-center text-[#F5CB5C] font-black text-2xl pt-2 mt-2 border-t border-[#4A4D4A]">
                             <div className="flex flex-col">
-                                <div className="flex items-center gap-2">
-                                    <span>Inversión Neta Final</span>
-                                    {!readOnly && (
-                                        <Popover open={isEditingNetTotal} onOpenChange={setIsEditingNetTotal}>
-                                            <PopoverTrigger asChild>
-                                                <button className="text-[#CFDBD5]/30 hover:text-[#F5CB5C] transition-colors p-1" onClick={() => { setTempManualNet(manualNetTotal !== null ? manualNetTotal.toString() : ''); setIsEditingNetTotal(true); }}>
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-56 bg-[#242423] border-[#4A4D4A] p-3 rounded-xl shadow-2xl animate-in zoom-in-95 duration-200" side="top" align="center">
-                                                <div className="flex flex-col gap-3">
-                                                    <div className="text-xs text-[#CFDBD5] mb-1">Override manual:</div>
-                                                    <input
-                                                        type="text"
-                                                        inputMode="numeric"
-                                                        autoFocus
-                                                        placeholder="Vacío para auto"
-                                                        className="w-full bg-transparent border border-[#4A4D4A] rounded-lg px-2 py-1.5 text-[#E8EDDF] text-center font-bold outline-none focus:border-[#F5CB5C]/50 transition-colors"
-                                                        value={tempManualNet}
-                                                        onChange={e => setTempManualNet(e.target.value.replace(/[^0-9]/g, ''))}
-                                                        onKeyDown={e => {
-                                                            if (e.key === 'Enter') {
-                                                                setManualNetTotal(tempManualNet ? parseInt(tempManualNet) : null);
-                                                                setIsEditingNetTotal(false);
-                                                            }
-                                                            if (e.key === 'Escape') setIsEditingNetTotal(false);
-                                                        }}
-                                                    />
-                                                    <div className="flex gap-2">
-                                                        <Button size="sm" className="flex-1 bg-[#F5CB5C] hover:bg-[#FFE082] text-black font-bold h-8" onClick={() => { setManualNetTotal(tempManualNet ? parseInt(tempManualNet) : null); setIsEditingNetTotal(false); }}>
-                                                            <Check className="w-4 h-4" />
-                                                        </Button>
-                                                        <Button size="sm" variant="outline" className="flex-1 border-[#4A4D4A] text-[#CFDBD5] hover:bg-white/5 h-8" onClick={() => { setManualNetTotal(null); setIsEditingNetTotal(false); }}>
-                                                            <X className="w-4 h-4" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </PopoverContent>
-                                        </Popover>
-                                    )}
-                                </div>
+                                <span>Inversión Neta Final</span>
                                 <span className="text-[10px] text-[#F5CB5C]/50 uppercase tracking-tighter leading-none mt-1">
                                     {viewMode === 'annual' ? 'PROYECTADA TOTAL' : 'COSTO MENSUAL ESTIMADO'}
                                 </span>
@@ -3489,7 +3449,52 @@ graph TD
                                     {manualNetTotal !== null && (
                                         <div className="text-[9px] bg-[#F5CB5C]/20 text-[#F5CB5C] px-1.5 py-0.5 rounded uppercase tracking-wider font-bold mb-0.5">AJUSTADO MANUALMENTE</div>
                                     )}
-                                    <span>{formatMoney(viewMode === 'annual' ? finalTotal * durationInMonths : finalTotal)}</span>
+                                    <div className="flex items-center gap-3">
+                                        {!readOnly && (
+                                            <Popover open={isEditingNetTotal} onOpenChange={setIsEditingNetTotal}>
+                                                <PopoverTrigger asChild>
+                                                    <div className="relative group/tooltip flex items-center">
+                                                        <button className="text-[#CFDBD5]/30 hover:text-[#F5CB5C] transition-colors p-1" onClick={() => { setTempManualNet(manualNetTotal !== null ? manualNetTotal.toString() : ''); setIsEditingNetTotal(true); }}>
+                                                            <Pencil className="w-4 h-4" />
+                                                        </button>
+                                                        <div className="absolute top-1/2 -translate-y-1/2 right-full mr-2 px-2 py-1 bg-[#242423] border border-[#4A4D4A] text-[#E8EDDF] text-[10px] uppercase font-bold tracking-wider rounded shadow-lg whitespace-nowrap opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity z-50">
+                                                            Editar Importe Final
+                                                        </div>
+                                                    </div>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-56 bg-[#242423] border-[#4A4D4A] p-3 rounded-xl shadow-2xl animate-in zoom-in-95 duration-200" side="top" align="center">
+                                                    <div className="flex flex-col gap-3">
+                                                        <div className="text-xs text-[#CFDBD5] mb-1">Override manual:</div>
+                                                        <input
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            autoFocus
+                                                            placeholder="Ingresar monto manual"
+                                                            className="w-full bg-transparent border border-[#4A4D4A] rounded-lg px-2 py-1.5 text-[#E8EDDF] text-center font-bold outline-none focus:border-[#F5CB5C]/50 transition-colors"
+                                                            value={tempManualNet}
+                                                            onChange={e => setTempManualNet(e.target.value.replace(/[^0-9]/g, ''))}
+                                                            onKeyDown={e => {
+                                                                if (e.key === 'Enter') {
+                                                                    setManualNetTotal(tempManualNet ? parseInt(tempManualNet) : null);
+                                                                    setIsEditingNetTotal(false);
+                                                                }
+                                                                if (e.key === 'Escape') setIsEditingNetTotal(false);
+                                                            }}
+                                                        />
+                                                        <div className="flex gap-2">
+                                                            <Button size="sm" className="flex-1 bg-[#F5CB5C] hover:bg-[#FFE082] text-black font-bold h-8" onClick={() => { setManualNetTotal(tempManualNet ? parseInt(tempManualNet) : null); setIsEditingNetTotal(false); }}>
+                                                                <Check className="w-4 h-4" />
+                                                            </Button>
+                                                            <Button size="sm" variant="outline" className="flex-1 border-[#4A4D4A] text-[#CFDBD5] hover:bg-white/5 h-8" onClick={() => { setManualNetTotal(null); setIsEditingNetTotal(false); }}>
+                                                                <X className="w-4 h-4" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </PopoverContent>
+                                            </Popover>
+                                        )}
+                                        <span>{formatMoney(viewMode === 'annual' ? finalTotal * durationInMonths : finalTotal)}</span>
+                                    </div>
                                 </div>
                                 {state.serviceType === 'Sustain' && (
                                     <div className="text-[10px] text-yellow-500 font-black uppercase mt-1 drop-shadow-sm flex flex-col items-end">
