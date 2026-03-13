@@ -254,13 +254,13 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
                                 <Pencil className="w-2.5 h-2.5 text-[#CFDBD5]/20 group-hover/inner:text-[#F5CB5C] transition-colors" />
                             </div>
                         </PopoverTrigger>
-                        <PopoverContent className="w-40 bg-[#242423] border-[#4A4D4A] p-3 rounded-xl shadow-2xl animate-in zoom-in-95 duration-200" side="bottom" align="center" sideOffset={8}>
-                            <div className="flex flex-col gap-3">
+                        <PopoverContent className="w-40 bg-transparent border-0 p-0 shadow-none animate-in zoom-in-95 duration-200" side="bottom" align="center" sideOffset={4}>
+                            <div className="flex flex-col gap-2 p-2 bg-[#2A2A28]/95 backdrop-blur-md border border-[#F5CB5C]/30 rounded-xl shadow-2xl">
                                 <input
                                     type="text"
                                     inputMode="numeric"
                                     autoFocus
-                                    className="w-full bg-transparent border border-[#4A4D4A] rounded-lg px-2 py-1.5 text-[#E8EDDF] text-center font-bold outline-none focus:border-[#F5CB5C]/50 transition-colors"
+                                    className="w-full bg-transparent border-b-2 border-[#4A4D4A] rounded-none px-2 py-1 text-[#F5CB5C] text-center font-bold outline-none focus:border-[#F5CB5C] transition-colors"
                                     value={localValue}
                                     onChange={e => setLocalValue(e.target.value.replace(/[^0-9]/g, ''))}
                                     onKeyDown={e => {
@@ -269,11 +269,11 @@ const NumericStepper = ({ label, value, onChange, min = 0, max = 999, unit = "",
                                     }}
                                 />
                                 <div className="flex gap-2">
-                                    <Button size="sm" className="flex-1 bg-[#F5CB5C] hover:bg-[#FFE082] text-black font-bold h-8" onClick={handleSave}>
-                                        <Check className="w-4 h-4" />
+                                    <Button size="sm" className="flex-1 bg-[#F5CB5C] hover:bg-[#FFE082] text-black font-bold h-7" onClick={handleSave}>
+                                        <Check className="w-3 h-3" />
                                     </Button>
-                                    <Button size="sm" variant="outline" className="flex-1 border-[#4A4D4A] text-[#CFDBD5] hover:bg-white/5 h-8" onClick={() => setIsOpen(false)}>
-                                        <X className="w-4 h-4" />
+                                    <Button size="sm" variant="ghost" className="flex-1 text-[#CFDBD5] hover:bg-white/10 h-7" onClick={() => setIsOpen(false)}>
+                                        <X className="w-3 h-3" />
                                     </Button>
                                 </div>
                             </div>
@@ -3449,18 +3449,18 @@ graph TD
                                     {manualNetTotal !== null && (
                                         <div className="text-[9px] bg-[#F5CB5C]/20 text-[#F5CB5C] px-1.5 py-0.5 rounded uppercase tracking-wider font-bold mb-0.5">AJUSTADO MANUALMENTE</div>
                                     )}
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2">
+                                        <span>{formatMoney(viewMode === 'annual' ? finalTotal * durationInMonths : finalTotal)}</span>
                                         {!readOnly && (
                                             <Popover open={isEditingNetTotal} onOpenChange={setIsEditingNetTotal}>
                                                 <PopoverTrigger asChild>
-                                                    <div className="relative group/tooltip flex items-center">
-                                                        <button className="text-[#CFDBD5]/30 hover:text-[#F5CB5C] transition-colors p-1" onClick={() => { setTempManualNet(manualNetTotal !== null ? manualNetTotal.toString() : ''); setIsEditingNetTotal(true); }}>
-                                                            <Pencil className="w-4 h-4" />
-                                                        </button>
-                                                        <div className="absolute top-1/2 -translate-y-1/2 right-full mr-2 px-2 py-1 bg-[#242423] border border-[#4A4D4A] text-[#E8EDDF] text-[10px] uppercase font-bold tracking-wider rounded shadow-lg whitespace-nowrap opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity z-50">
-                                                            Editar Importe Final
-                                                        </div>
-                                                    </div>
+                                                    <button
+                                                        title="Editar Importe Final"
+                                                        className="text-[#CFDBD5]/30 hover:text-[#F5CB5C] transition-colors p-1"
+                                                        onClick={() => { setTempManualNet(manualNetTotal !== null ? manualNetTotal.toString() : ''); setIsEditingNetTotal(true); }}
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
                                                 </PopoverTrigger>
                                                 <PopoverContent className="w-56 bg-[#242423] border-[#4A4D4A] p-3 rounded-xl shadow-2xl animate-in zoom-in-95 duration-200" side="top" align="center">
                                                     <div className="flex flex-col gap-3">
@@ -3493,7 +3493,6 @@ graph TD
                                                 </PopoverContent>
                                             </Popover>
                                         )}
-                                        <span>{formatMoney(viewMode === 'annual' ? finalTotal * durationInMonths : finalTotal)}</span>
                                     </div>
                                 </div>
                                 {state.serviceType === 'Sustain' && (
