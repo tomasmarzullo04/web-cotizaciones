@@ -90,13 +90,14 @@ export function createQuoteWordDoc(data: any, lang: Language = 'ES'): Document {
             .replace(/Ã‘/g, 'Ñ')
     }
 
-    // Safety Calcs (Direct Dashboard Sync)
-    const displayGross = (data.grossTotal || data.finalTotal) * multiplier
+    // Safety Calcs (Direct Dashboard Sync) - NaN guards: always fallback to 0 or 1
+    const dMonths = data.durationMonths || 1
+    const displayGross = ((data.grossTotal || data.finalTotal || 0)) * multiplier
     let displayRetention = (data.retentionAmount || 0) * multiplier
-    let displayNet = data.finalTotal * multiplier
+    let displayNet = (data.finalTotal || 0) * multiplier
 
     if (data.retention?.enabled && (displayRetention === 0 || !displayRetention)) {
-        displayRetention = displayGross * (data.retention.percentage / 100)
+        displayRetention = displayGross * ((data.retention.percentage || 0) / 100)
         displayNet = displayGross - displayRetention
     }
 
@@ -371,7 +372,7 @@ export function createQuoteWordDoc(data: any, lang: Language = 'ES'): Document {
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `${lang === 'EN' ? 'Service Complexity' : lang === 'PT' ? 'Complexidade do Serviço' : 'Complejidad del Servicio'} (Clase ${data.criticitnessLevel?.label || 'S1'})`, size: 17 })] })], margins: { left: 120 } }),
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: lang === 'EN' ? "FIXED" : lang === 'PT' ? "FIXO" : "FIJO", size: 17 })], alignment: AlignmentType.CENTER })] }),
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt(data.servicesCost || 0), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt((data.servicesCost || 0) * (isAnnual ? 12 : data.durationMonths)), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } })
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt((data.servicesCost || 0) * (isAnnual ? 12 : dMonths)), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } })
                                 ]
                             })
                         ] : []),
@@ -388,7 +389,7 @@ export function createQuoteWordDoc(data: any, lang: Language = 'ES'): Document {
                             const fullProfileLabel = `${p.role} ${seniorityStr}${allocationSuffix}`
 
                             const rowMonthly = monthlySub
-                            const rowTotal = data.viewMode === 'annual' ? monthlySub * 12 : monthlySub * (data.durationMonths || 1)
+                            const rowTotal = data.viewMode === 'annual' ? monthlySub * 12 : monthlySub * dMonths
 
                             return new TableRow({
                                 children: [
@@ -407,7 +408,7 @@ export function createQuoteWordDoc(data: any, lang: Language = 'ES'): Document {
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: lang === 'EN' ? "L2 Support" : "Soporte L2", size: 17 })] })], margins: { left: 120 } }),
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "10%", size: 17 })], alignment: AlignmentType.CENTER })] }),
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt(data.l2SupportCost), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt(data.l2SupportCost * (isAnnual ? 12 : data.durationMonths)), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } })
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt(data.l2SupportCost * (isAnnual ? 12 : dMonths)), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } })
                                 ]
                             })
                         ] : []),
@@ -418,7 +419,7 @@ export function createQuoteWordDoc(data: any, lang: Language = 'ES'): Document {
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: data.serviceType === 'Sustain' ? t('weekend_usage') : t('risk_management'), size: 17 })] })], margins: { left: 120 } }),
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: data.serviceType === 'Sustain' ? "1.5% Base" : `${((data.criticitnessLevel?.margin || 0) * 100).toFixed(0)}%`, size: 17 })], alignment: AlignmentType.CENTER })] }),
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt(data.riskCost), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt(data.riskCost * (isAnnual ? 12 : data.durationMonths)), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } })
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt(data.riskCost * (isAnnual ? 12 : dMonths)), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } })
                                 ]
                             })
                         ] : []),
@@ -429,7 +430,7 @@ export function createQuoteWordDoc(data: any, lang: Language = 'ES'): Document {
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t('commercial_discount'), size: 17 })] })], margins: { left: 120 } }),
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `${data.commercialDiscount || 0}%`, size: 17 })], alignment: AlignmentType.CENTER })] }),
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `-${fmt(data.discountAmount)}`, size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `-${fmt(data.discountAmount * (isAnnual ? 12 : data.durationMonths))}`, size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } })
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `-${fmt(data.discountAmount * (isAnnual ? 12 : dMonths))}`, size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } })
                                 ]
                             })
                         ] : [])
@@ -495,7 +496,7 @@ export function createQuoteWordDoc(data: any, lang: Language = 'ES'): Document {
                 ...(data.serviceType === 'Sustain' && data.sustainDetails ? [
                     new Paragraph({ children: [new PageBreak()] }),
                     new Paragraph({
-                        children: [new TextRun({ text: lang === 'EN' ? "OPERATIONAL SERVICE DEFINITION" : lang === 'PT' ? "DEFINIÇÃO OPERACIONAL DO SERVIÇO" : "DEFINICIÓN OPERACIONAL DEL SERVIÇO", bold: true, size: 20, color: COLOR_PRIMARY })],
+                        children: [new TextRun({ text: lang === 'EN' ? "OPERATIONAL SERVICE DEFINITION" : lang === 'PT' ? "DEFINIÇÃO OPERACIONAL DO SERVIÇO" : "DEFINICIÓN OPERACIONAL DEL SERVICIO", bold: true, size: 20, color: COLOR_PRIMARY })],
                         spacing: { before: 200, after: 100 }
                     }),
                     new Table({
@@ -551,14 +552,78 @@ export function createQuoteWordDoc(data: any, lang: Language = 'ES'): Document {
                         children: [new TextRun({ text: lang === 'EN' ? "CRITICALITY MATRIX AND METRICS" : lang === 'PT' ? "MATRIZ DE CRITICIDADE E MÉTRICAS" : "MATRIZ DE CRITICIDAD Y MÉTRICAS", bold: true, size: 20, color: COLOR_PRIMARY })],
                         spacing: { before: 300, after: 100 }
                     }),
-                    new Paragraph({
-                        children: [
-                            new TextRun({ text: `${lang === 'EN' ? 'CLASS' : lang === 'PT' ? 'CLASSE' : 'CLASE'} ${data.criticitnessLevel?.label || 'MEDIA'}`, bold: true, size: 18, color: COLOR_PRIMARY }),
-                            new TextRun({ text: `  • ${lang === 'EN' ? 'Operational Impact' : lang === 'PT' ? 'Impacto Operacional' : 'Impacto Operativo'}: ${data.sustainDetails.criticalityMatrix?.impactOperative >= 4 ? (lang === 'EN' ? 'High' : 'Alto') : (lang === 'EN' ? 'Medium' : 'Medio')}`, size: 17 }),
-                            new TextRun({ text: `  • ${lang === 'EN' ? 'Financial Impact' : lang === 'PT' ? 'Impacto Financeiro' : 'Impacto Financiero'}: ${data.isFinancialOrSales ? (lang === 'EN' ? 'High' : 'Alto') : (lang === 'EN' ? 'Standard' : 'Estándar')}`, size: 17, break: 1 }),
-                            new TextRun({ text: `  • ${lang === 'EN' ? 'Critical Use' : lang === 'PT' ? 'Uso Crítico' : 'Uso Crítico'}: ${(data.sustainDetails.criticalityMatrix?.frequencyOfUse || 'Diario').toUpperCase()}`, size: 17 })
+                    // Class badge row
+                    (() => {
+                        const m = data.sustainDetails.criticalityMatrix
+                        const lvl = data.criticitnessLevel?.label || 'MEDIA'
+                        const score = data.criticitnessLevel?.score || '-'
+                        const claseWord = lang === 'EN' ? 'CLASS' : lang === 'PT' ? 'CLASSE' : 'CLASE'
+                        const impactFn = (v: number) => v >= 4 ? (lang === 'EN' ? 'High' : 'Alto') : v >= 2 ? (lang === 'EN' ? 'Medium' : 'Medio') : (lang === 'EN' ? 'Low' : 'Bajo')
+                        const freqVal = (m?.frequencyOfUse || 'daily').toUpperCase()
+                        const freqLocalized = freqVal === 'DAILY' ? (lang === 'EN' ? 'DAILY' : lang === 'PT' ? 'DIÁRIO' : 'DIARIO')
+                            : freqVal === 'WEEKLY' ? (lang === 'EN' ? 'WEEKLY' : 'SEMANAL')
+                            : freqVal === 'MONTHLY' ? (lang === 'EN' ? 'MONTHLY' : lang === 'PT' ? 'MENSAL' : 'MENSUAL')
+                            : freqVal
+                        const lvlColor = lvl === 'S4' || lvl === 'ALTA' ? 'BE3232' : lvl === 'S1' || lvl === 'BAJA' ? '329632' : 'DC9600'
+                        const matrixItems: [string, string][] = [
+                            [lang === 'EN' ? 'Operational Impact' : lang === 'PT' ? 'Impacto Operacional' : 'Impacto Operativo', impactFn(m?.impactOperative || 0)],
+                            [lang === 'EN' ? 'Financial Impact' : lang === 'PT' ? 'Impacto Financeiro' : 'Impacto Financiero', impactFn(m?.impactFinancial || 0)],
+                            [lang === 'EN' ? 'User Coverage' : lang === 'PT' ? 'Cobertura de Usuários' : 'Cobertura de Usuarios', impactFn(m?.userCoverage || 0)],
+                            [lang === 'EN' ? 'Country Coverage' : lang === 'PT' ? 'Cobertura de Países' : 'Cobertura de Países', impactFn(m?.countryCoverage || 0)],
+                            [lang === 'EN' ? 'Technical Maturity' : lang === 'PT' ? 'Maturidade Técnica' : 'Madurez Técnica', impactFn(m?.technicalMaturity || 0)],
+                            [lang === 'EN' ? 'Dependencies' : lang === 'PT' ? 'Dependências' : 'Dependencias', impactFn(m?.dependencies || 0)],
+                            [lang === 'EN' ? 'Critical Use Frequency' : lang === 'PT' ? 'Frequência Crítica' : 'Uso Crítico', freqLocalized],
+                            [lang === 'EN' ? 'Financial/Sales Closure' : lang === 'PT' ? 'Fechamento Financeiro' : 'Cierre Financiero', data.isFinancialOrSales ? (lang === 'EN' ? 'YES' : 'SÍ') : 'NO'],
                         ]
-                    })
+                        return new Table({
+                            width: { size: 100, type: WidthType.PERCENTAGE },
+                            borders: {
+                                top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL },
+                                left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL },
+                                insideHorizontal: { style: BorderStyle.NIL }, insideVertical: { style: BorderStyle.NIL }
+                            },
+                            rows: [
+                                // Class badge header row
+                                new TableRow({
+                                    children: [
+                                        new TableCell({
+                                            children: [new Paragraph({ children: [new TextRun({ text: `${claseWord}: ${lvl}`, bold: true, color: 'FFFFFF', size: 22 })], alignment: AlignmentType.LEFT })],
+                                            shading: { fill: lvlColor },
+                                            margins: { left: 120, top: 80, bottom: 80 },
+                                            columnSpan: 2
+                                        }),
+                                        new TableCell({
+                                            children: [new Paragraph({ children: [new TextRun({ text: `SCORE: ${score} / 30`, color: 'FFFFFF', size: 18 })], alignment: AlignmentType.RIGHT })],
+                                            shading: { fill: lvlColor },
+                                            margins: { right: 120, top: 80, bottom: 80 },
+                                            columnSpan: 2
+                                        })
+                                    ]
+                                }),
+                                // Metric rows (pairs)
+                                ...matrixItems.reduce((rows: TableRow[], item, idx) => {
+                                    if (idx % 2 === 0) {
+                                        const next = matrixItems[idx + 1]
+                                        const fill = Math.floor(idx / 2) % 2 === 0 ? COLOR_ROW_ALT : 'FFFFFF'
+                                        rows.push(new TableRow({
+                                            children: [
+                                                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: item[0] + ':', bold: true, size: 16, color: COLOR_PRIMARY })] })], shading: { fill }, margins: { left: 120, top: 60, bottom: 60 } }),
+                                                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: item[1], size: 16, color: COLOR_TEXT })] })], shading: { fill }, margins: { left: 60 } }),
+                                                ...(next ? [
+                                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: next[0] + ':', bold: true, size: 16, color: COLOR_PRIMARY })] })], shading: { fill }, margins: { left: 120, top: 60, bottom: 60 } }),
+                                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: next[1], size: 16, color: COLOR_TEXT })] })], shading: { fill }, margins: { left: 60 } }),
+                                                ] : [
+                                                    new TableCell({ children: [new Paragraph({ children: [] })], shading: { fill } }),
+                                                    new TableCell({ children: [new Paragraph({ children: [] })], shading: { fill } }),
+                                                ])
+                                            ]
+                                        }))
+                                    }
+                                    return rows
+                                }, [])
+                            ]
+                        })
+                    })()
                 ] : []),
 
                 // === ARCHITECTURE DIAGRAM ===

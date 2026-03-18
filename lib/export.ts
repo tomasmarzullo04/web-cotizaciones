@@ -215,8 +215,10 @@ function createPDFDocument(data: QuoteState & {
     }
 
     const durationText = () => {
-        const val = Math.round(data.durationValue) === data.durationValue ? data.durationValue : data.durationValue.toFixed(1)
-        return `${val} ${data.durationUnit.toUpperCase()}`
+        const val = data.durationValue || 0
+        const rounded = Math.round(val) === val ? val : val.toFixed(1)
+        const unit = data.durationUnit ? data.durationUnit.toUpperCase() : 'MONTHS'
+        return `${rounded} ${unit}`
     }
 
     const cleanText = (str: string) => {
@@ -462,8 +464,11 @@ function createPDFDocument(data: QuoteState & {
     if (data.serviceType === 'Sustain' && (data.servicesCost || 0) > 0) {
         const classLabel = data.criticitnessLevel?.label || 'PENDIENTE'
         const monthlyBase = data.servicesCost || 0
-        const totalBase = data.viewMode === 'annual' ? monthlyBase * data.durationMonths : monthlyBase * data.durationMonths
-        drawRow(`Complejidad del Servicio (Clase ${classLabel})`, "Tarifa Base", fmt(monthlyBase), fmt(totalBase))
+        const dur = data.durationMonths || 1
+        const complexLabel = lang === 'EN' ? `Service Complexity (Class ${classLabel})` : lang === 'PT' ? `Complexidade do Serviço (Classe ${classLabel})` : `Complejidad del Servicio (Clase ${classLabel})`
+        const fijadoLabel = lang === 'EN' ? 'FIXED' : lang === 'PT' ? 'FIXO' : 'FIJO'
+        const totalBase = data.viewMode === 'annual' ? monthlyBase * 12 : monthlyBase * dur
+        drawRow(complexLabel, fijadoLabel, fmt(monthlyBase), fmt(totalBase))
     }
 
     const profiles = data.staffingDetails?.profiles || []
@@ -511,33 +516,44 @@ function createPDFDocument(data: QuoteState & {
         })
     }
 
-    if (data.serviceType !== 'Staffing' && data.l2SupportCost > 0) drawRow(lang === 'EN' ? "L2 Support" : "Soporte L2", "10%", fmt(data.l2SupportCost), fmt(data.l2SupportCost * data.durationMonths))
+    if (data.serviceType !== 'Staffing' && data.l2SupportCost > 0) {
+        const dur = data.durationMonths || 1
+        drawRow(lang === 'EN' ? "L2 Support" : lang === 'PT' ? "Suporte L2" : "Soporte L2", "10%", fmt(data.l2SupportCost), fmt(data.l2SupportCost * dur))
+    }
 
+    const dur = data.durationMonths || 1
     // Sustain Surcharges
     if (data.serviceType === 'Sustain') {
-        if (data.riskCost > 0) drawRow(t('weekend_usage'), "1.5% Base", fmt(data.riskCost), fmt(data.riskCost * data.durationMonths))
+        if (data.riskCost > 0) drawRow(t('weekend_usage'), lang === 'EN' ? '1.5% Base' : '1.5% Base', fmt(data.riskCost), fmt(data.riskCost * dur))
         if ((data.hypercareCost || 0) > 0) {
             const hCost = data.hypercareCost || 0
-            drawRow(t('hypercare'), lang === 'EN' ? "1 Full Month" : lang === 'PT' ? "1 Mês Full" : "1 Mes Full", fmt(0), fmt(hCost))
+            const hyperLabel = lang === 'EN' ? '1 Full Month' : lang === 'PT' ? '1 Mês Completo' : '1 Mes Completo'
+            drawRow(t('hypercare'), hyperLabel, fmt(0), fmt(hCost))
         }
     } else {
-        if (data.riskCost > 0) drawRow(t('risk_management'), `${((data.criticitnessLevel?.margin || 0) * 100).toFixed(0)}%`, fmt(data.riskCost), fmt(data.riskCost * data.durationMonths))
+        if (data.riskCost > 0) drawRow(t('risk_management'), `${((data.criticitnessLevel?.margin || 0) * 100).toFixed(0)}%`, fmt(data.riskCost), fmt(data.riskCost * dur))
     }
-    if (data.discountAmount > 0) drawRow(t('commercial_discount'), `${data.commercialDiscount || 0}%`, `-${fmt(data.discountAmount)}`, `-${fmt(data.discountAmount * data.durationMonths)}`)
+    if (data.discountAmount > 0) drawRow(t('commercial_discount'), `${data.commercialDiscount || 0}%`, `-${fmt(data.discountAmount)}`, `-${fmt(data.discountAmount * dur)}`)
 
     // Totals Box
     y += 10
     const isAnnual = data.viewMode === 'annual'
-    const multiplier = isAnnual ? data.durationMonths : 1
-    const periodLabel = isAnnual ? "TOTAL ESTIMADO" : "TOTAL ESTIMADO"
-    const netLabel = isAnnual ? "INVERSIÓN TOTAL PROYECTADA" : "INVERSIÓN NETA ESTIMADA"
+    const dMonths = data.durationMonths || 1
+    const multiplier = isAnnual ? dMonths : 1
+    const periodLabel = isAnnual
+        ? (lang === 'EN' ? 'ANNUALIZED' : lang === 'PT' ? 'ANUALIZADO' : 'ANUALIZADO')
+        : (lang === 'EN' ? 'ESTIMATED TOTAL' : lang === 'PT' ? 'TOTAL ESTIMADO' : 'TOTAL ESTIMADO')
+    const netLabel = isAnnual
+        ? (lang === 'EN' ? 'TOTAL PROJECTED INVESTMENT' : lang === 'PT' ? 'INVESTIMENTO TOTAL PROJETADO' : 'INVERSIÓN TOTAL PROYECTADA')
+        : (lang === 'EN' ? 'ESTIMATED NET INVESTMENT' : lang === 'PT' ? 'INVESTIMENTO LÍQUIDO ESTIMADO' : 'INVERSIÓN NETA ESTIMADA')
 
-    const displayGross = (data.grossTotal || data.finalTotal) * multiplier
+    const grossBase = (data.grossTotal || data.finalTotal || 0)
+    const displayGross = grossBase * multiplier
     let displayRetention = (data.retentionAmount || 0) * multiplier
-    let displayNet = data.finalTotal * multiplier
+    let displayNet = (data.finalTotal || 0) * multiplier
 
     if (data.retention?.enabled && (displayRetention === 0 || !displayRetention)) {
-        displayRetention = displayGross * (data.retention.percentage / 100)
+        displayRetention = displayGross * ((data.retention.percentage || 0) / 100)
         displayNet = displayGross - displayRetention
     }
 
@@ -581,14 +597,19 @@ function createPDFDocument(data: QuoteState & {
     }
     y += boxH + 15
 
-    // Notes
     doc.setFontSize(8)
     doc.setTextColor(COLOR_TEXT)
     doc.setFont(FONT_REG, "normal")
-    doc.text("* Valores no incluyen impuestos aplicables.", margin, y)
+    const taxNote = lang === 'EN' ? '* Values do not include applicable taxes.' : lang === 'PT' ? '* Valores não incluem impostos aplicáveis.' : '* Valores no incluyen impuestos aplicables.'
+    doc.text(taxNote, margin, y)
     if (data.retention?.enabled) {
         y += 4
-        doc.text(`* Retención financiera interna del ${data.retention.percentage}% aplicada pro - forma.`, margin, y)
+        const retNote = lang === 'EN'
+            ? `* Internal financial retention of ${data.retention.percentage}% applied pro-forma.`
+            : lang === 'PT'
+                ? `* Retenção financeira interna de ${data.retention.percentage}% aplicada pro-forma.`
+                : `* Retención financiera interna del ${data.retention.percentage}% aplicada pro-forma.`
+        doc.text(retNote, margin, y)
     }
     y += 10
 
@@ -596,155 +617,175 @@ function createPDFDocument(data: QuoteState & {
     if (data.serviceType === 'Sustain' && data.sustainDetails) {
         if (y > pageHeight - 60) { doc.addPage(); drawHeader(); y = 45; }
 
+        const defTitle = lang === 'EN' ? 'OPERATIONAL SERVICE DEFINITION' : lang === 'PT' ? 'DEFINIÇÃO OPERACIONAL DO SERVIÇO' : 'DEFINICIÓN OPERACIONAL DEL SERVICIO'
         doc.setFont(FONT_BOLD, "bold")
         doc.setFontSize(11)
         doc.setTextColor(COLOR_PRIMARY)
-        doc.text("DEFINICIÓN OPERACIONAL DEL SERVICIO", margin, y)
-        y += 6
+        doc.text(defTitle, margin, y)
+        y += 8
 
-        // Sustain Info Grid
-        const boxHeight = 55 // Further increased for more bottom breathing room
-        doc.setFillColor(COLOR_ROW_ALT)
-        doc.rect(margin, y, contentWidth, boxHeight, 'F')
+        // === DYNAMIC GRID (no fixed height, labels + values) ===
+        const fields: [string, string][] = []
 
-        let sy = y + 7 // Increased top padding
-        const paddingX = 8 // Increased horizontal padding
-        const col2 = margin + contentWidth / 2 + paddingX
+        const solLabel = lang === 'EN' ? 'SOLUTION' : lang === 'PT' ? 'SOLUÇÃO' : 'SOLUCIÓN'
+        const ownerLabel = 'OWNER'
+        const schedLabel = lang === 'EN' ? 'UPDATE SCHEDULES' : lang === 'PT' ? 'HORÁRIOS DE ATUALIZAÇÃO' : 'HORARIOS DE ACTUALIZACIÓN'
+        const freqLabel = lang === 'EN' ? 'FREQUENCY / DURATION' : lang === 'PT' ? 'FREQUÊNCIA / DURAÇÃO' : 'FRECUENCIA / DURACIÓN'
+        const hcLabel = lang === 'EN' ? 'HYPERCARE PERIOD' : lang === 'PT' ? 'PERÍODO HYPERCARE' : 'PERIODO HYPERCARE'
+        const weekendLabel = lang === 'EN' ? 'WEEKEND SUPPORT' : lang === 'PT' ? 'SUPORTE FIM DE SEMANA' : 'SOPORTE FINES DE SEMANA'
 
-        // Row 1: Solution & Owner
-        doc.setFontSize(8)
-        doc.setFont(FONT_BOLD, "bold")
-        doc.setTextColor(COLOR_PRIMARY)
-        doc.text("SOLUCIÓN:", margin + paddingX, sy)
-        doc.text("OWNER:", col2, sy)
+        const freq = (data.sustainDetails.metrics?.updateFrequency || 'daily').toUpperCase()
+        const freqLocalized = freq === 'DAILY' ? (lang === 'EN' ? 'DAILY' : lang === 'PT' ? 'DIÁRIO' : 'DIARIO')
+            : freq === 'WEEKLY' ? (lang === 'EN' ? 'WEEKLY' : lang === 'PT' ? 'SEMANAL' : 'SEMANAL')
+            : freq === 'MONTHLY' ? (lang === 'EN' ? 'MONTHLY' : lang === 'PT' ? 'MENSAL' : 'MENSUAL')
+            : freq
+        const updateDuration = data.sustainDetails.updateDuration || (lang === 'EN' ? 'N/A' : 'N/A')
 
-        sy += 5
-        doc.setFont(FONT_REG, "normal")
-        doc.setTextColor(COLOR_CHARCOAL)
-        doc.text(cleanText(data.sustainDetails.solutionName || "N/A"), margin + paddingX, sy)
-        doc.text(cleanText(data.sustainDetails.businessOwner || "Pendiente"), col2, sy)
-
-        sy += 8
-        doc.setFont(FONT_BOLD, "bold")
-        doc.setTextColor(COLOR_PRIMARY)
-        doc.text("HORARIOS DE ACTUALIZACIÓN:", margin + paddingX, sy)
-
-        sy += 5
-        doc.setFont(FONT_REG, "normal")
-        doc.setTextColor(COLOR_CHARCOAL)
-        const schedulesText = (data.sustainDetails.updateSchedules || [])
-            .filter(s => s)
-            .join(' | ') || "No definido"
-        doc.text(schedulesText.substring(0, 80), margin + paddingX, sy) // Cap length just in case
-
-        // Row 3: Freq & Hypercare
-        sy += 8
-        doc.setFont(FONT_BOLD, "bold")
-        doc.setTextColor(COLOR_PRIMARY)
-        doc.text("FRECUENCIA / DURACIÓN:", margin + paddingX, sy)
-        doc.text("PERIODO HYPERCARE:", col2, sy)
-
-        sy += 5
-        doc.setFont(FONT_REG, "normal")
-        doc.setTextColor(COLOR_CHARCOAL)
-        doc.text(`${(data.sustainDetails.metrics.updateFrequency || 'daily').toUpperCase()} / ${data.sustainDetails.updateDuration || 'N/A'}`, margin + paddingX, sy)
-        const formatHypercare = (val: string) => {
-            if (!val) return "30 días"
-            if (val === "+90_days") return "+ días"
-            return val.replace('_', ' ').replace('days', 'días')
+        const formatHypercare = (val: string, l: string) => {
+            if (!val) return l === 'EN' ? '30 days' : '30 días'
+            return val.replace('_', ' ').replace('days', l === 'EN' ? 'days' : l === 'PT' ? 'dias' : 'días').replace(/^\+/, '+')
         }
         const hypercareText = data.sustainDetails.hasHypercare
-            ? `Soporte Hypercare: ${formatHypercare(data.sustainDetails.hypercarePeriod)}`
-            : "NO APLICABLE"
-        doc.text(hypercareText, col2, sy)
-
-        // Row 4: Weekend Support
-        sy += 8
-        doc.setFont(FONT_BOLD, "bold")
-        doc.setTextColor(COLOR_PRIMARY)
-        doc.text("SOPORTE FINES DE SEMANA / HORARIO:", margin + paddingX, sy)
+            ? `${lang === 'EN' ? 'Hypercare' : 'Soporte Hypercare'}: ${formatHypercare(data.sustainDetails.hypercarePeriod, lang)}`
+            : (lang === 'EN' ? 'NOT APPLICABLE' : lang === 'PT' ? 'NÃO APLICÁVEL' : 'NO APLICABLE')
 
         const weekendText = data.sustainDetails.weekendUsage
-            ? `SÍ (+1.5% FEE) - ${(data.sustainDetails.weekendDays || []).join(', ')}`
-            : "NO"
-        doc.text(weekendText, margin + paddingX, sy)
+            ? `${lang === 'EN' ? 'YES (+1.5% FEE)' : 'SÍ (+1.5% FEE)'} - ${(data.sustainDetails.weekendDays || []).join(', ')}`
+            : (lang === 'EN' ? 'NO' : 'NO')
 
-        // Row 5: Monitoring Hours
-        sy += 8
-        doc.setFont(FONT_BOLD, "bold")
-        doc.setTextColor(COLOR_PRIMARY)
-        doc.text("HORAS DE MONITOREO ESTIMADAS:", margin + paddingX, sy)
-        sy += 5
-        doc.setFont(FONT_REG, "normal")
-        doc.setTextColor(COLOR_CHARCOAL)
-        doc.text(`${(data.finalTotal / 160).toFixed(1)} HORAS / MES (BASADO EN CLASE ${data.criticitnessLevel?.label || 'S1'})`, margin + paddingX, sy)
+        const schedText = (data.sustainDetails.updateSchedules || []).filter((s: string) => s).join(' | ') || (lang === 'EN' ? 'Not defined' : 'No definido')
 
-        y += boxHeight + 10
+        fields.push([solLabel, cleanText(data.sustainDetails.solutionName || 'N/A')])
+        fields.push([ownerLabel, cleanText(data.sustainDetails.businessOwner || (lang === 'EN' ? 'Pending' : 'Pendiente'))])
+        fields.push([schedLabel, schedText])
+        fields.push([freqLabel, `${freqLocalized} / ${updateDuration}`])
+        fields.push([hcLabel, hypercareText])
+        fields.push([weekendLabel, weekendText])
 
-        // CRITICALITY MATRIX
-        if (y > pageHeight - 60) { doc.addPage(); drawHeader(); y = 45; }
+        const rowH = 10
+        fields.forEach(([label, value]) => {
+            if (y + rowH > pageHeight - 20) { doc.addPage(); drawHeader(); y = 45; }
+            doc.setFillColor(COLOR_ROW_ALT)
+            doc.rect(margin, y, contentWidth, rowH, 'F')
+            doc.setFontSize(7.5)
+            doc.setFont(FONT_BOLD, "bold")
+            doc.setTextColor(COLOR_PRIMARY)
+            doc.text(label + ':', margin + 4, y + 4)
+            doc.setFont(FONT_REG, "normal")
+            doc.setTextColor(COLOR_CHARCOAL)
+            // Split long values
+            const valLines = doc.splitTextToSize(value, contentWidth - 80)
+            doc.text(valLines[0] || '', margin + 65, y + 4)
+            y += rowH + 1
+        })
 
+        y += 8
+
+        // CRITICALITY MATRIX (redesigned as a clean table)
+        if (y > pageHeight - 70) { doc.addPage(); drawHeader(); y = 45; }
+
+        const matTitle = lang === 'EN' ? 'CRITICALITY MATRIX' : lang === 'PT' ? 'MATRIZ DE CRITICIDADE' : 'MATRIZ DE CRITICIDAD'
         doc.setFont(FONT_BOLD, "bold")
         doc.setFontSize(11)
         doc.setTextColor(COLOR_PRIMARY)
-        doc.text("MATRIZ DE CRITICIDAD Y MÉTRICAS", margin, y)
+        doc.text(matTitle, margin, y)
         y += 6
 
         const matrix = data.sustainDetails.criticalityMatrix
-        const level = data.criticitnessLevel?.label || "MEDIA"
-        const levelColor = level === 'ALTA' ? [190, 50, 50] : level === 'BAJA' ? [50, 150, 50] : [220, 180, 0]
+        const level = data.criticitnessLevel?.label || 'MEDIA'
+        const score = data.criticitnessLevel?.score || '-'
+        const levelColor: [number, number, number] = level === 'S4' || level === 'ALTA' ? [190, 50, 50]
+            : level === 'S1' || level === 'BAJA' ? [50, 150, 50]
+            : [220, 150, 0]
 
+        // Class badge row
         doc.setFillColor(levelColor[0], levelColor[1], levelColor[2])
-        doc.rect(margin, y, 45, 10, 'F') // Increased width for "CLASE PREMIUM"
+        doc.rect(margin, y, contentWidth, 10, 'F')
         doc.setTextColor(255)
-        doc.setFontSize(10)
-        doc.text(`CLASE ${level}`, margin + 22.5, y + 6.5, { align: 'center' })
-
-        doc.setTextColor(COLOR_TEXT)
-        doc.setFontSize(9)
+        doc.setFontSize(11)
         doc.setFont(FONT_BOLD, "bold")
-        doc.text("Impacto Operativo:", margin + 45, y + 4)
-        doc.text("Impacto Financiero:", margin + 45, y + 9)
+        const claseWord = lang === 'EN' ? 'CLASS' : lang === 'PT' ? 'CLASSE' : 'CLASE'
+        const scoreWord = lang === 'EN' ? 'SCORE' : 'SCORE'
+        doc.text(`${claseWord}: ${level}`, margin + 4, y + 7)
+        doc.text(`${scoreWord}: ${score} / 30`, pageWidth - margin - 4, y + 7, { align: 'right' })
+        y += 14
 
-        doc.setFont(FONT_REG, "normal")
-        const impactText = (val: number) => val >= 4 ? "Alto" : val >= 2 ? "Medio" : "Bajo"
-        doc.text(impactText(matrix.impactOperative), margin + 80, y + 4)
-        doc.text(impactText(matrix.impactFinancial), margin + 80, y + 9)
-
-        doc.setFont(FONT_BOLD, "bold")
-        doc.text("Uso Crítico:", margin + 110, y + 4)
-        doc.text("Cierre Financiero:", margin + 110, y + 9)
-
-        doc.setFont(FONT_REG, "normal")
-        doc.text((matrix.frequencyOfUse || 'Diario').toUpperCase(), margin + 140, y + 4)
-        doc.text(data.isFinancialOrSales ? "SÍ" : "NO", margin + 140, y + 9)
-
-        if (matrix.hasCriticalDates && matrix.criticalDatesDescription) {
-            y += 13
-            doc.setFont(FONT_BOLD, "bold")
-            doc.text("Fechas Críticas:", margin + 45, y)
-            doc.setFont(FONT_REG, "normal")
-            doc.text(cleanText(matrix.criticalDatesDescription), margin + 80, y)
-            y += 5
-        } else {
-            y += 18
+        // Matrix metrics table
+        const impactText = (val: number) => {
+            if (val >= 4) return lang === 'EN' ? 'High (5)' : `Alto (${val})`
+            if (val >= 2) return lang === 'EN' ? 'Medium (3)' : `Medio (${val})`
+            return lang === 'EN' ? 'Low (1)' : `Bajo (${val})`
         }
 
-        // DEPENDENCIES TAGS
-        if (data.sustainDetails.metrics.systemDependencies) {
+        const matrixRows: [string, string][] = [
+            [lang === 'EN' ? 'Operational Impact' : lang === 'PT' ? 'Impacto Operacional' : 'Impacto Operativo', impactText(matrix?.impactOperative || 0)],
+            [lang === 'EN' ? 'Financial Impact' : lang === 'PT' ? 'Impacto Financeiro' : 'Impacto Financiero', impactText(matrix?.impactFinancial || 0)],
+            [lang === 'EN' ? 'User Coverage' : lang === 'PT' ? 'Cobertura de Usuários' : 'Cobertura de Usuarios', impactText(matrix?.userCoverage || 0)],
+            [lang === 'EN' ? 'Country Coverage' : lang === 'PT' ? 'Cobertura de Países' : 'Cobertura de Países', impactText(matrix?.countryCoverage || 0)],
+            [lang === 'EN' ? 'Technical Maturity' : lang === 'PT' ? 'Maturidade Técnica' : 'Madurez Técnica', impactText(matrix?.technicalMaturity || 0)],
+            [lang === 'EN' ? 'Dependencies' : lang === 'PT' ? 'Dependências' : 'Dependencias', impactText(matrix?.dependencies || 0)],
+        ]
+
+        const col2X = margin + contentWidth / 2 + 5
+        matrixRows.forEach(([label, value], i) => {
+            const rowY = y + Math.floor(i / 2) * 9
+            const xOff = (i % 2 === 0) ? margin + 4 : col2X
+            if (y + Math.ceil(matrixRows.length / 2) * 9 > pageHeight - 20) {
+                if (i === 0) { doc.addPage(); drawHeader(); y = 45; }
+            }
+            if (i % 2 === 0) {
+                doc.setFillColor(i % 4 === 0 ? COLOR_ROW_ALT : '#FFFFFF')
+                doc.rect(margin, rowY, contentWidth, 9, 'F')
+            }
+            doc.setFontSize(8)
+            doc.setFont(FONT_BOLD, "bold")
+            doc.setTextColor(COLOR_PRIMARY)
+            doc.text(`${label}:`, xOff, rowY + 5.5)
+            doc.setFont(FONT_REG, "normal")
+            doc.setTextColor(COLOR_TEXT)
+            doc.text(value, xOff + 55, rowY + 5.5)
+        })
+
+        y += Math.ceil(matrixRows.length / 2) * 9 + 6
+
+        // Critical dates & Financial flag
+        if (matrix?.hasCriticalDates && matrix.criticalDatesDescription) {
+            doc.setFont(FONT_BOLD, "bold")
+            doc.setFontSize(8.5)
+            doc.setTextColor(COLOR_PRIMARY)
+            const cdLabel = lang === 'EN' ? 'Critical Dates:' : lang === 'PT' ? 'Datas Críticas:' : 'Fechas Críticas:'
+            doc.text(cdLabel, margin, y)
+            doc.setFont(FONT_REG, "normal")
+            doc.setTextColor(COLOR_TEXT)
+            const cdLines = doc.splitTextToSize(cleanText(matrix.criticalDatesDescription), contentWidth - 40)
+            doc.text(cdLines, margin + 35, y)
+            y += cdLines.length * 4.5 + 4
+        }
+
+        const financialLabel = lang === 'EN' ? 'Financial/Sales closure:' : lang === 'PT' ? 'Fechamento financeiro:' : 'Cierre Financiero:'
+        doc.setFont(FONT_BOLD, "bold")
+        doc.setFontSize(8.5)
+        doc.setTextColor(COLOR_PRIMARY)
+        doc.text(financialLabel, margin, y)
+        doc.setFont(FONT_REG, "normal")
+        doc.setTextColor(COLOR_TEXT)
+        doc.text(data.isFinancialOrSales ? (lang === 'EN' ? 'YES' : 'SÍ') : 'NO', margin + 60, y)
+        y += 10
+
+        // System Dependencies
+        if (data.sustainDetails.metrics?.systemDependencies) {
+            const depsTitle = lang === 'EN' ? 'EXTERNAL DEPENDENCIES:' : lang === 'PT' ? 'DEPENDÊNCIAS EXTERNAS:' : 'DEPENDENCIAS EXTERNAS:'
             doc.setFont(FONT_BOLD, "bold")
             doc.setFontSize(9)
             doc.setTextColor(COLOR_PRIMARY)
-            doc.text("DEPENDENCIAS EXTERNAS:", margin, y)
+            doc.text(depsTitle, margin, y)
             y += 5
-
             const deps = data.sustainDetails.metrics.systemDependencies.split(',').filter((d: string) => d.trim())
             if (deps.length > 0) {
                 doc.setFont(FONT_REG, "normal")
                 doc.setFontSize(8.5)
                 doc.setTextColor(COLOR_TEXT)
-                const depText = deps.join(' • ')
-                const depLines = doc.splitTextToSize(depText, contentWidth)
+                const depLines = doc.splitTextToSize(deps.join(' • '), contentWidth)
                 doc.text(depLines, margin, y)
                 y += (depLines.length * 4) + 8
             } else {
@@ -755,91 +796,83 @@ function createPDFDocument(data: QuoteState & {
         }
     }
 
-    // 5. ARCHITECTURE DIAGRAM
+    // 5. ARCHITECTURE DIAGRAM (always rendered)
+    if (y > pageHeight - 80) { doc.addPage(); drawHeader(); y = 45; }
+    else { doc.addPage(); drawHeader(); y = 45; } // Always on new page
+
+    const archTitle = lang === 'EN' ? 'SOLUTION ARCHITECTURE' : lang === 'PT' ? 'ARQUITETURA DA SOLUÇÃO' : 'ARQUITECTURA DE LA SOLUCIÓN'
+    doc.setFont(FONT_BOLD, "bold")
+    doc.setFontSize(11)
+    doc.setTextColor(COLOR_PRIMARY)
+    doc.text(archTitle, margin, y)
+    y += 8
+
     if (data.diagramImage) {
-        const imgProps = doc.getImageProperties(data.diagramImage)
-        const imgW = contentWidth
-        const imgH = (imgProps.height * imgW) / imgProps.width
-
-        // Critical: If it doesn't fit, move to next page to avoid cuts
-        if (y + imgH > pageHeight - 30) {
-            doc.addPage()
-            drawHeader()
-            y = 45
-        }
-
-        doc.setFont(FONT_BOLD, "bold")
-        doc.setFontSize(11)
-        doc.setTextColor(COLOR_PRIMARY)
-        doc.text("ARQUITECTURA DE LA SOLUCIÓN", margin, y)
-        y += 6
-
         try {
+            const imgProps = doc.getImageProperties(data.diagramImage)
+            const imgW = contentWidth
+            const imgH = Math.min((imgProps.height * imgW) / imgProps.width, pageHeight - y - 40)
             doc.addImage(data.diagramImage, 'PNG', margin, y, imgW, imgH)
             y += imgH + 10
-
-            // TECH STACK LIST (below diagram)
-            if (data.techStack && data.techStack.length > 0) {
-                y += 5
-                doc.setFont(FONT_BOLD, "bold")
-                doc.setFontSize(9)
-                doc.setTextColor(COLOR_PRIMARY)
-                doc.text("STACK TECNOLÓGICO:", margin, y)
-                y += 5
-
-                // Map tech IDs to readable names
-                const techNames: Record<string, string> = {
-                    'azure': 'Azure Data Factory',
-                    'databricks': 'Azure Databricks',
-                    'synapse': 'Azure Synapse',
-                    'snowflake': 'Snowflake',
-                    'powerbi': 'Power BI',
-                    'sqlserver': 'SQL Server',
-                    'logicapps': 'Azure Logic Apps',
-                    'tableau': 'Tableau',
-                    'python': 'Python/Airflow',
-                    'n8n': 'n8n',
-                    'antigravity': 'Google Antigravity',
-                    'lovable': 'Lovable',
-                    'powerapps': 'Power Apps',
-                    'azure_df': 'Azure Data Factory',
-                    'dotnet': '.NET',
-                    'react': 'React',
-                    'sql': 'SQL',
-                    'streamlit': 'Streamlit',
-                    'datascience': 'Data Science / ML',
-                    'other': 'Otros'
-                }
-
-                // Display tech stack as comma-separated list
-                const techList = data.techStack
-                    .map((id: string) => techNames[id] || id)
-                    .join(' • ')
-
-                doc.setFont(FONT_REG, "normal")
-                doc.setFontSize(8.5)
-                doc.setTextColor(COLOR_TEXT)
-                const techLines = doc.splitTextToSize(techList, contentWidth)
-                doc.text(techLines, margin, y)
-                y += (techLines.length * 4) + 10
-            }
-
-            y += 5
         } catch (e) {
+            const noImgTxt = lang === 'EN' ? '[Diagram not available]' : lang === 'PT' ? '[Diagrama não disponível]' : '[Diagrama no disponible]'
             doc.setFont(FONT_REG, "italic")
-            doc.text("[Diagrama no disponible]", margin, y + 5)
-            y += 10
+            doc.setFontSize(9)
+            doc.setTextColor(COLOR_TEXT)
+            doc.text(noImgTxt, margin, y + 5)
+            y += 15
         }
+    } else {
+        const noImgTxt = lang === 'EN' ? '[Diagram not available - please add in the editor]' : lang === 'PT' ? '[Diagrama não disponível - adicione no editor]' : '[Diagrama no disponible - agregue uno en el editor]'
+        doc.setFont(FONT_REG, "italic")
+        doc.setFontSize(9)
+        doc.setTextColor(COLOR_TEXT)
+        doc.text(noImgTxt, margin, y + 5)
+        y += 15
     }
 
-    // 5. TERMS & CONDITIONS (Bottom of Last Page)
-    if (y > pageHeight - 80) { // Safety page break for terms
+    // TECH STACK (always)
+    if (data.techStack && data.techStack.length > 0) {
+        const stackTitle = lang === 'EN' ? 'TECH STACK:' : lang === 'PT' ? 'STACK TECNOLÓGICO:' : 'STACK TECNOLÓGICO:'
+        doc.setFont(FONT_BOLD, "bold")
+        doc.setFontSize(9)
+        doc.setTextColor(COLOR_PRIMARY)
+        doc.text(stackTitle, margin, y)
+        y += 5
+
+        const techNames: Record<string, string> = {
+            'azure': 'Azure Data Factory', 'databricks': 'Azure Databricks', 'synapse': 'Azure Synapse', 'snowflake': 'Snowflake',
+            'powerbi': 'Power BI', 'sqlserver': 'SQL Server', 'logicapps': 'Azure Logic Apps', 'tableau': 'Tableau',
+            'python': 'Python/Airflow', 'n8n': 'n8n', 'antigravity': 'Google Antigravity', 'lovable': 'Lovable',
+            'powerapps': 'Power Apps', 'azure_df': 'Azure Data Factory', 'dotnet': '.NET', 'react': 'React',
+            'sql': 'SQL', 'streamlit': 'Streamlit', 'datascience': 'Data Science / ML',
+            'other': lang === 'EN' ? 'Others' : lang === 'PT' ? 'Outros' : 'Otros'
+        }
+
+        const techList = data.techStack
+            .map((id: string) => techNames[id] || id)
+            .join(' • ')
+
+        doc.setFont(FONT_REG, "normal")
+        doc.setFontSize(8.5)
+        doc.setTextColor(COLOR_TEXT)
+        const techLines = doc.splitTextToSize(techList, contentWidth)
+        doc.text(techLines, margin, y)
+        y += (techLines.length * 4) + 10
+    }
+
+    y += 5
+
+    // 5. TERMS & CONDITIONS
+    if (y > pageHeight - 80) {
         doc.addPage()
         drawHeader()
         y = 45
     } else {
         y = Math.max(y + 10, pageHeight - 85)
     }
+
+    const termsTitle = lang === 'EN' ? 'TERMS AND CONDITIONS:' : lang === 'PT' ? 'TERMOS E CONDIÇÕES:' : 'TÉRMINOS Y CONDICIONES:'
 
     doc.setDrawColor(COLOR_PRIMARY)
     doc.setLineWidth(0.3)
@@ -849,7 +882,7 @@ function createPDFDocument(data: QuoteState & {
     doc.setFont(FONT_BOLD, "bold")
     doc.setFontSize(10)
     doc.setTextColor(COLOR_PRIMARY)
-    doc.text("TÉRMINOS Y CONDICIONES:", margin, y)
+    doc.text(termsTitle, margin, y)
     y += 6
 
     doc.setFont(FONT_REG, "normal")
