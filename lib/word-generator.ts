@@ -59,16 +59,15 @@ export function createQuoteWordDoc(data: any, lang: Language = 'ES'): Document {
     const isAnnual = data.viewMode === 'annual'
     const multiplier = isAnnual ? 12 : 1
     const currencyCode = data.currency || 'USD'
-    const rateMultiplier = data.exchangeRate || 1.0
-
-    // Match PDF formatting logic exactly
+    const rateMultiplier = typeof data.exchangeRate === 'number' && !isNaN(data.exchangeRate) ? data.exchangeRate : 1.0
     const fmt = (amount: number) => {
+        const value = typeof amount === 'number' && !isNaN(amount) ? amount : 0
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: currencyCode,
             currencyDisplay: 'code',
             minimumFractionDigits: 2
-        }).format(amount * rateMultiplier)
+        }).format(value * rateMultiplier)
     }
 
     const COLOR_PRIMARY = "004B8D" // Institutional Blue
@@ -496,60 +495,40 @@ export function createQuoteWordDoc(data: any, lang: Language = 'ES'): Document {
                 ...(data.serviceType === 'Sustain' && data.sustainDetails ? [
                     new Paragraph({ children: [new PageBreak()] }),
                     new Paragraph({
-                        children: [new TextRun({ text: lang === 'EN' ? "OPERATIONAL SERVICE DEFINITION" : lang === 'PT' ? "DEFINIÇÃO OPERACIONAL DO SERVIÇO" : "DEFINICIÓN OPERACIONAL DEL SERVICIO", bold: true, size: 20, color: COLOR_PRIMARY })],
-                        spacing: { before: 200, after: 100 }
+                        children: [new TextRun({ text: t('operational_definition'), bold: true, size: 24, color: COLOR_PRIMARY })],
+                        spacing: { before: 400, after: 200 }
                     }),
                     new Table({
                         width: { size: 100, type: WidthType.PERCENTAGE },
                         rows: [
                             new TableRow({
                                 children: [
-                                    new TableCell({
-                                        children: [new Paragraph({ children: [new TextRun({ text: lang === 'EN' ? "SOLUTION:" : lang === 'PT' ? "SOLUÇÃO:" : "SOLUCIÓN:", bold: true, size: 16, color: COLOR_PRIMARY })] }), new Paragraph({ children: [new TextRun({ text: cleanText(data.sustainDetails.solutionName), size: 17 })] })],
-                                        shading: { fill: COLOR_ROW_ALT }, margins: { top: 100, bottom: 100, left: 120 }
-                                    }),
-                                    new TableCell({
-                                        children: [new Paragraph({ children: [new TextRun({ text: "OWNER:", bold: true, size: 16, color: COLOR_PRIMARY })] }), new Paragraph({ children: [new TextRun({ text: cleanText(data.sustainDetails.businessOwner), size: 17 })] })],
-                                        shading: { fill: COLOR_ROW_ALT }, margins: { top: 100, bottom: 100, left: 120 }
-                                    })
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t('solution') + ':', bold: true, color: COLOR_PRIMARY })] })], width: { size: 25, type: WidthType.PERCENTAGE } }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: cleanText(data.sustainDetails.solutionName) })] })], width: { size: 75, type: WidthType.PERCENTAGE } })
                                 ]
                             }),
                             new TableRow({
                                 children: [
-                                    new TableCell({
-                                        children: [new Paragraph({ children: [new TextRun({ text: lang === 'EN' ? "UPDATE SCHEDULES:" : lang === 'PT' ? "HORÁRIOS DE ATUALIZAÇÃO:" : "HORARIOS DE ACTUALIZACIÓN:", bold: true, size: 16, color: COLOR_PRIMARY })] }), new Paragraph({ children: [new TextRun({ text: (data.sustainDetails.updateSchedules || []).filter((s: any) => s).join(' | '), size: 17 })] })],
-                                        columnSpan: 2, shading: { fill: COLOR_ROW_ALT }, margins: { top: 100, bottom: 100, left: 120 }
-                                    })
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t('owner') + ':', bold: true, color: COLOR_PRIMARY })] })] }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: cleanText(data.clientName) })] })] })
                                 ]
                             }),
                             new TableRow({
                                 children: [
-                                    new TableCell({
-                                        children: [new Paragraph({ children: [new TextRun({ text: lang === 'EN' ? "FREQUENCY / DURATION:" : lang === 'PT' ? "FREQUÊNCIA / DURAÇÃO:" : "FRECUENCIA / DURACIÓN:", bold: true, size: 16, color: COLOR_PRIMARY })] }), new Paragraph({ children: [new TextRun({ text: `${(data.sustainDetails.metrics.updateFrequency || 'daily').toUpperCase()} / ${data.sustainDetails.updateDuration || 'N/A'}`, size: 17 })] })],
-                                        shading: { fill: COLOR_ROW_ALT }, margins: { top: 100, bottom: 100, left: 120 }
-                                    }),
-                                    new TableCell({
-                                        children: [
-                                            new Paragraph({ children: [new TextRun({ text: lang === 'EN' ? "HYPERCARE PERIOD:" : lang === 'PT' ? "PERÍODO HYPERCARE:" : "PERIODO HYPERCARE:", bold: true, size: 16, color: COLOR_PRIMARY })] }),
-                                            new Paragraph({
-                                                children: [
-                                                    new TextRun({
-                                                        text: data.sustainDetails.hasHypercare
-                                                            ? `${lang === 'EN' ? 'Hypercare Support' : lang === 'PT' ? 'Suporte Hypercare' : 'Soporte Hypercare'}: ${(data.sustainDetails.hypercarePeriod || '30_days').replace('_', ' ').replace(/^\+/, '+ ').replace('days', lang === 'EN' ? 'days' : 'días')}`
-                                                            : (lang === 'EN' ? "NOT APPLICABLE" : lang === 'PT' ? "NÃO APLICÁVEL" : "NO APLICABLE"),
-                                                        size: 17
-                                                    })
-                                                ]
-                                            })
-                                        ],
-                                        shading: { fill: COLOR_ROW_ALT }, margins: { top: 100, bottom: 100, left: 120 }
-                                    })
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t('platform') + ':', bold: true, color: COLOR_PRIMARY })] })] }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: (data.sustainDetails.techStack || []).join(', ') })] })] })
+                                ]
+                            }),
+                            new TableRow({
+                                children: [
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t('frequency') + ':', bold: true, color: COLOR_PRIMARY })] })] }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: cleanText(data.updateFrequency) })] })] })
                                 ]
                             })
                         ]
                     }),
                     new Paragraph({
-                        children: [new TextRun({ text: lang === 'EN' ? "CRITICALITY MATRIX AND METRICS" : lang === 'PT' ? "MATRIZ DE CRITICIDADE E MÉTRICAS" : "MATRIZ DE CRITICIDAD Y MÉTRICAS", bold: true, size: 20, color: COLOR_PRIMARY })],
+                        children: [new TextRun({ text: t('criticality'), bold: true, size: 20, color: COLOR_PRIMARY })],
                         spacing: { before: 300, after: 100 }
                     }),
                     // Class badge row
@@ -566,14 +545,14 @@ export function createQuoteWordDoc(data: any, lang: Language = 'ES'): Document {
                             : freqVal
                         const lvlColor = lvl === 'S4' || lvl === 'ALTA' ? 'BE3232' : lvl === 'S1' || lvl === 'BAJA' ? '329632' : 'DC9600'
                         const matrixItems: [string, string][] = [
-                            [lang === 'EN' ? 'Operational Impact' : lang === 'PT' ? 'Impacto Operacional' : 'Impacto Operativo', impactFn(m?.impactOperative || 0)],
-                            [lang === 'EN' ? 'Financial Impact' : lang === 'PT' ? 'Impacto Financeiro' : 'Impacto Financiero', impactFn(m?.impactFinancial || 0)],
-                            [lang === 'EN' ? 'User Coverage' : lang === 'PT' ? 'Cobertura de Usuários' : 'Cobertura de Usuarios', impactFn(m?.userCoverage || 0)],
-                            [lang === 'EN' ? 'Country Coverage' : lang === 'PT' ? 'Cobertura de Países' : 'Cobertura de Países', impactFn(m?.countryCoverage || 0)],
-                            [lang === 'EN' ? 'Technical Maturity' : lang === 'PT' ? 'Maturidade Técnica' : 'Madurez Técnica', impactFn(m?.technicalMaturity || 0)],
-                            [lang === 'EN' ? 'Dependencies' : lang === 'PT' ? 'Dependências' : 'Dependencias', impactFn(m?.dependencies || 0)],
-                            [lang === 'EN' ? 'Critical Use Frequency' : lang === 'PT' ? 'Frequência Crítica' : 'Uso Crítico', freqLocalized],
-                            [lang === 'EN' ? 'Financial/Sales Closure' : lang === 'PT' ? 'Fechamento Financeiro' : 'Cierre Financiero', data.isFinancialOrSales ? (lang === 'EN' ? 'YES' : 'SÍ') : 'NO'],
+                            [t('impact_operative'), impactFn(m?.impactOperative || 0)],
+                            [t('impact_financial'), impactFn(m?.impactFinancial || 0)],
+                            [t('user_coverage'), impactFn(m?.userCoverage || 0)],
+                            [t('country_coverage'), impactFn(m?.countryCoverage || 0)],
+                            [t('tech_maturity'), impactFn(m?.technicalMaturity || 0)],
+                            [t('dependencies'), impactFn(m?.dependencies || 0)],
+                            [t('critical_frequency'), freqLocalized],
+                            [t('financial_closure'), data.isFinancialOrSales ? t('yes') : t('no')],
                         ]
                         return new Table({
                             width: { size: 100, type: WidthType.PERCENTAGE },
@@ -629,7 +608,7 @@ export function createQuoteWordDoc(data: any, lang: Language = 'ES'): Document {
                 // === ARCHITECTURE DIAGRAM ===
                 new Paragraph({ children: [new PageBreak()] }),
                 new Paragraph({
-                    children: [new TextRun({ text: lang === 'EN' ? "SOLUTION ARCHITECTURE" : lang === 'PT' ? "ARQUITETURA DA SOLUÇÃO" : "ARQUITECTURA DE LA SOLUCIÓN", bold: true, size: 24, color: COLOR_PRIMARY })],
+                    children: [new TextRun({ text: t('solution_architecture'), bold: true, size: 24, color: COLOR_PRIMARY })],
                     spacing: { before: 200, after: 400 }
                 }),
                 ...(diagramData && diagramData.length > 0 ? [
@@ -644,7 +623,7 @@ export function createQuoteWordDoc(data: any, lang: Language = 'ES'): Document {
                         alignment: AlignmentType.CENTER
                     })
                 ] : [
-                    new Paragraph({ children: [new TextRun({ text: lang === 'EN' ? "[Diagram not available]" : lang === 'PT' ? "[Diagrama não disponível]" : "[Diagrama no disponible]", italics: true, size: 18 })] })
+                    new Paragraph({ children: [new TextRun({ text: `[${t('operational_flow')} ${t('not_available').toLowerCase()}]`, italics: true, size: 18, color: "999999" })] })
                 ]),
 
                 // Stack
@@ -672,8 +651,8 @@ export function createQuoteWordDoc(data: any, lang: Language = 'ES'): Document {
                 // === TERMS AND CONDITIONS ===
                 new Paragraph({ children: [new PageBreak()] }),
                 new Paragraph({
-                    children: [new TextRun({ text: lang === 'EN' ? "TERMS AND CONDITIONS" : lang === 'PT' ? "TERMOS E CONDIÇÕES" : "TÉRMINOS Y CONDICIONES", bold: true, color: COLOR_PRIMARY, size: 24 })],
-                    spacing: { before: 400, after: 300 }
+                    children: [new TextRun({ text: t('terms_conditions'), bold: true, color: COLOR_PRIMARY, size: 24 })],
+                    spacing: { before: 200, after: 200 }
                 }),
                  ... (lang === 'EN' ? [
                     "Proposal Valid for 30 days from issuance.",

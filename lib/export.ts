@@ -204,14 +204,15 @@ function createPDFDocument(data: QuoteState & {
     const FONT_BOLD = "helvetica"
 
     const currencyCode = data.currency || 'USD'
-    const rateMultiplier = data.exchangeRate || 1.0
+    const rateMultiplier = typeof data.exchangeRate === 'number' && !isNaN(data.exchangeRate) ? data.exchangeRate : 1.0
     const fmt = (amount: number) => {
+        const value = typeof amount === 'number' && !isNaN(amount) ? amount : 0
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: currencyCode,
-            currencyDisplay: 'code', // Show "USD", "MXN", etc.
+            currencyDisplay: 'code',
             minimumFractionDigits: 2
-        }).format(amount * rateMultiplier)
+        }).format(value * rateMultiplier)
     }
 
     const durationText = () => {
@@ -613,198 +614,105 @@ function createPDFDocument(data: QuoteState & {
     }
     y += 10
 
-    // 4. SUSTAIN SPECIFIC DETAILS (Operational & Criticality)
+    // === 4. SUSTAIN SPECIFIC DETAILS (Operational & Criticality) ===
     if (data.serviceType === 'Sustain' && data.sustainDetails) {
         if (y > pageHeight - 60) { doc.addPage(); drawHeader(); y = 45; }
+        else y += 10
 
-        const defTitle = lang === 'EN' ? 'OPERATIONAL SERVICE DEFINITION' : lang === 'PT' ? 'DEFINIÇÃO OPERACIONAL DO SERVIÇO' : 'DEFINICIÓN OPERACIONAL DEL SERVICIO'
         doc.setFont(FONT_BOLD, "bold")
-        doc.setFontSize(11)
+        doc.setFontSize(13)
         doc.setTextColor(COLOR_PRIMARY)
-        doc.text(defTitle, margin, y)
+        doc.text(t('operational_definition'), margin, y)
         y += 8
 
-        // === DYNAMIC GRID (no fixed height, labels + values) ===
-        const fields: [string, string][] = []
-
-        const solLabel = lang === 'EN' ? 'SOLUTION' : lang === 'PT' ? 'SOLUÇÃO' : 'SOLUCIÓN'
-        const ownerLabel = 'OWNER'
-        const schedLabel = lang === 'EN' ? 'UPDATE SCHEDULES' : lang === 'PT' ? 'HORÁRIOS DE ATUALIZAÇÃO' : 'HORARIOS DE ACTUALIZACIÓN'
-        const freqLabel = lang === 'EN' ? 'FREQUENCY / DURATION' : lang === 'PT' ? 'FREQUÊNCIA / DURAÇÃO' : 'FRECUENCIA / DURACIÓN'
-        const hcLabel = lang === 'EN' ? 'HYPERCARE PERIOD' : lang === 'PT' ? 'PERÍODO HYPERCARE' : 'PERIODO HYPERCARE'
-        const weekendLabel = lang === 'EN' ? 'WEEKEND SUPPORT' : lang === 'PT' ? 'SUPORTE FIM DE SEMANA' : 'SOPORTE FINES DE SEMANA'
-
-        const freq = (data.sustainDetails.metrics?.updateFrequency || 'daily').toUpperCase()
-        const freqLocalized = freq === 'DAILY' ? (lang === 'EN' ? 'DAILY' : lang === 'PT' ? 'DIÁRIO' : 'DIARIO')
-            : freq === 'WEEKLY' ? (lang === 'EN' ? 'WEEKLY' : lang === 'PT' ? 'SEMANAL' : 'SEMANAL')
-            : freq === 'MONTHLY' ? (lang === 'EN' ? 'MONTHLY' : lang === 'PT' ? 'MENSAL' : 'MENSUAL')
-            : freq
-        const updateDuration = data.sustainDetails.updateDuration || (lang === 'EN' ? 'N/A' : 'N/A')
-
-        const formatHypercare = (val: string, l: string) => {
-            if (!val) return l === 'EN' ? '30 days' : '30 días'
-            return val.replace('_', ' ').replace('days', l === 'EN' ? 'days' : l === 'PT' ? 'dias' : 'días').replace(/^\+/, '+')
-        }
-        const hypercareText = data.sustainDetails.hasHypercare
-            ? `${lang === 'EN' ? 'Hypercare' : 'Soporte Hypercare'}: ${formatHypercare(data.sustainDetails.hypercarePeriod, lang)}`
-            : (lang === 'EN' ? 'NOT APPLICABLE' : lang === 'PT' ? 'NÃO APLICÁVEL' : 'NO APLICABLE')
-
-        const weekendText = data.sustainDetails.weekendUsage
-            ? `${lang === 'EN' ? 'YES (+1.5% FEE)' : 'SÍ (+1.5% FEE)'} - ${(data.sustainDetails.weekendDays || []).join(', ')}`
-            : (lang === 'EN' ? 'NO' : 'NO')
-
-        const schedText = (data.sustainDetails.updateSchedules || []).filter((s: string) => s).join(' | ') || (lang === 'EN' ? 'Not defined' : 'No definido')
-
-        fields.push([solLabel, cleanText(data.sustainDetails.solutionName || 'N/A')])
-        fields.push([ownerLabel, cleanText(data.sustainDetails.businessOwner || (lang === 'EN' ? 'Pending' : 'Pendiente'))])
-        fields.push([schedLabel, schedText])
-        fields.push([freqLabel, `${freqLocalized} / ${updateDuration}`])
-        fields.push([hcLabel, hypercareText])
-        fields.push([weekendLabel, weekendText])
-
-        const rowH = 10
-        fields.forEach(([label, value]) => {
-            if (y + rowH > pageHeight - 20) { doc.addPage(); drawHeader(); y = 45; }
-            doc.setFillColor(COLOR_ROW_ALT)
-            doc.rect(margin, y, contentWidth, rowH, 'F')
-            doc.setFontSize(7.5)
-            doc.setFont(FONT_BOLD, "bold")
-            doc.setTextColor(COLOR_PRIMARY)
-            doc.text(label + ':', margin + 4, y + 4)
-            doc.setFont(FONT_REG, "normal")
-            doc.setTextColor(COLOR_CHARCOAL)
-            // Split long values
-            const valLines = doc.splitTextToSize(value, contentWidth - 80)
-            doc.text(valLines[0] || '', margin + 65, y + 4)
-            y += rowH + 1
-        })
-
-        y += 8
-
-        // CRITICALITY MATRIX (redesigned as a clean table)
-        if (y > pageHeight - 70) { doc.addPage(); drawHeader(); y = 45; }
-
-        const matTitle = lang === 'EN' ? 'CRITICALITY MATRIX' : lang === 'PT' ? 'MATRIZ DE CRITICIDADE' : 'MATRIZ DE CRITICIDAD'
-        doc.setFont(FONT_BOLD, "bold")
-        doc.setFontSize(11)
-        doc.setTextColor(COLOR_PRIMARY)
-        doc.text(matTitle, margin, y)
-        y += 6
-
-        const matrix = data.sustainDetails.criticalityMatrix
-        const level = data.criticitnessLevel?.label || 'MEDIA'
-        const score = data.criticitnessLevel?.score || '-'
-        const levelColor: [number, number, number] = level === 'S4' || level === 'ALTA' ? [190, 50, 50]
-            : level === 'S1' || level === 'BAJA' ? [50, 150, 50]
-            : [220, 150, 0]
-
-        // Class badge row
-        doc.setFillColor(levelColor[0], levelColor[1], levelColor[2])
-        doc.rect(margin, y, contentWidth, 10, 'F')
-        doc.setTextColor(255)
-        doc.setFontSize(11)
-        doc.setFont(FONT_BOLD, "bold")
-        const claseWord = lang === 'EN' ? 'CLASS' : lang === 'PT' ? 'CLASSE' : 'CLASE'
-        const scoreWord = lang === 'EN' ? 'SCORE' : 'SCORE'
-        doc.text(`${claseWord}: ${level}`, margin + 4, y + 7)
-        doc.text(`${scoreWord}: ${score} / 30`, pageWidth - margin - 4, y + 7, { align: 'right' })
-        y += 14
-
-        // Matrix metrics table
-        const impactText = (val: number) => {
-            if (val >= 4) return lang === 'EN' ? 'High (5)' : `Alto (${val})`
-            if (val >= 2) return lang === 'EN' ? 'Medium (3)' : `Medio (${val})`
-            return lang === 'EN' ? 'Low (1)' : `Bajo (${val})`
-        }
-
-        const matrixRows: [string, string][] = [
-            [lang === 'EN' ? 'Operational Impact' : lang === 'PT' ? 'Impacto Operacional' : 'Impacto Operativo', impactText(matrix?.impactOperative || 0)],
-            [lang === 'EN' ? 'Financial Impact' : lang === 'PT' ? 'Impacto Financeiro' : 'Impacto Financiero', impactText(matrix?.impactFinancial || 0)],
-            [lang === 'EN' ? 'User Coverage' : lang === 'PT' ? 'Cobertura de Usuários' : 'Cobertura de Usuarios', impactText(matrix?.userCoverage || 0)],
-            [lang === 'EN' ? 'Country Coverage' : lang === 'PT' ? 'Cobertura de Países' : 'Cobertura de Países', impactText(matrix?.countryCoverage || 0)],
-            [lang === 'EN' ? 'Technical Maturity' : lang === 'PT' ? 'Maturidade Técnica' : 'Madurez Técnica', impactText(matrix?.technicalMaturity || 0)],
-            [lang === 'EN' ? 'Dependencies' : lang === 'PT' ? 'Dependências' : 'Dependencias', impactText(matrix?.dependencies || 0)],
+        const metricsList = [
+            { label: t('solution') + ':', value: cleanText(data.sustainDetails.solutionName) },
+            { label: t('owner') + ':', value: cleanText(data.clientName) },
+            { label: t('platform') + ':', value: (data.sustainDetails.techStack || []).join(', ') },
+            { label: t('frequency') + ':', value: cleanText(data.updateFrequency) }
         ]
 
-        const col2X = margin + contentWidth / 2 + 5
-        matrixRows.forEach(([label, value], i) => {
-            const rowY = y + Math.floor(i / 2) * 9
-            const xOff = (i % 2 === 0) ? margin + 4 : col2X
-            if (y + Math.ceil(matrixRows.length / 2) * 9 > pageHeight - 20) {
-                if (i === 0) { doc.addPage(); drawHeader(); y = 45; }
-            }
-            if (i % 2 === 0) {
-                doc.setFillColor(i % 4 === 0 ? COLOR_ROW_ALT : '#FFFFFF')
-                doc.rect(margin, rowY, contentWidth, 9, 'F')
-            }
-            doc.setFontSize(8)
-            doc.setFont(FONT_BOLD, "bold")
-            doc.setTextColor(COLOR_PRIMARY)
-            doc.text(`${label}:`, xOff, rowY + 5.5)
-            doc.setFont(FONT_REG, "normal")
-            doc.setTextColor(COLOR_TEXT)
-            doc.text(value, xOff + 55, rowY + 5.5)
-        })
-
-        y += Math.ceil(matrixRows.length / 2) * 9 + 6
-
-        // Critical dates & Financial flag
-        if (matrix?.hasCriticalDates && matrix.criticalDatesDescription) {
-            doc.setFont(FONT_BOLD, "bold")
-            doc.setFontSize(8.5)
-            doc.setTextColor(COLOR_PRIMARY)
-            const cdLabel = lang === 'EN' ? 'Critical Dates:' : lang === 'PT' ? 'Datas Críticas:' : 'Fechas Críticas:'
-            doc.text(cdLabel, margin, y)
-            doc.setFont(FONT_REG, "normal")
-            doc.setTextColor(COLOR_TEXT)
-            const cdLines = doc.splitTextToSize(cleanText(matrix.criticalDatesDescription), contentWidth - 40)
-            doc.text(cdLines, margin + 35, y)
-            y += cdLines.length * 4.5 + 4
-        }
-
-        const financialLabel = lang === 'EN' ? 'Financial/Sales closure:' : lang === 'PT' ? 'Fechamento financeiro:' : 'Cierre Financiero:'
-        doc.setFont(FONT_BOLD, "bold")
-        doc.setFontSize(8.5)
-        doc.setTextColor(COLOR_PRIMARY)
-        doc.text(financialLabel, margin, y)
         doc.setFont(FONT_REG, "normal")
-        doc.setTextColor(COLOR_TEXT)
-        doc.text(data.isFinancialOrSales ? (lang === 'EN' ? 'YES' : 'SÍ') : 'NO', margin + 60, y)
-        y += 10
-
-        // System Dependencies
-        if (data.sustainDetails.metrics?.systemDependencies) {
-            const depsTitle = lang === 'EN' ? 'EXTERNAL DEPENDENCIES:' : lang === 'PT' ? 'DEPENDÊNCIAS EXTERNAS:' : 'DEPENDENCIAS EXTERNAS:'
-            doc.setFont(FONT_BOLD, "bold")
-            doc.setFontSize(9)
+        doc.setFontSize(9)
+        metricsList.forEach((m) => {
             doc.setTextColor(COLOR_PRIMARY)
-            doc.text(depsTitle, margin, y)
-            y += 5
-            const deps = data.sustainDetails.metrics.systemDependencies.split(',').filter((d: string) => d.trim())
-            if (deps.length > 0) {
-                doc.setFont(FONT_REG, "normal")
+            doc.setFont(FONT_BOLD, "bold")
+            doc.text(m.label, margin, y)
+            
+            doc.setTextColor(COLOR_TEXT)
+            doc.setFont(FONT_REG, "normal")
+            const valLines = doc.splitTextToSize(m.value || "N/A", contentWidth - 30)
+            doc.text(valLines, margin + 25, y)
+            y += (valLines.length * 4.5) + 1
+        })
+        y += 6
+
+        // CRITICALITY MATRIX REDESIGN
+        if (y > pageHeight - 70) { doc.addPage(); drawHeader(); y = 45; }
+        doc.setFont(FONT_BOLD, "bold")
+        doc.setFontSize(12)
+        doc.setTextColor(COLOR_PRIMARY)
+        doc.text(t('criticality'), margin, y)
+        y += 6
+
+        const level = data.criticitnessLevel?.level || "N/A"
+        const score = data.criticitnessLevel?.score || 0
+        const lvlColor = level === 'ALTA' || level === 'HIGH' ? '#D32F2F' : level === 'MEDIA' || level === 'MEDIUM' ? '#F57C00' : '#388E3C'
+
+        // Class and Score Badge (Header Table Row)
+        doc.setFillColor(lvlColor)
+        doc.rect(margin, y, contentWidth, 8, 'F')
+        doc.setTextColor(255)
+        doc.setFontSize(9)
+        doc.text(`${t('clase')}: ${level}`, margin + 5, y + 5.5)
+        doc.text(`SCORE: ${score}/30`, margin + contentWidth - 5, y + 5.5, { align: 'right' })
+        y += 8
+
+        // Metrics Table Content
+        const matrix = data.sustainDetails.criticalityMatrix
+        const matrixItems = [
+            [t('support_window'), data.supportHours === '24/7' ? '24/7' : 'Standard'],
+            [t('hypercare'), data.sustainDetails.hasHypercare ? t('yes') : t('no')],
+            [t('impact_operative'), (matrix?.impactOperative !== undefined) ? matrix.impactOperative : 'N/A'],
+            [t('impact_financial'), (matrix?.impactFinancial !== undefined) ? matrix.impactFinancial : 'N/A']
+        ]
+
+        matrixItems.forEach((item, idx) => {
+            if (idx % 2 === 0) {
+                const next = matrixItems[idx+1]
+                doc.setFillColor(COLOR_ROW_ALT)
+                doc.rect(margin, y, contentWidth, 7, 'F')
+                
+                doc.setFont(FONT_BOLD, "bold")
+                doc.setTextColor(COLOR_PRIMARY)
                 doc.setFontSize(8.5)
+                doc.text(item[0] + ":", margin + 4, y + 4.5)
+                doc.setFont(FONT_REG, "normal")
                 doc.setTextColor(COLOR_TEXT)
-                const depLines = doc.splitTextToSize(deps.join(' • '), contentWidth)
-                doc.text(depLines, margin, y)
-                y += (depLines.length * 4) + 8
-            } else {
-                y += 5
+                doc.text(String(item[1]), margin + 40, y + 4.5)
+
+                if (next) {
+                    doc.setFont(FONT_BOLD, "bold")
+                    doc.setTextColor(COLOR_PRIMARY)
+                    doc.text(next[0] + ":", margin + (contentWidth/2), y + 4.5)
+                    doc.setFont(FONT_REG, "normal")
+                    doc.setTextColor(COLOR_TEXT)
+                    doc.text(String(next[1]), margin + (contentWidth/2) + 40, y + 4.5)
+                }
+                y += 7
             }
-        } else {
-            y += 5
-        }
+        })
+        y += 10
     }
 
-    // 5. ARCHITECTURE DIAGRAM (always rendered)
+    // === 5. ARCHITECTURE DIAGRAM (Fixed Section) ===
     if (y > pageHeight - 80) { doc.addPage(); drawHeader(); y = 45; }
-    else { doc.addPage(); drawHeader(); y = 45; } // Always on new page
+    else { doc.addPage(); drawHeader(); y = 45; } // Force New Page as requested for distinct flow diagram section
 
-    const archTitle = lang === 'EN' ? 'SOLUTION ARCHITECTURE' : lang === 'PT' ? 'ARQUITETURA DA SOLUÇÃO' : 'ARQUITECTURA DE LA SOLUCIÓN'
     doc.setFont(FONT_BOLD, "bold")
     doc.setFontSize(11)
     doc.setTextColor(COLOR_PRIMARY)
-    doc.text(archTitle, margin, y)
+    doc.text(t('solution_architecture'), margin, y)
     y += 8
 
     if (data.diagramImage) {
@@ -815,7 +723,7 @@ function createPDFDocument(data: QuoteState & {
             doc.addImage(data.diagramImage, 'PNG', margin, y, imgW, imgH)
             y += imgH + 10
         } catch (e) {
-            const noImgTxt = lang === 'EN' ? '[Diagram not available]' : lang === 'PT' ? '[Diagrama não disponível]' : '[Diagrama no disponible]'
+            const noImgTxt = `[${t('operational_flow')} ${t('not_available').toLowerCase()}]`
             doc.setFont(FONT_REG, "italic")
             doc.setFontSize(9)
             doc.setTextColor(COLOR_TEXT)
@@ -823,7 +731,7 @@ function createPDFDocument(data: QuoteState & {
             y += 15
         }
     } else {
-        const noImgTxt = lang === 'EN' ? '[Diagram not available - please add in the editor]' : lang === 'PT' ? '[Diagrama não disponível - adicione no editor]' : '[Diagrama no disponible - agregue uno en el editor]'
+        const noImgTxt = `[${t('operational_flow')} ${t('not_available').toLowerCase()}]`
         doc.setFont(FONT_REG, "italic")
         doc.setFontSize(9)
         doc.setTextColor(COLOR_TEXT)
@@ -833,11 +741,19 @@ function createPDFDocument(data: QuoteState & {
 
     // TECH STACK (always)
     if (data.techStack && data.techStack.length > 0) {
-        const stackTitle = lang === 'EN' ? 'TECH STACK:' : lang === 'PT' ? 'STACK TECNOLÓGICO:' : 'STACK TECNOLÓGICO:'
+        const stackTitle = t('tech_stack').toUpperCase() + ':'
         doc.setFont(FONT_BOLD, "bold")
         doc.setFontSize(9)
         doc.setTextColor(COLOR_PRIMARY)
         doc.text(stackTitle, margin, y)
+        y += 5
+
+        // External Dependencies
+        const depsTitle = t('external_dependencies') + ':'
+        doc.setFont(FONT_BOLD, "bold")
+        doc.setFontSize(9)
+        doc.setTextColor(COLOR_PRIMARY)
+        doc.text(depsTitle, margin, y)
         y += 5
 
         const techNames: Record<string, string> = {
