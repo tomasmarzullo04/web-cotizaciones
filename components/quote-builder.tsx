@@ -2477,7 +2477,7 @@ graph TD
                                                         <p className="text-[#F5CB5C] text-[10px] font-black uppercase tracking-[0.2em] mb-1">Blindaje de Complejidad</p>
                                                         <div className="flex items-baseline gap-2">
                                                             <p className={cn("text-2xl font-black tracking-tighter transition-all", state.sustainDetails.isComplexityLocked ? "text-[#E8EDDF]" : "text-[#E8EDDF]/40")}>
-                                                                {formatMoney(state.sustainDetails.isComplexityLocked && state.sustainDetails.fixedServicesCost !== null ? state.sustainDetails.fixedServicesCost : (servicesCost || 0))}
+                                                                {formatMoney((state.sustainDetails.isComplexityLocked && state.sustainDetails.fixedServicesCost != null) ? state.sustainDetails.fixedServicesCost : (servicesCost || 0))}
                                                             </p>
                                                             {!state.sustainDetails.isComplexityLocked && (
                                                                 <span className="text-[10px] text-[#F5CB5C] font-bold animate-pulse">CALCULADO</span>
