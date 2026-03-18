@@ -2,6 +2,7 @@ import jsPDF from 'jspdf'
 // import { Document ... } from 'docx' - Removed for API generation
 import { saveAs } from 'file-saver'
 import { LOGO_NESTLE, LOGO_SI } from './logos'
+import { DICTIONARY, Language, DictionaryKey } from './translations'
 
 // Rates for internal calculation if needed (fallback)
 const RATES: Record<string, number> = {
@@ -142,6 +143,7 @@ interface QuoteState {
         areaLeader?: string
     }
     clientLogoBase64?: string
+    lang?: Language
 }
 
 export function downloadCSV(data: any[], filename: string) {
@@ -179,8 +181,12 @@ function createPDFDocument(data: QuoteState & {
     retentionAmount?: number,
     viewMode?: 'monthly' | 'annual',
     servicesCost?: number,
-    hypercareCost?: number
+    hypercareCost?: number,
+    lang?: Language
 }) {
+    const lang: Language = data.lang || 'ES'
+    const t = (key: DictionaryKey) => DICTIONARY[lang][key] || DICTIONARY['ES'][key] || key
+
     const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true })
 
     const pageWidth = doc.internal.pageSize.width
@@ -244,7 +250,7 @@ function createPDFDocument(data: QuoteState & {
         doc.setFont(FONT_BOLD, "bold")
         doc.setFontSize(22)  // Reduced from 30 to 22
         doc.setTextColor(255)
-        doc.text("COTIZACIÓN", pageWidth - margin, 16, { align: "right" })  // Adjusted Y from 21 to 16
+        doc.text(lang === 'PT' ? "COTAÇÃO" : lang === 'EN' ? "QUOTE" : "COTIZACIÓN", pageWidth - margin, 16, { align: "right" })  // Adjusted Y from 21 to 16
 
         // Quote Number
         if (data.quoteNumber) {
@@ -307,8 +313,12 @@ function createPDFDocument(data: QuoteState & {
             doc.setFontSize(7)
             doc.setFont(FONT_REG, "normal")
             doc.setTextColor(150)
-            doc.text(`The Store Intelligence | Confidencial | Pág. ${i} de ${pageCount}`, margin, pageHeight - 10, { align: 'left' })
-            doc.text(`Propuesta Comercial SI`, margin, pageHeight - 6, { align: 'left' })
+            const footerPage = lang === 'PT' ? 'Pág.' : lang === 'EN' ? 'Page' : 'Pág.'
+            const footerOf = lang === 'PT' ? 'de' : lang === 'EN' ? 'of' : 'de'
+            const footerConf = lang === 'PT' ? 'Confidencial' : lang === 'EN' ? 'Confidential' : 'Confidencial'
+            doc.text(`The Store Intelligence | ${footerConf} | ${footerPage} ${i} ${footerOf} ${pageCount}`, margin, pageHeight - 10, { align: 'left' })
+            const footerProp = lang === 'PT' ? 'Proposta Comercial SI' : lang === 'EN' ? 'SI Commercial Proposal' : 'Propuesta Comercial SI'
+            doc.text(footerProp, margin, pageHeight - 6, { align: 'left' })
         }
     }
 
@@ -321,8 +331,8 @@ function createPDFDocument(data: QuoteState & {
     doc.setFont(FONT_BOLD, "bold")
     doc.setFontSize(9)
     doc.setTextColor(COLOR_PRIMARY)
-    doc.text("COTIZADO A:", margin, y)
-    doc.text("DETALLES DE COTIZACIÓN:", pageWidth / 2 + 5, y)
+    doc.text(lang === 'EN' ? "QUOTED TO:" : lang === 'PT' ? "COTADO PARA:" : "COTIZADO A:", margin, y)
+    doc.text(lang === 'EN' ? "QUOTE DETAILS:" : lang === 'PT' ? "DETALHES DA COTAÇÃO:" : "DETALLES DE COTIZACIÓN:", pageWidth / 2 + 5, y)
 
     y += 6
     doc.setFontSize(12)
@@ -333,7 +343,9 @@ function createPDFDocument(data: QuoteState & {
     doc.setFontSize(9)
     doc.setFont(FONT_REG, "normal")
     doc.setTextColor(COLOR_TEXT)
-    doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, rightX, y)
+    const dateLabel = t('date')
+    const dateVal = new Date().toLocaleDateString(lang === 'EN' ? 'en-US' : lang === 'PT' ? 'pt-BR' : 'es-ES')
+    doc.text(`${dateLabel}: ${dateVal}`, rightX, y)
     const idStr = data.quoteNumber ? data.quoteNumber.toString().padStart(6, '0') : "000000"
     doc.text(`ID: ${idStr}`, pageWidth - margin, y, { align: 'right' })
 
@@ -341,25 +353,27 @@ function createPDFDocument(data: QuoteState & {
     if (data.clientContact?.name) {
         doc.text(cleanText(data.clientContact.name), margin, y)
     }
-    doc.text(`Validez: 30 Días`, rightX, y)
-    doc.text(`Consultor: ${cleanText(data.clientContact?.areaLeader || "Equipo Comercial")}`, pageWidth - margin, y, { align: 'right' })
+    const validityLabel = lang === 'EN' ? 'Validity' : lang === 'PT' ? 'Validade' : 'Validez'
+    const daysLabel = lang === 'EN' ? 'Days' : lang === 'PT' ? 'Dias' : 'Días'
+    doc.text(`${validityLabel}: 30 ${daysLabel}`, rightX, y)
+    doc.text(`${t('consultant')}: ${cleanText(data.clientContact?.areaLeader || (lang === 'EN' ? "Sales Team" : lang === 'PT' ? "Equipe Comercial" : "Equipo Comercial"))}`, pageWidth - margin, y, { align: 'right' })
 
     y += 15
 
     // 2. STRATEGIC OBJECTIVE
     doc.setFont(FONT_BOLD, "bold")
     doc.setTextColor(COLOR_PRIMARY)
-    doc.text("OBJETIVO ESTRATÉGICO", margin, y)
+    doc.text(t('strategic_objective').toUpperCase(), margin, y)
 
     y += 6
     doc.setFont(FONT_REG, "normal")
     doc.setFontSize(9.5)
     doc.setTextColor(COLOR_TEXT)
     const objText = data.serviceType === 'Project'
-        ? "Diseño e implementación de una solución tecnológica punta a punta, garantizando escalabilidad y alineación con los estándares regionales de Nestlé."
+        ? (lang === 'EN' ? "Design and implementation of an end-to-end technological solution, guaranteeing scalability and alignment with regional standards." : lang === 'PT' ? "Design e implementação de uma solução tecnológica de ponta a ponta, garantindo escalabilidade e alinhamento com os padrões regionais." : "Diseño e implementación de una solución tecnológica punta a punta, garantizando escalabilidad y alineación con los estándares regionales de Nestlé.")
         : data.serviceType === 'Sustain'
-            ? "Continuidad operativa y evolución tecnológica de activos digitales existentes, asegurando performance y cumplimiento de KPIs de negocio."
-            : "Fortalecimiento de capacidades técnicas a través de talento especializado integrado en células de trabajo bajo demanda."
+            ? (lang === 'EN' ? "Operational continuity and technological evolution of existing digital assets, ensuring performance and compliance with business KPIs." : lang === 'PT' ? "Continuidade operacional e evolução tecnológica de ativos digitais existentes, garantindo performance e conformidade com os KPIs de negócio." : "Continuidad operativa y evolución tecnológica de activos digitales existentes, asegurando performance y cumplimiento de KPIs de negocio.")
+            : (lang === 'EN' ? "Technical capacity building through specialized talent integrated into on-demand work cells." : lang === 'PT' ? "Fortalecimento de capacidades técnicas através de talento especializado integrado em células de trabalho sob demanda." : "Fortalecimiento de capacidades técnicas a través de talento especializado integrado en células de trabajo bajo demanda.")
 
     const objLines = doc.splitTextToSize(objText, contentWidth)
     doc.text(objLines, margin, y)
@@ -397,7 +411,7 @@ function createPDFDocument(data: QuoteState & {
     doc.setFont(FONT_BOLD, "bold")
     doc.setFontSize(11)
     doc.setTextColor(COLOR_PRIMARY)
-    doc.text("DETALLE DE INVERSIÓN", margin, y)
+    doc.text(t('investment_detail').toUpperCase(), margin, y)
     y += 6
 
     // Table Header
@@ -405,10 +419,15 @@ function createPDFDocument(data: QuoteState & {
     doc.rect(margin, y, contentWidth, 8, 'F')
     doc.setFontSize(9)
     doc.setTextColor(255)
-    doc.text("CONCEPTO / PERFIL", margin + 4, y + 5.5) // Increased padding
-    doc.text("CANT.", pageWidth - margin - 85, y + 5.5, { align: 'right' })
-    doc.text(data.viewMode === 'annual' ? "MENSUAL" : "MENSUAL", pageWidth - margin - 45, y + 5.5, { align: 'right' })
-    doc.text(data.viewMode === 'annual' ? "TOTAL ANUAL" : "TOTAL PROYECTO", pageWidth - margin - 5, y + 5.5, { align: 'right' })
+    const conceptLabel = lang === 'EN' ? "CONCEPT / PROFILE" : lang === 'PT' ? "CONCEITO / PERFIL" : "CONCEPTO / PERFIL"
+    const countLabel = lang === 'EN' ? "QTY." : lang === 'PT' ? "QTD." : "CANT."
+    const monthlyLabel = t('total_monthly').toUpperCase()
+    const totalLabel = data.viewMode === 'annual' ? t('annual_total').toUpperCase() : (lang === 'EN' ? "PROJECT TOTAL" : lang === 'PT' ? "TOTAL PROJETO" : "TOTAL PROYECTO")
+    
+    doc.text(conceptLabel, margin + 4, y + 5.5) // Increased padding
+    doc.text(countLabel, pageWidth - margin - 85, y + 5.5, { align: 'right' })
+    doc.text(monthlyLabel, pageWidth - margin - 45, y + 5.5, { align: 'right' })
+    doc.text(totalLabel, pageWidth - margin - 5, y + 5.5, { align: 'right' })
     y += 8
 
     let isReview = true
@@ -492,19 +511,19 @@ function createPDFDocument(data: QuoteState & {
         })
     }
 
-    if (data.serviceType !== 'Staffing' && data.l2SupportCost > 0) drawRow("Soporte L2", "10%", fmt(data.l2SupportCost), fmt(data.l2SupportCost * data.durationMonths))
+    if (data.serviceType !== 'Staffing' && data.l2SupportCost > 0) drawRow(lang === 'EN' ? "L2 Support" : "Soporte L2", "10%", fmt(data.l2SupportCost), fmt(data.l2SupportCost * data.durationMonths))
 
     // Sustain Surcharges
     if (data.serviceType === 'Sustain') {
-        if (data.riskCost > 0) drawRow("Soporte Fines de Semana", "1.5% Base", fmt(data.riskCost), fmt(data.riskCost * data.durationMonths))
+        if (data.riskCost > 0) drawRow(t('weekend_usage'), "1.5% Base", fmt(data.riskCost), fmt(data.riskCost * data.durationMonths))
         if ((data.hypercareCost || 0) > 0) {
             const hCost = data.hypercareCost || 0
-            drawRow("Periodo Hypercare", "1 Mes Full", fmt(0), fmt(hCost))
+            drawRow(t('hypercare'), lang === 'EN' ? "1 Full Month" : lang === 'PT' ? "1 Mês Full" : "1 Mes Full", fmt(0), fmt(hCost))
         }
     } else {
-        if (data.riskCost > 0) drawRow("Fee de Gestión y Riesgo", `${((data.criticitnessLevel?.margin || 0) * 100).toFixed(0)}%`, fmt(data.riskCost), fmt(data.riskCost * data.durationMonths))
+        if (data.riskCost > 0) drawRow(t('risk_management'), `${((data.criticitnessLevel?.margin || 0) * 100).toFixed(0)}%`, fmt(data.riskCost), fmt(data.riskCost * data.durationMonths))
     }
-    if (data.discountAmount > 0) drawRow("Descuento Comercial", `${data.commercialDiscount || 0}%`, `-${fmt(data.discountAmount)}`, `-${fmt(data.discountAmount * data.durationMonths)}`)
+    if (data.discountAmount > 0) drawRow(t('commercial_discount'), `${data.commercialDiscount || 0}%`, `-${fmt(data.discountAmount)}`, `-${fmt(data.discountAmount * data.durationMonths)}`)
 
     // Totals Box
     y += 10
@@ -837,7 +856,29 @@ function createPDFDocument(data: QuoteState & {
     doc.setFontSize(7) // Slightly smaller for prolijidad
     doc.setTextColor(COLOR_TEXT)
 
-    const terms = [
+    const terms = lang === 'EN' ? [
+        "Proposal Valid for 30 days from issuance.",
+        "Project to start with formal Purchase Order.",
+        "Costs based on Store Intelligence regional agreement.",
+        data.serviceType === 'Staffing'
+            ? "Talent assignment subject to availability and profile confirmation."
+            : "Sustain not included if the requirement does not evolve.",
+        "Additional developments will be quoted separately.",
+        "Deliverables owned by Nestlé upon project completion.",
+        "Payment Sprints agreed upon project start.",
+        "Absolute confidentiality agreement on shared data."
+    ] : lang === 'PT' ? [
+        "Proposta Válida por 30 dias a partir da emissão.",
+        "Projeto a iniciar com Ordem de Compra formal.",
+        "Custos baseados no acordo regional da Store Intelligence.",
+        data.serviceType === 'Staffing'
+            ? "Atribuição de talento sujeita a disponibilidade e confirmação de perfis."
+            : "Sustain não incluído caso o requisito não evolua.",
+        "Desenvolvimentos adicionais serão cotados separadamente.",
+        "Entregas de propriedade da Nestlé após a conclusão do projeto.",
+        "Sprints de Pagamento acordados no início do projeto.",
+        "Acordo de confidencialidade absoluto sobre dados compartilhados."
+    ] : [
         "Propuesta Válida durante 30 días desde su emisión.",
         "Proyecto a iniciar con Orden de Compra formal.",
         "Costos tasados según acuerdo regional Store Intelligence.",
@@ -861,79 +902,42 @@ function createPDFDocument(data: QuoteState & {
     return doc
 }
 
-export async function exportToPDF(data: any) {
+// --- Export Functions ---
+
+export function exportToPDF(state: any, lang: Language = 'ES') {
+    const data = { ...state, lang }
     const doc = createPDFDocument(data)
-    const filename = `cotizacion_${(data.clientName || 'proyecto').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
-    doc.save(filename)
+    doc.save(`cotizacion_${(state.clientName || 'draft').replace(/\s+/g, '_')}_${lang}.pdf`)
 }
 
-export async function generatePDFBlob(data: any) {
+export async function generatePDFBlob(state: any, lang: Language = 'ES') {
+    const data = { ...state, lang }
     const doc = createPDFDocument(data)
     return doc.output('blob')
 }
 
-// Helper for Base64 Type Detection
-function getDataURLType(dataURL: string): 'png' | 'jpg' | 'gif' {
-    const match = dataURL.match(/^data:image\/(\w+);base64,/)
-    if (match) {
-        const type = match[1].toLowerCase()
-        if (type === 'jpg') return 'jpg'
-        if (type === 'jpeg') return 'jpg' // docx expects 'jpg'
-        if (type === 'png') return 'png'
-        if (type === 'gif') return 'gif'
-    }
-    return 'png'
-}
-
-// Helper for Base64
-function base64DataURLToUint8Array(dataURL: string): Uint8Array {
-    if (!dataURL) return new Uint8Array(0)
-    // Handle optional data: prefix
-    const base64Only = dataURL.includes(',') ? dataURL.split(',')[1] : dataURL;
-    try {
-        const binaryString = atob(base64Only);
-        const len = binaryString.length;
-        const bytes = new Uint8Array(len);
-        for (let i = 0; i < len; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
+export function exportToWord(state: any, lang: Language = 'ES') {
+    const filename = `cotizacion_${(state.clientName || 'draft').replace(/\s+/g, '_')}_${lang}.docx`
+    
+    fetch('/api/generate-word', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ state, lang })
+    })
+    .then(async res => {
+        if (res.ok) {
+            const blob = await res.blob()
+            saveAs(blob, filename)
+        } else {
+            const err = await res.text()
+            console.error("Error generating word:", err)
+            alert("Error al generar documento Word")
         }
-        return bytes;
-    } catch (e) {
-        console.error("Base64 conversion failed", e)
-        return new Uint8Array(0)
-    }
-}
-
-export async function exportToWord(data: any) {
-    try {
-        const response = await fetch('/api/generate-word', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-        })
-
-        if (!response.ok) {
-            throw new Error('Error al generar el documento')
-        }
-
-        const blob = await response.blob()
-
-        // Extract filename from header
-        const disposition = response.headers.get('Content-Disposition')
-        let filename = `cotizacion_${(data.clientName || 'proyecto').replace(/[^a-zA-Z0-9]/g, '_')}.docx`
-        if (disposition && disposition.includes('filename=')) {
-            const match = disposition.match(/filename="?([^"]+)"?/)
-            if (match && match[1]) filename = match[1]
-        }
-
-        saveAs(blob, filename)
-
-    } catch (e) {
-        console.error("Export failed", e)
-        alert("Hubo un error al generar el archivo Word. Por favor intente nuevamente.")
-    }
+    })
+    .catch(err => {
+        console.error("Error calling word api:", err)
+        alert("Error de conexión al generar Word")
+    })
 }
 /* REMOVED CLIENT-SIDE GENERATION
 

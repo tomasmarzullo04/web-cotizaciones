@@ -15,7 +15,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Separator } from "@/components/ui/separator"
 import { ServiceRate } from "@prisma/client"
 import { MermaidDiagram } from "@/components/mermaid-diagram"
-import { Wand2, Download, FileText, Check, ShieldAlert, Network, Cpu, Calculator, Save, Loader2, ClipboardList, Database, Users, Briefcase, Layers, AlertTriangle, Activity, Zap, Edit, X, RefreshCw, ImageDown, Sparkles, Undo2, ArrowRight, Plus, Minus, Trash2, Pencil } from "lucide-react"
+import { Wand2, Download, FileText, Check, ShieldAlert, Network, Cpu, Calculator, Save, Loader2, ClipboardList, Database, Users, Briefcase, Layers, AlertTriangle, Activity, Zap, Edit, X, RefreshCw, ImageDown, Sparkles, Undo2, ArrowRight, Plus, Minus, Trash2, Pencil, Globe, ShieldCheck, Lock as LockIcon, FileType } from "lucide-react"
 import { SenioritySelector } from "@/components/seniority-selector"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
@@ -164,8 +164,8 @@ interface QuoteState {
             systemDependencies: string
             updateFrequency: string
         }
-
-        // Section 2: Operational Definition
+        fixedServicesCost?: number | null // NEW: Locked complexity value
+        isComplexityLocked?: boolean // NEW: Lock flag
         businessOwner: string
         devHours: number
         incidentRate: number
@@ -368,6 +368,8 @@ const INITIAL_STATE: QuoteState = {
             systemDependencies: '',
             updateFrequency: ''
         },
+        fixedServicesCost: null,
+        isComplexityLocked: false,
         businessOwner: '',
         devHours: 0,
         incidentRate: 0,
@@ -706,6 +708,24 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
     const [tempDiagramCode, setTempDiagramCode] = useState('')
     const [aiPrompt, setAiPrompt] = useState('')
     const [isAiLoading, setIsAiLoading] = useState(false)
+    const [saveLoading, setSaveLoading] = useState(false);
+    const [selectedLanguage, setSelectedLanguage] = useState<'ES' | 'EN' | 'PT'>('ES');
+    
+    // --- Session Sync for Area Leader (Consultant) ---
+    useEffect(() => {
+        const syncConsultant = async () => {
+            if (!state.clientContact.areaLeader) {
+                // Try to get from cookie first (fast)
+                const cookies = document.cookie.split('; ');
+                const userCookie = cookies.find(row => row.startsWith('session_user='));
+                if (userCookie) {
+                    const userName = decodeURIComponent(userCookie.split('=')[1]);
+                    updateState('clientContact', { ...state.clientContact, areaLeader: userName });
+                }
+            }
+        };
+        syncConsultant();
+    }, []);
     const [isNetTotalFlashing, setIsNetTotalFlashing] = useState(false)
     const [diagramHistory, setDiagramHistory] = useState<string[]>([]) // For Undo
     const [polishLoading, setPolishLoading] = useState(false)
@@ -1244,18 +1264,24 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
 
         // --- Sustain Mode: Fixed Class Pricing ---
         if (state.serviceType === 'Sustain') {
-            const baseCost = baseRoles * (sustainLevel.multiplier || 0)
             const rolesCost = baseRoles // Profiles cost including support window multiplier
-            const weekendSurcharge = state.sustainDetails.weekendUsage ? (baseCost * 0.015) : 0
+            
+            // COMPLEXITY LOCK LOGIC:
+            // If locked, use the fixed value. Else, calculate based on current baseRoles.
+            let servicesCost = (state.sustainDetails.isComplexityLocked && state.sustainDetails.fixedServicesCost !== null)
+                ? (state.sustainDetails.fixedServicesCost || 0)
+                : baseRoles * (sustainLevel.multiplier || 0)
 
-            let monthlyTotal = baseCost + rolesCost + weekendSurcharge
-            const hypercareCost = state.sustainDetails.hasHypercare ? (baseCost + rolesCost) : 0 // Hypercare is 1 month of total service
+            const weekendSurcharge = state.sustainDetails.weekendUsage ? (servicesCost * 0.015) : 0
+
+            let monthlyTotal = servicesCost + rolesCost + weekendSurcharge
+            const hypercareCost = state.sustainDetails.hasHypercare ? (servicesCost + rolesCost) : 0 // Hypercare is 1 month of total service
 
             monthlyTotal = manualNetTotal !== null ? manualNetTotal : monthlyTotal
 
             return {
                 rolesCost: rolesCost,
-                servicesCost: baseCost,
+                servicesCost: servicesCost,
                 l2SupportCost: 0,
                 riskCost: weekendSurcharge,
                 totalWithRisk: monthlyTotal,
@@ -2441,6 +2467,53 @@ graph TD
                                                         </div>
                                                     </div>
                                                 </div>
+                                                
+                                                {/* BLINDAJE DE COMPLEJIDAD (SUSTAIN) */}
+                                                <div className="flex flex-col md:flex-row items-start md:items-center gap-4 p-5 bg-[#F5CB5C]/5 border border-[#F5CB5C]/20 rounded-2xl mt-12 animate-in fade-in slide-in-from-bottom-2">
+                                                    <div className="p-3 bg-[#F5CB5C]/10 rounded-xl">
+                                                        <ShieldCheck className={cn("w-6 h-6 transition-all", state.sustainDetails.isComplexityLocked ? "text-[#F5CB5C]" : "text-[#7C7F7C]")} />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="text-[#F5CB5C] text-[10px] font-black uppercase tracking-[0.2em] mb-1">Blindaje de Complejidad</p>
+                                                        <div className="flex items-baseline gap-2">
+                                                            <p className={cn("text-2xl font-black tracking-tighter transition-all", state.sustainDetails.isComplexityLocked ? "text-[#E8EDDF]" : "text-[#E8EDDF]/40")}>
+                                                                {formatMoney(state.sustainDetails.isComplexityLocked && state.sustainDetails.fixedServicesCost !== null ? state.sustainDetails.fixedServicesCost : (servicesCost || 0))}
+                                                            </p>
+                                                            {!state.sustainDetails.isComplexityLocked && (
+                                                                <span className="text-[10px] text-[#F5CB5C] font-bold animate-pulse">CALCULADO</span>
+                                                            )}
+                                                            {state.sustainDetails.isComplexityLocked && (
+                                                                <span className="text-[10px] text-green-500 font-bold flex items-center gap-1">
+                                                                    <LockIcon className="w-2.5 h-2.5" /> BLOQUEADO
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-[#CFDBD5] text-xs mt-1 leading-relaxed max-w-md">
+                                                            {state.sustainDetails.isComplexityLocked 
+                                                                ? "El monto de complejidad ha sido fijado y no variará ante cambios en la asignación de perfiles."
+                                                                : "Fija este monto antes de ajustar asignaciones de perfiles en la Sección 02."}
+                                                        </p>
+                                                    </div>
+                                                    <Button 
+                                                        variant={state.sustainDetails.isComplexityLocked ? "outline" : "default"}
+                                                        onClick={() => {
+                                                            const isLocked = !state.sustainDetails.isComplexityLocked;
+                                                            updateState('sustainDetails', { 
+                                                                ...state.sustainDetails, 
+                                                                isComplexityLocked: isLocked, 
+                                                                fixedServicesCost: isLocked ? servicesCost : null 
+                                                            });
+                                                        }}
+                                                        className={cn(
+                                                            "font-black uppercase tracking-widest text-[10px] h-12 px-6 rounded-xl transition-all",
+                                                            state.sustainDetails.isComplexityLocked 
+                                                                ? "border-red-500/30 text-red-500 hover:bg-red-500/10 hover:border-red-500" 
+                                                                : "bg-[#F5CB5C] text-[#242423] hover:bg-[#F5CB5C]/90 shadow-[0_4px_20px_rgba(245,203,92,0.2)] hover:scale-105"
+                                                        )}
+                                                    >
+                                                        {state.sustainDetails.isComplexityLocked ? "Remover Blindaje" : "Blindar Complejidad"}
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -2530,7 +2603,7 @@ graph TD
                                                         })}
                                                         className="h-[40px] mt-[18px] border border-[#4A4D4A] border-dashed text-[#F5CB5C] hover:bg-[#F5CB5C]/10 rounded-xl px-4 flex items-center gap-2 group transition-all"
                                                     >
-                                                        <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                                        <Plus className="w-4 h-4" />
                                                         <span className="text-[10px] uppercase font-bold tracking-widest">Agregar Horario</span>
                                                     </Button>
                                                 </div>
@@ -3518,24 +3591,43 @@ graph TD
                         {isSaving ? 'Guardando...' : 'Guardar Cotización'}
                     </Button>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <Button
-                            onClick={() => handleExport('pdf')}
-                            disabled={isExporting}
-                            className="bg-[#333533] hover:bg-[#E8EDDF] hover:text-[#242423] text-[#E8EDDF] border border-transparent rounded-2xl h-12 font-bold transition-all text-sm"
-                        >
-                            {isExporting && exportType === 'pdf' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-                            PDF
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => handleExport('word')}
-                            disabled={isExporting}
-                            className="bg-transparent border-[#4A4D4A] text-[#E8EDDF] hover:bg-[#333533] hover:text-[#E8EDDF] rounded-2xl h-12 font-medium transition-all text-sm"
-                        >
-                            {isExporting && exportType === 'word' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
-                            Word
-                        </Button>
+                    {/* EXPORT OPTIONS */}
+                    <div className="space-y-6">
+                        <div className="p-6 bg-[#242423] rounded-3xl border border-[#333533] space-y-4">
+                            <h3 className="text-[#E8EDDF] font-bold uppercase tracking-widest text-xs flex items-center gap-2">
+                                <Globe className="w-4 h-4 text-[#F5CB5C]" /> Idioma de Exportación
+                            </h3>
+                            <ToggleGroup
+                                type="single"
+                                value={selectedLanguage}
+                                onValueChange={(val: any) => val && setSelectedLanguage(val)}
+                                className="justify-start bg-[#1a1a19] p-1 rounded-xl border border-[#333533] w-full"
+                            >
+                                <ToggleGroupItem value="ES" className="flex-1 data-[state=on]:bg-[#F5CB5C] data-[state=on]:text-[#242423] text-[#CFDBD5] text-xs font-bold transition-all rounded-lg py-3">ESPAÑOL</ToggleGroupItem>
+                                <ToggleGroupItem value="EN" className="flex-1 data-[state=on]:bg-[#F5CB5C] data-[state=on]:text-[#242423] text-[#CFDBD5] text-xs font-bold transition-all rounded-lg py-3">ENGLISH</ToggleGroupItem>
+                                <ToggleGroupItem value="PT" className="flex-1 data-[state=on]:bg-[#F5CB5C] data-[state=on]:text-[#242423] text-[#CFDBD5] text-xs font-bold transition-all rounded-lg py-3">PORTUGUÊS</ToggleGroupItem>
+                            </ToggleGroup>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <Button
+                                onClick={() => exportToPDF(state, selectedLanguage)}
+                                disabled={isExporting}
+                                className="bg-[#333533] hover:bg-[#E8EDDF] hover:text-[#242423] text-[#E8EDDF] border border-transparent rounded-2xl h-12 font-bold transition-all text-sm"
+                            >
+                                {isExporting && exportType === 'pdf' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+                                PDF
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => exportToWord(state, selectedLanguage)}
+                                disabled={isExporting}
+                                className="bg-transparent border-[#4A4D4A] text-[#E8EDDF] hover:bg-[#333533] hover:text-[#E8EDDF] rounded-2xl h-12 font-medium transition-all text-sm"
+                            >
+                                {isExporting && exportType === 'word' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+                                Word
+                            </Button>
+                        </div>
                     </div>
                 </div>
 

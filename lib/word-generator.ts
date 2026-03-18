@@ -1,5 +1,6 @@
 import { Document, Paragraph, TextRun, Table, TableRow, TableCell, BorderStyle, WidthType, ImageRun, AlignmentType, Header, Footer, PageBreak, HorizontalPositionAlign, VerticalPositionAlign, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom, TextWrappingType, PageNumber } from 'docx'
 import { LOGO_NESTLE, LOGO_SI } from './logos'
+import { DICTIONARY, Language, DictionaryKey } from './translations'
 
 // Rates for internal calculation if needed (fallback)
 const RATES: Record<string, number> = {
@@ -52,7 +53,9 @@ export function base64DataURLToUint8Array(dataURL: string): Uint8Array {
     }
 }
 
-export function createQuoteWordDoc(data: any): Document {
+export function createQuoteWordDoc(data: any, lang: Language = 'ES'): Document {
+    const t = (key: DictionaryKey) => DICTIONARY[lang][key] || DICTIONARY['ES'][key] || key
+    
     const isAnnual = data.viewMode === 'annual'
     const multiplier = isAnnual ? 12 : 1
     const currencyCode = data.currency || 'USD'
@@ -153,7 +156,7 @@ export function createQuoteWordDoc(data: any): Document {
                                                 new Paragraph({
                                                     children: [
                                                         new TextRun({
-                                                            text: "COTIZACIÓN",
+                                                            text: lang === 'PT' ? "COTAÇÃO" : lang === 'EN' ? "QUOTE" : "COTIZACIÓN",
                                                             bold: true,
                                                             size: 40,
                                                             color: "FFFFFF"
@@ -207,7 +210,7 @@ export function createQuoteWordDoc(data: any): Document {
                                                 new Paragraph({
                                                     children: [
                                                         new TextRun({
-                                                            text: `Store Intelligence | Confidencial | Pág. `,
+                                                            text: `Store Intelligence | ${lang === 'EN' ? 'Confidential' : 'Confidencial'} | ${lang === 'EN' ? 'Page' : 'Pág.'} `,
                                                             size: 14,
                                                             color: "999999"
                                                         }),
@@ -219,7 +222,7 @@ export function createQuoteWordDoc(data: any): Document {
                                                     ]
                                                 }),
                                                 new Paragraph({
-                                                    children: [new TextRun({ text: "Propuesta Comercial SI", size: 12, color: "999999" })]
+                                                    children: [new TextRun({ text: lang === 'PT' ? 'Proposta Comercial SI' : lang === 'EN' ? 'SI Commercial Proposal' : 'Propuesta Comercial SI', size: 12, color: "999999" })]
                                                 })
                                             ],
                                             width: { size: 70, type: WidthType.PERCENTAGE }
@@ -252,9 +255,9 @@ export function createQuoteWordDoc(data: any): Document {
                 // === CONTACT INFO SECTION ===
                 new Paragraph({
                     children: [
-                        new TextRun({ text: "COTIZADO A:", bold: true, size: 18, color: COLOR_PRIMARY }),
+                        new TextRun({ text: lang === 'EN' ? "QUOTED TO:" : lang === 'PT' ? "COTADO PARA:" : "COTIZADO A:", bold: true, size: 18, color: COLOR_PRIMARY }),
                         new TextRun({ text: "\t\t\t\t\t\t\t" }), // Tab for spacing
-                        new TextRun({ text: "DETALLES DE COTIZACIÓN:", bold: true, size: 18, color: COLOR_PRIMARY })
+                        new TextRun({ text: lang === 'EN' ? "QUOTE DETAILS:" : lang === 'PT' ? "DETALHES DA COTAÇÃO:" : "DETALLES DE COTIZACIÓN:", bold: true, size: 18, color: COLOR_PRIMARY })
                     ],
                     spacing: { before: 200, after: 100 }
                 }),
@@ -262,31 +265,31 @@ export function createQuoteWordDoc(data: any): Document {
                     children: [
                         new TextRun({ text: cleanText(data.clientName), bold: true, size: 22, color: COLOR_CHARCOAL }),
                         new TextRun({ text: "\t\t\t\t\t\t\t" }),
-                        new TextRun({ text: `Fecha: ${new Date().toLocaleDateString('es-ES')}`, size: 18, color: COLOR_TEXT })
+                        new TextRun({ text: `${t('date')}: ${new Date().toLocaleDateString(lang === 'EN' ? 'en-US' : lang === 'PT' ? 'pt-BR' : 'es-ES')}`, size: 18, color: COLOR_TEXT })
                     ]
                 }),
                 new Paragraph({
                     children: [
                         new TextRun({ text: cleanText(data.clientContact?.name || ""), size: 18, color: COLOR_TEXT }),
                         new TextRun({ text: "\t\t\t\t\t\t\t" }),
-                        new TextRun({ text: `Consultor: ${cleanText(data.clientContact?.areaLeader || "Equipo Comercial")}`, size: 18, color: COLOR_TEXT })
+                        new TextRun({ text: `${t('consultant')}: ${cleanText(data.clientContact?.areaLeader || (lang === 'EN' ? "Sales Team" : lang === 'PT' ? "Equipe Comercial" : "Equipo Comercial"))}`, size: 18, color: COLOR_TEXT })
                     ],
                     spacing: { after: 400 }
                 }),
 
                 // === STRATEGIC OBJECTIVE ===
                 new Paragraph({
-                    children: [new TextRun({ text: "OBJETIVO ESTRATÉGICO", bold: true, size: 20, color: COLOR_PRIMARY })],
+                    children: [new TextRun({ text: t('strategic_objective').toUpperCase(), bold: true, size: 20, color: COLOR_PRIMARY })],
                     spacing: { after: 100 }
                 }),
                 new Paragraph({
                     children: [
                         new TextRun({
                             text: data.serviceType === 'Project'
-                                ? "Diseño e implementación de una solución tecnológica punta a punta, garantizando escalabilidad y alineación con los estándares regionales de Nestlé."
+                                ? (lang === 'EN' ? "Design and implementation of an end-to-end technological solution, guaranteeing scalability and alignment with regional standards." : lang === 'PT' ? "Design e implementação de uma solução tecnológica de ponta a ponta, garantindo escalabilidade e alinhamento com os padrões regionais." : "Diseño e implementación de una solución tecnológica punta a punta, garantizando escalabilidad y alineación con los estándares regionales de Nestlé.")
                                 : data.serviceType === 'Sustain'
-                                    ? "Continuidad operativa y evolución tecnológica de activos digitales existentes, asegurando performance y cumplimiento de KPIs de negocio."
-                                    : "Fortalecimiento de capacidades técnicas a través de talento especializado integrado en células de trabajo bajo demanda.",
+                                    ? (lang === 'EN' ? "Operational continuity and technological evolution of existing digital assets, ensuring performance and compliance with business KPIs." : lang === 'PT' ? "Continuidade operacional e evolução tecnológica de ativos digitais existentes, garantindo performance e conformidade com os KPIs de negócio." : "Continuidad operativa y evolución tecnológica de activos digitales existentes, asegurando performance y cumplimiento de KPIs de negocio.")
+                                    : (lang === 'EN' ? "Technical capacity building through specialized talent integrated into on-demand work cells." : lang === 'PT' ? "Fortalecimento de capacidades técnicas através de talento especializado integrado em células de trabalho sob demanda." : "Fortalecimiento de capacidades técnicas a través de talento especializado integrado en células de trabajo bajo demanda."),
                             size: 19,
                             color: COLOR_TEXT
                         })
@@ -325,7 +328,7 @@ export function createQuoteWordDoc(data: any): Document {
 
                 // === INVESTMENT TABLE ===
                 new Paragraph({
-                    children: [new TextRun({ text: "DETALLE DE INVERSIÓN", bold: true, size: 20, color: COLOR_PRIMARY })],
+                    children: [new TextRun({ text: t('investment_detail').toUpperCase(), bold: true, size: 20, color: COLOR_PRIMARY })],
                     spacing: { before: 200, after: 100 }
                 }),
 
@@ -336,24 +339,24 @@ export function createQuoteWordDoc(data: any): Document {
                         new TableRow({
                             children: [
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: "CONCEPTO / PERFIL", bold: true, color: "FFFFFF", size: 18 })] })],
+                                    children: [new Paragraph({ children: [new TextRun({ text: lang === 'EN' ? "CONCEPT / PROFILE" : lang === 'PT' ? "CONCEITO / PERFIL" : "CONCEPTO / PERFIL", bold: true, color: "FFFFFF", size: 18 })] })],
                                     shading: { fill: COLOR_PRIMARY },
                                     verticalAlign: VerticalPositionAlign.CENTER,
                                     margins: { left: 120 }
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: "CANT.", bold: true, color: "FFFFFF", size: 18 })], alignment: AlignmentType.CENTER })],
+                                    children: [new Paragraph({ children: [new TextRun({ text: lang === 'EN' ? "QTY." : lang === 'PT' ? "QTD." : "CANT.", bold: true, color: "FFFFFF", size: 18 })], alignment: AlignmentType.CENTER })],
                                     shading: { fill: COLOR_PRIMARY },
                                     width: { size: 15, type: WidthType.PERCENTAGE }
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: "MENSUAL", bold: true, color: "FFFFFF", size: 18 })], alignment: AlignmentType.RIGHT })],
+                                    children: [new Paragraph({ children: [new TextRun({ text: t('total_monthly').toUpperCase(), bold: true, color: "FFFFFF", size: 18 })], alignment: AlignmentType.RIGHT })],
                                     shading: { fill: COLOR_PRIMARY },
                                     width: { size: 20, type: WidthType.PERCENTAGE },
                                     margins: { right: 120 }
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: data.viewMode === 'annual' ? "ANUAL" : "TOTAL", bold: true, color: "FFFFFF", size: 18 })], alignment: AlignmentType.RIGHT })],
+                                    children: [new Paragraph({ children: [new TextRun({ text: isAnnual ? t('annual_total').toUpperCase() : (lang === 'EN' ? "TOTAL" : lang === 'PT' ? "TOTAL" : "TOTAL"), bold: true, color: "FFFFFF", size: 18 })], alignment: AlignmentType.RIGHT })],
                                     shading: { fill: COLOR_PRIMARY },
                                     width: { size: 25, type: WidthType.PERCENTAGE },
                                     margins: { right: 120 }
@@ -365,10 +368,10 @@ export function createQuoteWordDoc(data: any): Document {
                         ...(data.serviceType === 'Sustain' && (data.servicesCost || 0) > 0 ? [
                             new TableRow({
                                 children: [
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `Complejidad del Servicio (Clase ${data.criticitnessLevel?.label || 'S1'})`, size: 17 })] })], margins: { left: 120 } }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "FIJO", size: 17 })], alignment: AlignmentType.CENTER })] }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `${lang === 'EN' ? 'Service Complexity' : lang === 'PT' ? 'Complexidade do Serviço' : 'Complejidad del Servicio'} (Clase ${data.criticitnessLevel?.label || 'S1'})`, size: 17 })] })], margins: { left: 120 } }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: lang === 'EN' ? "FIXED" : lang === 'PT' ? "FIXO" : "FIJO", size: 17 })], alignment: AlignmentType.CENTER })] }),
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt(data.servicesCost || 0), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt((data.servicesCost || 0) * (data.viewMode === 'annual' ? 12 : data.durationMonths)), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } })
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt((data.servicesCost || 0) * (isAnnual ? 12 : data.durationMonths)), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } })
                                 ]
                             })
                         ] : []),
@@ -401,10 +404,10 @@ export function createQuoteWordDoc(data: any): Document {
                         ...(data.l2SupportCost > 0 ? [
                             new TableRow({
                                 children: [
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Soporte L2", size: 17 })] })], margins: { left: 120 } }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: lang === 'EN' ? "L2 Support" : "Soporte L2", size: 17 })] })], margins: { left: 120 } }),
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "10%", size: 17 })], alignment: AlignmentType.CENTER })] }),
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt(data.l2SupportCost), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt(data.l2SupportCost * (data.viewMode === 'annual' ? 12 : data.durationMonths)), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } })
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt(data.l2SupportCost * (isAnnual ? 12 : data.durationMonths)), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } })
                                 ]
                             })
                         ] : []),
@@ -412,10 +415,10 @@ export function createQuoteWordDoc(data: any): Document {
                         ...(data.riskCost > 0 ? [
                             new TableRow({
                                 children: [
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: data.serviceType === 'Sustain' ? "Soporte Fines de Semana" : "Fee de Gestión y Riesgo", size: 17 })] })], margins: { left: 120 } }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: data.serviceType === 'Sustain' ? t('weekend_usage') : t('risk_management'), size: 17 })] })], margins: { left: 120 } }),
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: data.serviceType === 'Sustain' ? "1.5% Base" : `${((data.criticitnessLevel?.margin || 0) * 100).toFixed(0)}%`, size: 17 })], alignment: AlignmentType.CENTER })] }),
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt(data.riskCost), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt(data.riskCost * (data.viewMode === 'annual' ? 12 : data.durationMonths)), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } })
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fmt(data.riskCost * (isAnnual ? 12 : data.durationMonths)), size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } })
                                 ]
                             })
                         ] : []),
@@ -423,10 +426,10 @@ export function createQuoteWordDoc(data: any): Document {
                         ...(data.discountAmount > 0 ? [
                             new TableRow({
                                 children: [
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Descuento Comercial", size: 17 })] })], margins: { left: 120 } }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t('commercial_discount'), size: 17 })] })], margins: { left: 120 } }),
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `${data.commercialDiscount || 0}%`, size: 17 })], alignment: AlignmentType.CENTER })] }),
                                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `-${fmt(data.discountAmount)}`, size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `-${fmt(data.discountAmount * (data.viewMode === 'annual' ? 12 : data.durationMonths))}`, size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } })
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `-${fmt(data.discountAmount * (isAnnual ? 12 : data.durationMonths))}`, size: 17 })], alignment: AlignmentType.RIGHT })], margins: { right: 120 } })
                                 ]
                             })
                         ] : [])
@@ -456,7 +459,7 @@ export function createQuoteWordDoc(data: any): Document {
                                 new TableCell({
                                     children: [
                                         new Paragraph({
-                                            children: [new TextRun({ text: data.viewMode === 'annual' ? "ANUALIZADO: " : "TOTAL ESTIMADO: ", bold: true, color: "FFFFFF", size: 18 })],
+                                            children: [new TextRun({ text: isAnnual ? (lang === 'EN' ? "ANNUALIZED: " : lang === 'PT' ? "ANUALIZADO: " : "ANUALIZADO: ") : (lang === 'EN' ? "ESTIMATED TOTAL: " : lang === 'PT' ? "TOTAL ESTIMADO: " : "TOTAL ESTIMADO: "), bold: true, color: "FFFFFF", size: 18 })],
                                             alignment: AlignmentType.RIGHT
                                         }),
                                         new Paragraph({
@@ -465,12 +468,12 @@ export function createQuoteWordDoc(data: any): Document {
                                         }),
                                         ...(data.retention?.enabled ? [
                                             new Paragraph({
-                                                children: [new TextRun({ text: `Retención (${data.retention.percentage}%): -${fmt(displayRetention)}`, color: "FFFFFF", size: 16 })],
+                                                children: [new TextRun({ text: `${lang === 'EN' ? 'Retention' : lang === 'PT' ? 'Retenção' : 'Retención'} (${data.retention.percentage}%): -${fmt(displayRetention)}`, color: "FFFFFF", size: 16 })],
                                                 alignment: AlignmentType.RIGHT,
                                                 spacing: { before: 50 }
                                             }),
                                             new Paragraph({
-                                                children: [new TextRun({ text: data.viewMode === 'annual' ? "INVERSIÓN ANUAL" : "INVERSIÓN NETA", bold: true, color: "FFFFFF", size: 24 })],
+                                                children: [new TextRun({ text: isAnnual ? (lang === 'EN' ? "ANNUAL INVESTMENT" : lang === 'PT' ? "INVESTIMENTO ANUAL" : "INVERSIÓN ANUAL") : (lang === 'EN' ? "NET INVESTMENT" : lang === 'PT' ? "INVESTIMENTO LÍQUIDO" : "INVERSIÓN NETA"), bold: true, color: "FFFFFF", size: 24 })],
                                                 alignment: AlignmentType.RIGHT,
                                                 spacing: { before: 50 }
                                             }),
@@ -492,7 +495,7 @@ export function createQuoteWordDoc(data: any): Document {
                 ...(data.serviceType === 'Sustain' && data.sustainDetails ? [
                     new Paragraph({ children: [new PageBreak()] }),
                     new Paragraph({
-                        children: [new TextRun({ text: "DEFINICIÓN OPERACIONAL DEL SERVICIO", bold: true, size: 20, color: COLOR_PRIMARY })],
+                        children: [new TextRun({ text: lang === 'EN' ? "OPERATIONAL SERVICE DEFINITION" : lang === 'PT' ? "DEFINIÇÃO OPERACIONAL DO SERVIÇO" : "DEFINICIÓN OPERACIONAL DEL SERVIÇO", bold: true, size: 20, color: COLOR_PRIMARY })],
                         spacing: { before: 200, after: 100 }
                     }),
                     new Table({
@@ -501,7 +504,7 @@ export function createQuoteWordDoc(data: any): Document {
                             new TableRow({
                                 children: [
                                     new TableCell({
-                                        children: [new Paragraph({ children: [new TextRun({ text: "SOLUCIÓN:", bold: true, size: 16, color: COLOR_PRIMARY })] }), new Paragraph({ children: [new TextRun({ text: cleanText(data.sustainDetails.solutionName), size: 17 })] })],
+                                        children: [new Paragraph({ children: [new TextRun({ text: lang === 'EN' ? "SOLUTION:" : lang === 'PT' ? "SOLUÇÃO:" : "SOLUCIÓN:", bold: true, size: 16, color: COLOR_PRIMARY })] }), new Paragraph({ children: [new TextRun({ text: cleanText(data.sustainDetails.solutionName), size: 17 })] })],
                                         shading: { fill: COLOR_ROW_ALT }, margins: { top: 100, bottom: 100, left: 120 }
                                     }),
                                     new TableCell({
@@ -513,7 +516,7 @@ export function createQuoteWordDoc(data: any): Document {
                             new TableRow({
                                 children: [
                                     new TableCell({
-                                        children: [new Paragraph({ children: [new TextRun({ text: "HORARIOS DE ACTUALIZACIÓN:", bold: true, size: 16, color: COLOR_PRIMARY })] }), new Paragraph({ children: [new TextRun({ text: (data.sustainDetails.updateSchedules || []).filter((s: any) => s).join(' | '), size: 17 })] })],
+                                        children: [new Paragraph({ children: [new TextRun({ text: lang === 'EN' ? "UPDATE SCHEDULES:" : lang === 'PT' ? "HORÁRIOS DE ATUALIZAÇÃO:" : "HORARIOS DE ACTUALIZACIÓN:", bold: true, size: 16, color: COLOR_PRIMARY })] }), new Paragraph({ children: [new TextRun({ text: (data.sustainDetails.updateSchedules || []).filter((s: any) => s).join(' | '), size: 17 })] })],
                                         columnSpan: 2, shading: { fill: COLOR_ROW_ALT }, margins: { top: 100, bottom: 100, left: 120 }
                                     })
                                 ]
@@ -521,18 +524,18 @@ export function createQuoteWordDoc(data: any): Document {
                             new TableRow({
                                 children: [
                                     new TableCell({
-                                        children: [new Paragraph({ children: [new TextRun({ text: "FRECUENCIA / DURACIÓN:", bold: true, size: 16, color: COLOR_PRIMARY })] }), new Paragraph({ children: [new TextRun({ text: `${(data.sustainDetails.metrics.updateFrequency || 'daily').toUpperCase()} / ${data.sustainDetails.updateDuration || 'N/A'}`, size: 17 })] })],
+                                        children: [new Paragraph({ children: [new TextRun({ text: lang === 'EN' ? "FREQUENCY / DURATION:" : lang === 'PT' ? "FREQUÊNCIA / DURAÇÃO:" : "FRECUENCIA / DURACIÓN:", bold: true, size: 16, color: COLOR_PRIMARY })] }), new Paragraph({ children: [new TextRun({ text: `${(data.sustainDetails.metrics.updateFrequency || 'daily').toUpperCase()} / ${data.sustainDetails.updateDuration || 'N/A'}`, size: 17 })] })],
                                         shading: { fill: COLOR_ROW_ALT }, margins: { top: 100, bottom: 100, left: 120 }
                                     }),
                                     new TableCell({
                                         children: [
-                                            new Paragraph({ children: [new TextRun({ text: "PERIODO HYPERCARE:", bold: true, size: 16, color: COLOR_PRIMARY })] }),
+                                            new Paragraph({ children: [new TextRun({ text: lang === 'EN' ? "HYPERCARE PERIOD:" : lang === 'PT' ? "PERÍODO HYPERCARE:" : "PERIODO HYPERCARE:", bold: true, size: 16, color: COLOR_PRIMARY })] }),
                                             new Paragraph({
                                                 children: [
                                                     new TextRun({
                                                         text: data.sustainDetails.hasHypercare
-                                                            ? `Soporte Hypercare: ${(data.sustainDetails.hypercarePeriod || '30_days').replace('_', ' ').replace(/^\+/, '+ ').replace('days', 'días')}`
-                                                            : "NO APLICABLE",
+                                                            ? `${lang === 'EN' ? 'Hypercare Support' : lang === 'PT' ? 'Suporte Hypercare' : 'Soporte Hypercare'}: ${(data.sustainDetails.hypercarePeriod || '30_days').replace('_', ' ').replace(/^\+/, '+ ').replace('days', lang === 'EN' ? 'days' : 'días')}`
+                                                            : (lang === 'EN' ? "NOT APPLICABLE" : lang === 'PT' ? "NÃO APLICÁVEL" : "NO APLICABLE"),
                                                         size: 17
                                                     })
                                                 ]
@@ -545,15 +548,15 @@ export function createQuoteWordDoc(data: any): Document {
                         ]
                     }),
                     new Paragraph({
-                        children: [new TextRun({ text: "MATRIZ DE CRITICIDAD Y MÉTRICAS", bold: true, size: 20, color: COLOR_PRIMARY })],
+                        children: [new TextRun({ text: lang === 'EN' ? "CRITICALITY MATRIX AND METRICS" : lang === 'PT' ? "MATRIZ DE CRITICIDADE E MÉTRICAS" : "MATRIZ DE CRITICIDAD Y MÉTRICAS", bold: true, size: 20, color: COLOR_PRIMARY })],
                         spacing: { before: 300, after: 100 }
                     }),
                     new Paragraph({
                         children: [
-                            new TextRun({ text: `CLASE ${data.criticitnessLevel?.label || 'MEDIA'}`, bold: true, size: 18, color: COLOR_PRIMARY }),
-                            new TextRun({ text: `  • Impacto Operativo: ${data.sustainDetails.criticalityMatrix?.impactOperative >= 4 ? 'Alto' : 'Medio'}`, size: 17 }),
-                            new TextRun({ text: `  • Impacto Financiero: ${data.isFinancialOrSales ? 'Alto' : 'Estándar'}`, size: 17, break: 1 }),
-                            new TextRun({ text: `  • Uso Crítico: ${(data.sustainDetails.criticalityMatrix?.frequencyOfUse || 'Diario').toUpperCase()}`, size: 17 })
+                            new TextRun({ text: `${lang === 'EN' ? 'CLASS' : lang === 'PT' ? 'CLASSE' : 'CLASE'} ${data.criticitnessLevel?.label || 'MEDIA'}`, bold: true, size: 18, color: COLOR_PRIMARY }),
+                            new TextRun({ text: `  • ${lang === 'EN' ? 'Operational Impact' : lang === 'PT' ? 'Impacto Operacional' : 'Impacto Operativo'}: ${data.sustainDetails.criticalityMatrix?.impactOperative >= 4 ? (lang === 'EN' ? 'High' : 'Alto') : (lang === 'EN' ? 'Medium' : 'Medio')}`, size: 17 }),
+                            new TextRun({ text: `  • ${lang === 'EN' ? 'Financial Impact' : lang === 'PT' ? 'Impacto Financeiro' : 'Impacto Financiero'}: ${data.isFinancialOrSales ? (lang === 'EN' ? 'High' : 'Alto') : (lang === 'EN' ? 'Standard' : 'Estándar')}`, size: 17, break: 1 }),
+                            new TextRun({ text: `  • ${lang === 'EN' ? 'Critical Use' : lang === 'PT' ? 'Uso Crítico' : 'Uso Crítico'}: ${(data.sustainDetails.criticalityMatrix?.frequencyOfUse || 'Diario').toUpperCase()}`, size: 17 })
                         ]
                     })
                 ] : []),
@@ -561,7 +564,7 @@ export function createQuoteWordDoc(data: any): Document {
                 // === ARCHITECTURE DIAGRAM ===
                 new Paragraph({ children: [new PageBreak()] }),
                 new Paragraph({
-                    children: [new TextRun({ text: "ARQUITECTURA DE LA SOLUCIÓN", bold: true, size: 24, color: COLOR_PRIMARY })],
+                    children: [new TextRun({ text: lang === 'EN' ? "SOLUTION ARCHITECTURE" : lang === 'PT' ? "ARQUITETURA DA SOLUÇÃO" : "ARQUITECTURA DE LA SOLUCIÓN", bold: true, size: 24, color: COLOR_PRIMARY })],
                     spacing: { before: 200, after: 400 }
                 }),
                 ...(diagramData && diagramData.length > 0 ? [
@@ -576,12 +579,12 @@ export function createQuoteWordDoc(data: any): Document {
                         alignment: AlignmentType.CENTER
                     })
                 ] : [
-                    new Paragraph({ children: [new TextRun({ text: "[Diagrama no disponible]", italics: true, size: 18 })] })
+                    new Paragraph({ children: [new TextRun({ text: lang === 'EN' ? "[Diagram not available]" : lang === 'PT' ? "[Diagrama não disponível]" : "[Diagrama no disponible]", italics: true, size: 18 })] })
                 ]),
 
                 // Stack
                 new Paragraph({
-                    children: [new TextRun({ text: "STACK TECNOLÓGICO:", bold: true, size: 18, color: COLOR_PRIMARY })],
+                    children: [new TextRun({ text: lang === 'EN' ? "TECH STACK:" : lang === 'PT' ? "STACK TECNOLÓGICO:" : "STACK TECNOLÓGICO:", bold: true, size: 18, color: COLOR_PRIMARY })],
                     spacing: { before: 300, after: 100 }
                 }),
                 new Paragraph({
@@ -604,10 +607,28 @@ export function createQuoteWordDoc(data: any): Document {
                 // === TERMS AND CONDITIONS ===
                 new Paragraph({ children: [new PageBreak()] }),
                 new Paragraph({
-                    children: [new TextRun({ text: "TÉRMINOS Y CONDICIONES", bold: true, color: COLOR_PRIMARY, size: 24 })],
+                    children: [new TextRun({ text: lang === 'EN' ? "TERMS AND CONDITIONS" : lang === 'PT' ? "TERMOS E CONDIÇÕES" : "TÉRMINOS Y CONDICIONES", bold: true, color: COLOR_PRIMARY, size: 24 })],
                     spacing: { before: 400, after: 300 }
                 }),
-                ...[
+                 ... (lang === 'EN' ? [
+                    "Proposal Valid for 30 days from issuance.",
+                    "Project to start with formal Purchase Order.",
+                    "Costs based on Store Intelligence regional agreement.",
+                    data.serviceType === 'Staffing' ? "Talent assignment subject to availability and profile confirmation." : "Sustain not included if the requirement does not evolve.",
+                    "Additional developments will be quoted separately.",
+                    "Deliverables owned by Nestlé upon project completion.",
+                    "Payment Sprints agreed upon project start.",
+                    "Absolute confidentiality agreement on shared data."
+                ] : lang === 'PT' ? [
+                    "Proposta Válida por 30 dias a partir da emissão.",
+                    "Projeto a iniciar com Ordem de Compra formal.",
+                    "Custos baseados no acordo regional da Store Intelligence.",
+                    data.serviceType === 'Staffing' ? "Atribuição de talento sujeita a disponibilidade e confirmação de perfis." : "Sustain não incluído caso o requisito não evolua.",
+                    "Desenvolvimentos adicionais serão cotados separadamente.",
+                    "Entregas de propriedade da Nestlé após a conclusão do projeto.",
+                    "Sprints de Pagamento acordados no início do projeto.",
+                    "Acordo de confidencialidade absoluto sobre dados compartilhados."
+                ] : [
                     "Propuesta Válida durante 30 días desde su emisión.",
                     "Proyecto a iniciar con Orden de Compra formal.",
                     "Costos tasados según acuerdo regional Store Intelligence.",
@@ -616,7 +637,7 @@ export function createQuoteWordDoc(data: any): Document {
                     "Entregables propiedad de Nestlé finalizado el proyecto.",
                     "Sprints de Pago acordados al inicio del proyecto.",
                     "Acuerdo de confidencialidad absoluto sobre datos compartidos."
-                ].map(term => new Paragraph({
+                ]).map(term => new Paragraph({
                     children: [new TextRun({ text: `• ${cleanText(term)}`, size: 18, color: COLOR_TEXT })],
                     spacing: { after: 120 }
                 }))

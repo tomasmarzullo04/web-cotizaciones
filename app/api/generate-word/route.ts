@@ -5,18 +5,19 @@ import { createQuoteWordDoc } from '@/lib/word-generator'
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json()
-        const { clientName, quoteNumber } = body
+        const state = body.state || body
+        const lang = body.lang || 'ES'
+        const { clientName } = state
 
         // Generate Document Object
-        const doc = createQuoteWordDoc(body)
+        const doc = createQuoteWordDoc(state, lang)
 
         // Generate Buffer (Blob)
         const buffer = await Packer.toBuffer(doc)
 
         // Filename
         const safeClient = (clientName || 'proyecto').replace(/[^a-zA-Z0-9]/g, '_')
-        const date = new Date().toISOString().split('T')[0]
-        const filename = `cotizacion_${safeClient}_${date}.docx`
+        const filename = `cotizacion_${safeClient}_${lang}.docx`
 
         // Return Response
         return new NextResponse(buffer as any, {
