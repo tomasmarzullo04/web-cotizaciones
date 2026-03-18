@@ -853,25 +853,28 @@ function createPDFDocument(data: QuoteState & {
 
 // --- Export Functions ---
 
-export function exportToPDF(state: any, lang: Language = 'ES') {
-    const data = { ...state, lang }
+export function exportToPDF(state: any, lang?: Language) {
+    const useLang: Language = (state.lang as Language) || lang || 'ES'
+    const data = { ...state, lang: useLang }
     const doc = createPDFDocument(data)
-    doc.save(`cotizacion_${(state.clientName || 'draft').replace(/\s+/g, '_')}_${lang}.pdf`)
+    doc.save(`cotizacion_${(state.clientName || 'draft').replace(/\s+/g, '_')}_${useLang}.pdf`)
 }
 
-export async function generatePDFBlob(state: any, lang: Language = 'ES') {
-    const data = { ...state, lang }
+export async function generatePDFBlob(state: any, lang?: Language) {
+    const useLang: Language = (state.lang as Language) || lang || 'ES'
+    const data = { ...state, lang: useLang }
     const doc = createPDFDocument(data)
     return doc.output('blob')
 }
 
-export function exportToWord(state: any, lang: Language = 'ES') {
-    const filename = `cotizacion_${(state.clientName || 'draft').replace(/\s+/g, '_')}_${lang}.docx`
+export function exportToWord(state: any, lang?: Language) {
+    const useLang: Language = (state.lang as Language) || lang || 'ES'
+    const filename = `cotizacion_${(state.clientName || 'draft').replace(/\s+/g, '_')}_${useLang}.docx`
     
     fetch('/api/generate-word', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ state, lang })
+        body: JSON.stringify({ state: { ...state, lang: useLang }, lang: useLang })
     })
     .then(async res => {
         if (res.ok) {

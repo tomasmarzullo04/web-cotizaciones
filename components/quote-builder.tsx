@@ -1684,6 +1684,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             if (type === 'pdf') {
                 await exportToPDF({
                     ...state,
+                    lang: selectedLanguage,
                     totalMonthlyCost,
                     l2SupportCost,
                     riskCost,
@@ -1699,7 +1700,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     durationMonths: getDurationInMonths(),
                     clientLogoBase64,
                     viewMode,
-                    currency, // Passed correctly
+                    currency,
                     exchangeRate: exchangeRates[currency] || 1.0,
                     servicesCost,
                     hypercareCost
@@ -1707,6 +1708,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
             } else {
                 await exportToWord({
                     ...state,
+                    lang: selectedLanguage,
                     totalMonthlyCost,
                     l2SupportCost,
                     riskCost,
@@ -1720,7 +1722,7 @@ export default function QuoteBuilder({ dbRates = [], initialData, readOnly = fal
                     retentionAmount,
                     finalTotal,
                     durationMonths: getDurationInMonths(),
-                    clientLogoBase64: clientLogoBase64,
+                    clientLogoBase64,
                     viewMode,
                     currency,
                     exchangeRate: exchangeRates[currency] || 1.0,
@@ -3611,7 +3613,7 @@ graph TD
 
                         <div className="grid grid-cols-2 gap-4">
                             <Button
-                                onClick={() => exportToPDF(state, selectedLanguage)}
+                                onClick={() => handleExport('pdf')}
                                 disabled={isExporting}
                                 className="bg-[#333533] hover:bg-[#E8EDDF] hover:text-[#242423] text-[#E8EDDF] border border-transparent rounded-2xl h-12 font-bold transition-all text-sm"
                             >
@@ -3620,7 +3622,7 @@ graph TD
                             </Button>
                             <Button
                                 variant="outline"
-                                onClick={() => exportToWord(state, selectedLanguage)}
+                                onClick={() => handleExport('word')}
                                 disabled={isExporting}
                                 className="bg-transparent border-[#4A4D4A] text-[#E8EDDF] hover:bg-[#333533] hover:text-[#E8EDDF] rounded-2xl h-12 font-medium transition-all text-sm"
                             >
