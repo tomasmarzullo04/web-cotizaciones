@@ -2468,13 +2468,13 @@ graph TD
                                                     </div>
                                                 </div>
                                                 
-                                                {/* BLINDAJE DE COMPLEJIDAD (SUSTAIN) */}
+                                                {/* FIJAR COMPLEJIDAD (SUSTAIN) */}
                                                 <div className="flex flex-col md:flex-row items-start md:items-center gap-4 p-5 bg-[#F5CB5C]/5 border border-[#F5CB5C]/20 rounded-2xl mt-12 animate-in fade-in slide-in-from-bottom-2">
                                                     <div className="p-3 bg-[#F5CB5C]/10 rounded-xl">
                                                         <ShieldCheck className={cn("w-6 h-6 transition-all", state.sustainDetails.isComplexityLocked ? "text-[#F5CB5C]" : "text-[#7C7F7C]")} />
                                                     </div>
                                                     <div className="flex-1">
-                                                        <p className="text-[#F5CB5C] text-[10px] font-black uppercase tracking-[0.2em] mb-1">Blindaje de Complejidad</p>
+                                                        <p className="text-[#F5CB5C] text-[10px] font-black uppercase tracking-[0.2em] mb-1">Fijar Complejidad</p>
                                                         <div className="flex items-baseline gap-2">
                                                             <p className={cn("text-2xl font-black tracking-tighter transition-all", state.sustainDetails.isComplexityLocked ? "text-[#E8EDDF]" : "text-[#E8EDDF]/40")}>
                                                                 {formatMoney((state.sustainDetails.isComplexityLocked && state.sustainDetails.fixedServicesCost != null) ? state.sustainDetails.fixedServicesCost : (servicesCost || 0))}
@@ -2484,14 +2484,14 @@ graph TD
                                                             )}
                                                             {state.sustainDetails.isComplexityLocked && (
                                                                 <span className="text-[10px] text-green-500 font-bold flex items-center gap-1">
-                                                                    <LockIcon className="w-2.5 h-2.5" /> BLOQUEADO
+                                                                    <LockIcon className="w-2.5 h-2.5" /> FIJADO
                                                                 </span>
                                                             )}
                                                         </div>
                                                         <p className="text-[#CFDBD5] text-xs mt-1 leading-relaxed max-w-md">
                                                             {state.sustainDetails.isComplexityLocked 
-                                                                ? "El monto de complejidad ha sido fijado y no variará ante cambios en la asignación de perfiles."
-                                                                : "Fija este monto antes de ajustar asignaciones de perfiles en la Sección 02."}
+                                                                ? "Complejidad fijada. No variará al ajustar las asignaciones de perfiles en la Sección 02."
+                                                                : "Fija este monto para que no varíe al ajustar las asignaciones de perfiles en la Sección 02."}
                                                         </p>
                                                     </div>
                                                     <Button 
@@ -2511,7 +2511,7 @@ graph TD
                                                                 : "bg-[#F5CB5C] text-[#242423] hover:bg-[#F5CB5C]/90 shadow-[0_4px_20px_rgba(245,203,92,0.2)] hover:scale-105"
                                                         )}
                                                     >
-                                                        {state.sustainDetails.isComplexityLocked ? "Remover Blindaje" : "Blindar Complejidad"}
+                                                        {state.sustainDetails.isComplexityLocked ? "Desfijar" : "Fijar"}
                                                     </Button>
                                                 </div>
                                             </div>
